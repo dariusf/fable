@@ -7,7 +7,8 @@ type choice = {
 }
 
 and cmd =
-  | Print of string
+  | Para of cmd list
+  | Text of string
   | Run of string
   | Interpolate of string
   | Choices of choice list
@@ -29,7 +30,7 @@ module Convert = struct
   let inline : (Inline.t, cmd Acc.t) Folder.folder =
    fun _f acc i ->
     match i with
-    | Inline.Text (s, _) -> Folder.ret (Acc.add (Print s) acc)
+    | Inline.Text (s, _) -> Folder.ret (Acc.add (Text s) acc)
     | Inline.Autolink (_, _) -> failwith "unimplemented Autolink"
     | Inline.Break (_, _) -> failwith "unimplemented Break"
     | Inline.Code_span (cs, _) ->
@@ -85,7 +86,9 @@ module Convert = struct
           (Block.Paragraph.inline p)
       in
       Folder.ret
-        (Acc.change_last (fun (name, cmds) -> (name, Acc.plus a cmds)) acc)
+        (Acc.change_last
+           (fun (name, cmds) -> (name, Acc.add (Para (Acc.to_list a)) cmds))
+           acc)
     | Block.Code_block (cb, _meta) ->
       (* let acc = *)
       (* match Block.Code_block.info_string cb with
@@ -109,9 +112,7 @@ module Convert = struct
       (* Folder.ret acc *)
     | Block.Blank_line (_, _) ->
       (* Folder.ret
-         (Acc.change_last
-            (fun (name, cmds) -> (name, Acc.add (Print "\n") cmds))
-            acc) *)
+         (Acc.change_last (fun (name, cmds) -> (name, Acc.add Break cmds)) acc) *)
       Folder.default
     | Block.Block_quote (_, _) -> failwith "unimplemented Block_quote"
     | Block.Blocks (_bs, _) ->

@@ -1,4 +1,3 @@
 
 all:
-	dune exec ./main.exe test.md
-#	dune build ./web.bc.js
+	dune exec ./main.exe test.md > data.js
