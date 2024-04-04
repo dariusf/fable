@@ -10,17 +10,16 @@ function main() {
 
 function interpret(instrs, parent) {
   for (const instr of instrs) {
-    console.log("interpret", instr[0], parent);
+    // console.log("interpret", instr[0], parent);
     switch (instr[0]) {
       case "Run":
-        console.log("run", instr[1]);
+        // console.log("run", instr[1]);
         try {
           // Function(instr[1])();
           eval?.(instr[1]);
         } catch (e) {
           print(e);
         }
-        debugger;
         break;
       // case "Break":
       //   {
@@ -45,8 +44,7 @@ function interpret(instrs, parent) {
       case "Interpolate":
         {
           let d = document.createElement("span");
-          console.log("eval", instr[1]);
-          debugger;
+          // console.log("eval", instr[1]);
           let v;
           try {
             // v = Function(instr[1])();
