@@ -2,8 +2,8 @@ open Common
 
 type choice = {
   initial : cmd list;
-  code : string;
-  rest : cmd list;
+  code : cmd list;
+  rest : cmd;
 }
 
 and cmd =
@@ -11,6 +11,7 @@ and cmd =
   | Text of string
   | Run of string
   | Interpolate of string
+  | Jump of string
   | Choices of choice list
 [@@deriving show { with_path = false }, yojson]
 
@@ -38,6 +39,8 @@ module Convert = struct
       let r =
         if String.starts_with ~prefix:"$" c then
           Interpolate (String.sub c 1 (String.length c - 1))
+        else if String.starts_with ~prefix:"jump " c then
+          Jump (String.sub c 5 (String.length c - 5))
         else Run c
       in
       Folder.ret (Acc.add r acc)
@@ -144,17 +147,28 @@ module Convert = struct
             in
             (* show_block (Block.List_item.block i); *)
             let _, bs = List.hd (Acc.to_list bs) in
+            (* it's a para *)
+            let bs =
+              match Acc.to_list bs with
+              | [Para b] -> b
+              | _ -> failwith "not a para?"
+            in
             let _, i, c, r =
               List.fold_left
                 (fun (b, i, c, r) e ->
                   match (e, b) with
-                  | Run s, false -> (true, i, s, r)
+                  | Run _, false -> (true, i, Some e, r)
+                  | Jump _, false -> (true, i, Some e, r)
                   | _, true -> (true, i, c, Acc.add e r)
                   | _, false -> (false, Acc.add e i, c, r))
-                (false, Acc.empty, "", Acc.empty)
-                (Acc.to_list bs)
+                (false, Acc.empty, None, Acc.empty)
+                bs
             in
-            { initial = Acc.to_list i; code = c; rest = Acc.to_list r })
+            {
+              initial = Acc.to_list i;
+              code = Option.to_list c;
+              rest = Para (Acc.to_list r);
+            })
           (Block.List'.items l)
       in
       Folder.ret

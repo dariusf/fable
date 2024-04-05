@@ -1,34 +1,37 @@
 let scenes = {};
 let content = document.querySelector("#content");
 
-function Goto(scene) {
-  this.scene = scene;
-}
-function jump(scene) {
-  throw new Goto(scene);
-}
+// function Goto(scene) {
+//   this.scene = scene;
+// }
+// function jump(scene) {
+//   // throw new Goto(scene);
+//   interpret(scenes[scene], content, () => {});
+// }
 
 function main() {
   for (const scene of data) {
     scenes[scene.name] = scene.cmds;
   }
   let scene = data[0].name;
-  while (true) {
-    try {
-      interpret(scenes[scene].cmds, content);
-    } catch (e) {
-      if (e instanceof Goto) {
-        scene = e.scene;
-      } else {
-        throw e;
-      }
-    }
-  }
+  // while (true) {
+  // try {
+  interpret(scenes[scene], content, () => {});
+  // break;
+  // } catch (e) {
+  //   if (e instanceof Goto) {
+  //     scene = e.scene;
+  //   } else {
+  //     throw e;
+  //   }
+  // }
+  // }
 }
 
-function interpret(instrs, parent) {
-  for (const instr of instrs) {
-    // console.log("interpret", instr[0], parent);
+function interpret(instrs, parent, k) {
+  loop: for (var i = 0; i < instrs.length; i++) {
+    const instr = instrs[i];
+    console.log("interpret", instr, parent);
     switch (instr[0]) {
       case "Run":
         // console.log("run", instr[1]);
@@ -36,20 +39,10 @@ function interpret(instrs, parent) {
           // Function(instr[1])();
           eval?.(instr[1]);
         } catch (e) {
-          print(e);
-        }
-        break;
-      // case "Break":
-      //   {
-      //     let d = document.createElement("br");
-      //     parent.appendChild(d);
-      //   }
-      //   break;
-      case "Para":
-        {
-          let d = document.createElement("div");
-          interpret(instr[1], d);
-          parent.appendChild(d);
+          // if (e instanceof Goto) {
+          //   throw e;
+          // }
+          console.log(e);
         }
         break;
       case "Text":
@@ -68,27 +61,112 @@ function interpret(instrs, parent) {
             // v = Function(instr[1])();
             v = eval?.(instr[1]);
           } catch (e) {
+            // if (e instanceof Goto) {
+            //   throw e;
+            // }
             v = "(" + e + ")";
           }
           d.textContent = v + "";
           parent.appendChild(d);
         }
         break;
-      case "Choices":
-        {
-          let alts = instr[1];
-          let ul = document.createElement("ul");
-          let items = [];
-          for (const item of alts) {
-            let li = document.createElement("li");
-            li.textContent = item.initial;
-            items.push(li);
-          }
-          parent.appendChild(ul);
-        }
-        break;
+      // case "Break":
+      //   {
+      //     let d = document.createElement("br");
+      //     parent.appendChild(d);
+      //   }
+      //   break;
+
+      // These have recursion
+
+      // case "Para":
+      // {
+      //   let d = document.createElement("div");
+      //   interpret(instr[1], d);
+      //   parent.appendChild(d);
+      // }
+      // break loop;
+      // case "Choices":
+      // {
+      //   let alts = instr[1];
+      //   let ul = document.createElement("ul");
+      //   let items = [];
+      //   for (const item of alts) {
+      //     let li = document.createElement("li");
+      //     li.textContent = item.initial;
+      //     items.push(li);
+      //   }
+      //   parent.appendChild(ul);
+      // }
       default:
-        throw `unknown kind ${instr[0]}`;
+        break loop;
+      // throw `unknown kind ${instr[0]}`;
     }
+  }
+
+  // i is the index of a recursive instr, or the end of the instr list
+  if (i >= instrs.length) {
+    return k();
+  }
+  let current = instrs[i];
+  let rest = instrs.slice(i + 1);
+
+  switch (current[0]) {
+    case "Jump":
+      {
+        return interpret(scenes[current[1]], content, () => {});
+        // abandon current k and instructions, go back to top element
+      }
+      break;
+    case "Para":
+      {
+        if (current[1].length > 0) {
+          let d = document.createElement("div");
+          parent.appendChild(d);
+          interpret(current[1], d, () => {
+            interpret(rest, parent, k);
+          });
+        } else {
+          interpret(rest, parent, k);
+        }
+      }
+      break;
+    case "Choices":
+      {
+        let alts = current[1];
+        let ul = document.createElement("ul");
+        parent.appendChild(ul);
+        let links = [];
+        let indicate_clicked = (clicked) => {
+          links.forEach((a) => {
+            if (a !== clicked) {
+              a.removeAttribute("href");
+            }
+            a.onclick = null;
+          });
+        };
+        // let after = document.createElement("div");
+        // parent.appendChild(after);
+        for (const item of alts) {
+          let li = document.createElement("li");
+          ul.appendChild(li);
+          let a = document.createElement("a");
+          a.href = "#";
+          links.push(a);
+          li.appendChild(a);
+          a.onclick = () => {
+            indicate_clicked(a);
+            interpret(item.code, document.createElement("div"), () => {
+              interpret([item.rest], parent, () => {
+                interpret(rest, parent, k);
+              });
+            });
+          };
+          interpret(item.initial, a, (x) => x);
+        }
+      }
+      break;
+    default:
+      throw `unknown kind ${current[0]}`;
   }
 }

@@ -6,21 +6,24 @@ let items = ['Apple', 'Banana', 'Carrot'];
 var a = items[Math.floor(Math.random()*items.length)];
 ```
 
-H[e](`jump('Three')`)llo `$a`!
+Hello `$a`!
 
 Make a choice:
 
-- one `jump('One')`
-- three `scene = 'Three'`
+- one `jump One` should not show
+- one 2 `1` should show. `jump One`
+- three
+
+after all
 
 ---
 
 # One
 
-Scene 1
+text from Scene 1
 
 ---
 
 # Three
 
-Scene 3
+text from Scene 3
