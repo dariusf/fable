@@ -1,11 +1,29 @@
 let scenes = {};
 let content = document.querySelector("#content");
 
+function Goto(scene) {
+  this.scene = scene;
+}
+function jump(scene) {
+  throw new Goto(scene);
+}
+
 function main() {
   for (const scene of data) {
     scenes[scene.name] = scene.cmds;
   }
-  interpret(data[0].cmds, content);
+  let scene = data[0].name;
+  while (true) {
+    try {
+      interpret(scenes[scene].cmds, content);
+    } catch (e) {
+      if (e instanceof Goto) {
+        scene = e.scene;
+      } else {
+        throw e;
+      }
+    }
+  }
 }
 
 function interpret(instrs, parent) {

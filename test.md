@@ -1,15 +1,16 @@
 
 # Two
 
-```
-var a = 1
+```js
+let items = ['Apple', 'Banana', 'Carrot'];
+var a = items[Math.floor(Math.random()*items.length)];
 ```
 
-Hello `$a`!
+H[e](`jump('Three')`)llo `$a`!
 
 Make a choice:
 
-- one `scene = 'One'`
+- one `jump('One')`
 - three `scene = 'Three'`
 
 ---
