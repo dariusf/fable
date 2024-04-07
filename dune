@@ -1,11 +1,13 @@
 (executable
  (name main)
- (libraries cmarkit)
+ (modules main)
+ (libraries scripture)
  (preprocess (pps ppx_deriving_yojson ppx_deriving.std)))
 
-; (executable
-;  (name web)
-;  (libraries brr)
-;  (modes js))
+(executable
+ (name web)
+ (modules web)
+ (libraries brr scripture)
+ (modes js))
 
 (env (dev (flags (:standard -warn-error -A))))

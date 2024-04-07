@@ -31,7 +31,7 @@ function main() {
 function interpret(instrs, parent, k) {
   loop: for (var i = 0; i < instrs.length; i++) {
     const instr = instrs[i];
-    console.log("interpret", instr, parent);
+    // console.log("interpret", instr, parent);
     switch (instr[0]) {
       case "Run":
         // console.log("run", instr[1]);
@@ -45,11 +45,35 @@ function interpret(instrs, parent, k) {
           console.log(e);
         }
         break;
+      case "Verbatim":
+        {
+          // comments go in here too
+          // this is on the same level as Para, i.e. block
+          let d = document.createElement("div");
+          d.innerHTML = instr[1];
+          parent.appendChild(d);
+        }
+        break;
       case "Text":
         {
+          // this is inline
           let d = document.createElement("span");
           d.textContent = instr[1];
           parent.appendChild(d);
+        }
+        break;
+      case "LinkCode":
+      case "LinkJump":
+        {
+          let e = document.createElement("a");
+          e.href = "#";
+          let kind = instr[0] === "LinkCode" ? "Run" : "Jump";
+          let target = instr[0] === "LinkCode" ? instr[2] + "()" : instr[2];
+          e.onclick = () => {
+            interpret([[kind, target]], parent, () => {});
+          };
+          e.textContent = instr[1];
+          parent.appendChild(e);
         }
         break;
       case "Interpolate":

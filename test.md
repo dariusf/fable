@@ -8,12 +8,22 @@ var a = items[Math.floor(Math.random()*items.length)];
 
 Hello `$a`!
 
+```js
+function runMe() {
+  console.log('hi');
+}
+```
+
+[jump](#One)
+
+[code](!runMe)
+
 Make a choice:
 
-- one `jump One` should not show
-- one 2 `1` should show. `jump One`
-- three `jump Three`
-- four
+- Go to Scene 1 `jump One` should not show
+- Say something, then go to Scene 1 `1` should show. `jump One`
+- Go to Scene 3 `jump Three`
+- Continue
 
 after all
 
