@@ -2,7 +2,7 @@
 # Two
 
 ```js
-let items = ['Apple', 'Banana', 'Carrot'];
+var items = ['Apple', 'Banana', 'Carrot'];
 var a = items[Math.floor(Math.random()*items.length)];
 ```
 
@@ -11,6 +11,7 @@ Hello `$a`!
 ```js
 function runMe() {
   console.log('hi');
+  interpret([['Para', [['Text', 'Hi!']]]], content,()=>{});
 }
 ```
 
@@ -33,14 +34,12 @@ after all
 
 text from Scene 1
 
+```js meta
+items.map(i => `- ${i}`).join('\n')
+```
+
 ---
 
 # Three
 
 text from Scene 3
-
-This can't be interpreted as markdown
-
-```
-[1, 2, 3].map(n => `- ${n}`).join('\n')
-```

@@ -33,15 +33,20 @@ function interpret(instrs, parent, k) {
     const instr = instrs[i];
     // console.log("interpret", instr, parent);
     switch (instr[0]) {
-      case "Run":
-        // console.log("run", instr[1]);
+      case "Meta":
         try {
-          // Function(instr[1])();
+          let s = eval?.(instr[1]);
+          let instrs = scripture_parse(s)[0].cmds;
+          interpret(instrs, parent, () => {});
+        } catch (e) {
+          // TODO surface errors
+          console.log(e);
+        }
+        break;
+      case "Run":
+        try {
           eval?.(instr[1]);
         } catch (e) {
-          // if (e instanceof Goto) {
-          //   throw e;
-          // }
           console.log(e);
         }
         break;
