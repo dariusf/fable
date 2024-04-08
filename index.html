@@ -32,6 +32,11 @@
       padding: 20pt;
     }
 
+    /* fix relayout on scrollbars appearing */
+    html {
+      overflow-y: scroll;
+    }
+
     a,
     a:visited {
       color: var(--main-fg-color);
@@ -43,6 +48,12 @@
       animation: fadein 0.5s;
     }
 
+    ul {
+      margin-top: 0px;
+      margin-bottom: 1em;
+      animation: fadein 0.5s;
+    }
+
     @keyframes fadein {
       from {
         opacity: 0;
@@ -50,10 +61,6 @@
       to {
         opacity: 1;
       }
-    }
-    ul {
-      margin-top: 0px;
-      margin-bottom: 1em;
     }
 
     * {

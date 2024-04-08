@@ -1,31 +1,12 @@
 let scenes = {};
 let content = document.querySelector("#content");
 
-// function Goto(scene) {
-//   this.scene = scene;
-// }
-// function jump(scene) {
-//   // throw new Goto(scene);
-//   interpret(scenes[scene], content, () => {});
-// }
-
 function main() {
   for (const scene of data) {
     scenes[scene.name] = scene.cmds;
   }
   let scene = data[0].name;
-  // while (true) {
-  // try {
   interpret(scenes[scene], content, () => {});
-  // break;
-  // } catch (e) {
-  //   if (e instanceof Goto) {
-  //     scene = e.scene;
-  //   } else {
-  //     throw e;
-  //   }
-  // }
-  // }
 }
 
 function interpret(instrs, parent, k) {
@@ -37,7 +18,7 @@ function interpret(instrs, parent, k) {
         try {
           let s = eval?.(instr[1]);
           let instrs = scripture_parse(s)[0].cmds;
-          console.log("meta produced", instrs);
+          // console.log("meta produced", instrs);
           interpret(instrs, parent, () => {});
         } catch (e) {
           // TODO surface errors
@@ -75,8 +56,14 @@ function interpret(instrs, parent, k) {
           e.href = "#";
           let kind = instr[0] === "LinkCode" ? "Run" : "Jump";
           let target = instr[0] === "LinkCode" ? instr[2] + "()" : instr[2];
-          e.onclick = () => {
-            interpret([[kind, target]], parent, () => {});
+          e.onclick = (ev) => {
+            ev.preventDefault();
+            if (kind === "Jump") {
+              // ensure that it is not used
+              interpret([[kind, target]], parent, null);
+            } else {
+              interpret([[kind, target]], parent, () => {});
+            }
           };
           e.textContent = instr[1];
           parent.appendChild(e);
@@ -100,43 +87,20 @@ function interpret(instrs, parent, k) {
           parent.appendChild(d);
         }
         break;
-      // case "Break":
-      //   {
-      //     let d = document.createElement("br");
-      //     parent.appendChild(d);
-      //   }
-      //   break;
 
-      // These have recursion
-
-      // case "Para":
-      // {
-      //   let d = document.createElement("div");
-      //   interpret(instr[1], d);
-      //   parent.appendChild(d);
-      // }
-      // break loop;
-      // case "Choices":
-      // {
-      //   let alts = instr[1];
-      //   let ul = document.createElement("ul");
-      //   let items = [];
-      //   for (const item of alts) {
-      //     let li = document.createElement("li");
-      //     li.textContent = item.initial;
-      //     items.push(li);
-      //   }
-      //   parent.appendChild(ul);
-      // }
       default:
         break loop;
-      // throw `unknown kind ${instr[0]}`;
     }
   }
 
   // i is the index of a recursive instr, or the end of the instr list
   if (i >= instrs.length) {
-    return k();
+    k();
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: "smooth",
+    });
+    return;
   }
   let current = instrs[i];
   let rest = instrs.slice(i + 1);
@@ -144,8 +108,8 @@ function interpret(instrs, parent, k) {
   switch (current[0]) {
     case "Jump":
       {
-        return interpret(scenes[current[1]], content, () => {});
         // abandon current k and instructions, go back to top element
+        return interpret(scenes[current[1]], content, () => {});
       }
       break;
     case "Para":
@@ -172,11 +136,11 @@ function interpret(instrs, parent, k) {
             if (a !== clicked) {
               a.removeAttribute("href");
             }
-            a.onclick = null;
+            a.onclick = (ev) => {
+              ev.preventDefault();
+            };
           });
         };
-        // let after = document.createElement("div");
-        // parent.appendChild(after);
         for (const item of alts) {
           let li = document.createElement("li");
           ul.appendChild(li);
@@ -184,11 +148,12 @@ function interpret(instrs, parent, k) {
           a.href = "#";
           links.push(a);
           li.appendChild(a);
-          a.onclick = () => {
+          a.onclick = (ev) => {
+            ev.preventDefault();
             indicate_clicked(a);
             interpret(item.code, document.createElement("div"), () => {
               interpret([item.rest], parent, () => {
-                interpret(rest, parent, k);
+                interpret(rest, parent, () => {});
               });
             });
           };
