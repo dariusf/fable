@@ -1,0 +1,4 @@
+
+; bin is determined by what is installed
+(cram
+ (deps %{bin:main}))

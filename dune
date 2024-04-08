@@ -1,5 +1,6 @@
 (executable
  (name main)
+ (public_name main)
  (modules main)
  (libraries scripture)
  (preprocess (pps ppx_deriving_yojson ppx_deriving.std)))

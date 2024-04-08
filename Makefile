@@ -1,9 +1,9 @@
 
-.PHONY: all
-all:
-	dune exec ./main.exe test.md | tee data.js
+.PHONY: default
+default:
+	dune exec ./main.exe test/examples.t/test.md | tee data.js
 
-.PHONY: test
-test:
-	dune exec ./main.exe test.md > data.js
+.PHONY: all
+all: default
+	dune test
 	dune build --release ./web.bc.js
