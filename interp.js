@@ -37,6 +37,7 @@ function interpret(instrs, parent, k) {
         try {
           let s = eval?.(instr[1]);
           let instrs = scripture_parse(s)[0].cmds;
+          console.log("meta produced", instrs);
           interpret(instrs, parent, () => {});
         } catch (e) {
           // TODO surface errors

@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Hi</title>
+    <title>Scripture Feature Test</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -10,10 +10,15 @@
     <script src="_build/default/web.bc.js"></script>
   </head>
   <style>
+    :root {
+      --main-bg-color: #202124;
+      --main-bg-color-lighter: #4e5159;
+      --main-fg-color: #e8eaed;
+    }
     body {
       font-family: "Noto Serif", serif;
-      background-color: #202124;
-      color: #e8eaed;
+      background-color: var(--main-bg-color);
+      color: var(--main-fg-color);
       margin: 2rem auto;
       max-width: 640px;
       line-height: 1.4;
@@ -29,7 +34,7 @@
 
     a,
     a:visited {
-      color: #e8eaed;
+      color: var(--main-fg-color);
     }
 
     /* for paragraphs, maybe make more specific later */
@@ -50,6 +55,21 @@
       margin-top: 0px;
       margin-bottom: 1em;
     }
+
+    * {
+      scrollbar-color: var(--main-bg-color-lighter) var(--main-bg-color);
+      scrollbar-width: thin;
+    }
+    /* hide scrollbars */
+    /* *::-webkit-scrollbar {
+      display: none;
+    } */
+    /* * { */
+    /* IE and Edge */
+    /* -ms-overflow-style: none; */
+    /* Firefox */
+    /* scrollbar-width: none; */
+    /* } */
   </style>
   <body>
     <div id="content"></div>
