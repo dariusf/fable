@@ -48,3 +48,12 @@ items.map(i => `- ${i}`).join('\n') + `
 # Three
 
 text from Scene 3
+
+---
+
+# Nested
+
+<!-- - Choice 1 `1`
+    - Did you choose choice 1? `1`
+    - Or not? `1`
+- Choice 2 `1` -->
