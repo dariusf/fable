@@ -47,7 +47,7 @@ Code block output is not shown, like inline code without a prefix.
 CODE
 ```</code></pre>
 
-Adding the `meta` info-string after the language type unquotes the code block, like inline code with the `~` prefix.
+Adding the `meta` or `~` info-string after the language type unquotes the code block, like inline code with the `~` prefix.
 
 <pre><code>```js meta
 CODE
@@ -71,6 +71,12 @@ Links allow user input outside the usual flow of choices.
 A `[TEXT](#SECTION)` link jumps to SECTION.
 
 A `[TEXT](!FN)` link causes the function FN to be run.
+
+### Runtime
+
+There is a lot of freedom in how the runtime can behave, but it should minimally implement the following:
+
+- the `on_interact` function is called whenever a user interaction takes place
 
 ## Semantics
 

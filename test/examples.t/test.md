@@ -2,6 +2,10 @@
 # Two
 
 ```js
+var turns = 0;
+function on_interact() {
+  turns++;
+}
 var items = ['Apple', 'Banana', 'Carrot'];
 var a = items[Math.floor(Math.random()*items.length)];
 ```
@@ -48,6 +52,8 @@ items.map(i => `- ${i}`).join('\n') + `
 # Three
 
 text from Scene 3
+
+Turns: `$turns`
 
 ---
 

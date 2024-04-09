@@ -144,7 +144,9 @@ module Convert = struct
           | None -> Run content
           | Some (s, _) ->
             let segs = String.split_on_char ' ' s in
-            (match segs with [_; "meta"] -> Meta content | _ -> Run content)
+            (match segs with
+            | [_; "meta"] | [_; "~"] -> Meta content
+            | _ -> Run content)
         in
         Folder.ret
           (Acc.change_last (fun (name, cmds) -> (name, Acc.add thing cmds)) acc)

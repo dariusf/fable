@@ -1,5 +1,6 @@
 let scenes = {};
 let content = document.querySelector("#content");
+window.on_interact = {};
 
 function main() {
   for (const scene of data) {
@@ -58,6 +59,7 @@ function interpret(instrs, parent, k) {
           let target = instr[0] === "LinkCode" ? instr[2] + "()" : instr[2];
           e.onclick = (ev) => {
             ev.preventDefault();
+            window.on_interact();
             if (kind === "Jump") {
               // ensure that it is not used
               interpret([[kind, target]], parent, null);
@@ -150,6 +152,7 @@ function interpret(instrs, parent, k) {
           li.appendChild(a);
           a.onclick = (ev) => {
             ev.preventDefault();
+            window.on_interact();
             indicate_clicked(a);
             interpret(item.code, document.createElement("div"), () => {
               interpret([item.rest], parent, () => {
