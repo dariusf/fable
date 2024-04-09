@@ -18,8 +18,6 @@ The bedroom. This is where it happened. Now to look for clues. `jump murder_scen
 
 `jump murder_scene`
 
----
-
 # bed
 
 ```js

@@ -11,8 +11,6 @@ type choice = {
 and cmd =
   | Verbatim of string
   | Para of cmd list
-  (* | Guard of string *)
-  (* | Sticky of string *)
   | Text of string
   | LinkCode of string * string
   | LinkJump of string * string
@@ -177,7 +175,7 @@ module Convert = struct
             (Block.Heading.inline h)
           |> Acc.to_list |> String.concat ""
         in
-        Folder.ret (Acc.change_last (fun (_, cmds) -> (name, cmds)) acc)
+        Folder.ret (Acc.add (name, Acc.empty) acc)
       | Block.Html_block (b, _) ->
         let l = List.map Block_line.to_string b |> String.concat "\n" in
         if String.starts_with ~prefix:"<!--" l then Folder.default
@@ -244,47 +242,16 @@ module Convert = struct
           (Acc.change_last
              (fun (name, cmds) -> (name, Acc.add (Choices cs) cmds))
              acc)
-      | Block.Thematic_break (_, _) ->
-        Folder.ret (Acc.add ("none", Acc.empty) acc)
+      | Block.Thematic_break (_, _) -> Folder.default
       | _ -> Folder.default (* let the folder thread the fold *)
     in
     Folder.make ~block ()
 
   let to_program doc =
-    (* ~inline  *)
-    let acc = Acc.add ("default", Acc.empty) Acc.empty in
-    let prog = Folder.fold_doc block_cmd_folder acc doc in
-    (* SSet.elements langs *)
+    let prog = Folder.fold_doc block_cmd_folder Acc.empty doc in
     Acc.to_list prog
     |> List.map (fun (name, cmds) -> { name; cmds = Acc.to_list cmds })
-
-  (* let wikilink = Cmarkit.Meta.key () (* A meta key to recognize them *)
-
-     let make_wikilink label =
-       (* Just a placeholder label definition *)
-       let meta = Cmarkit.Meta.tag wikilink (Cmarkit.Label.meta label) in
-       Cmarkit.Label.with_meta meta label
-
-     (* copied from docs. keeps unresolved links instead of turning them into text *)
-     let resolver = function
-       | `Def _ as ctx -> Cmarkit.Label.default_resolver ctx
-       | `Ref (_, _, (Some _ as def)) -> def (* As per doc definition *)
-       | `Ref (_, ref, None) -> Some (make_wikilink ref) *)
 end
-
-(* let rec interp program cmds =
-     match cmds with
-     | [] -> ()
-     | Run c :: cs ->
-       eval c |> ignore;
-       interp program cs
-     | Print c :: cs ->
-       append c |> ignore;
-       interp program cs
-     | Interpolate c :: cs ->
-       append (eval c |> Jv.to_string);
-       interp program cs
-     | Choices chs :: cs -> failwith "choice" *)
 
 let print_json program =
   let compact = true in

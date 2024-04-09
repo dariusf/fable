@@ -32,8 +32,6 @@ Make a choice:
 
 after all
 
----
-
 # One
 
 text from Scene 1
