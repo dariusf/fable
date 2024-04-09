@@ -34,7 +34,7 @@ function mayHaveText(str) {
 function interpret(instrs, parent, k) {
   loop: for (var i = 0; i < instrs.length; i++) {
     const instr = instrs[i];
-    console.log("interpret", instr, parent);
+    // console.log("interpret", instr, parent);
     switch (instr[0]) {
       case "Meta":
         try {
@@ -44,14 +44,14 @@ function interpret(instrs, parent, k) {
           interpret(instrs, parent, () => {});
         } catch (e) {
           // TODO surface errors
-          console.log(e);
+          console.error(e);
         }
         break;
       case "Run":
         try {
           eval?.(instr[1]);
         } catch (e) {
-          console.log(e);
+          console.error(e);
         }
         break;
       case "Verbatim":
@@ -95,16 +95,12 @@ function interpret(instrs, parent, k) {
       case "Interpolate":
         {
           let d = document.createElement("span");
-          // console.log("eval", instr[1]);
           let v;
           try {
-            // v = Function(instr[1])();
             v = eval?.(instr[1]);
           } catch (e) {
-            // if (e instanceof Goto) {
-            //   throw e;
-            // }
             v = "(" + e + ")";
+            console.error(e);
           }
           d.textContent = v + "";
           parent.appendChild(d);
@@ -181,7 +177,8 @@ function interpret(instrs, parent, k) {
             try {
               generate &&= !!eval?.(g);
             } catch (e) {
-              console.log(e);
+              console.error(e);
+              continue;
             }
           }
           if (!generate) {

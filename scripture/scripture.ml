@@ -195,21 +195,24 @@ module Convert = struct
                   (Acc.add ("", Acc.empty) Acc.empty)
                   (Block.List_item.block i)
               in
-              (* show_block (Block.List_item.block i); *)
               let _, bs = List.hd (Acc.to_list bs) in
-              (* it's a para *)
+              (* flatten multiple paras *)
               let bs =
-                match Acc.to_list bs with
-                | [Para b] -> b
-                | _ -> failwith "not a para?"
+                bs |> Acc.to_list
+                |> List.concat_map (fun e ->
+                       match e with
+                       | Para b -> b
+                       | _ ->
+                         show_block (Block.List_item.block i);
+                         failwith "not a para?")
               in
               let _, gs, st, i, c, r =
                 List.fold_left
                   (fun (b, gs, st, i, c, r) e ->
                     match (e, b) with
-                    | Run "sticky", _ -> (true, gs, true, i, Some e, r)
+                    | Run "sticky", _ -> (b, gs, true, i, Some e, r)
                     | Run s, _ when String.starts_with ~prefix:"guard " s ->
-                      (true, Acc.add (suffix 6 s) gs, st, i, Some e, r)
+                      (b, Acc.add (suffix 6 s) gs, st, i, Some e, r)
                     | Run _, false -> (true, gs, st, i, Some e, r)
                     | Jump _, false -> (true, gs, st, i, Some e, r)
                     | _, true -> (true, gs, st, i, c, Acc.add e r)
