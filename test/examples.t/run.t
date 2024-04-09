@@ -6,7 +6,7 @@
       "cmds": [
         [
           "Run",
-          "var items = ['Apple', 'Banana', 'Carrot'];\nvar a = items[Math.floor(Math.random()*items.length)];"
+          "var turns = 0;\nfunction on_interact() {\n  turns++;\n}\nvar items = ['Apple', 'Banana', 'Carrot'];\nvar a = items[Math.floor(Math.random()*items.length)];"
         ],
         [
           "Para",
@@ -62,6 +62,7 @@
           "Choices",
           [
             {
+              "guard": [],
               "initial": [
                 [
                   "Text",
@@ -85,6 +86,7 @@
               ]
             },
             {
+              "guard": [],
               "initial": [
                 [
                   "Text",
@@ -112,6 +114,7 @@
               ]
             },
             {
+              "guard": [],
               "initial": [
                 [
                   "Text",
@@ -130,6 +133,7 @@
               ]
             },
             {
+              "guard": [],
               "initial": [
                 [
                   "Text",
@@ -184,7 +188,24 @@
               "text from Scene 3"
             ]
           ]
+        ],
+        [
+          "Para",
+          [
+            [
+              "Text",
+              "Turns: "
+            ],
+            [
+              "Interpolate",
+              "turns"
+            ]
+          ]
         ]
       ]
+    },
+    {
+      "name": "Nested",
+      "cmds": []
     }
   ]

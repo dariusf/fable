@@ -46,3 +46,5 @@ module SMap = struct
          (fun fmt (k, v) -> Format.fprintf fmt "%s: %a" k pp_v v))
       (bindings map)
 end
+
+let suffix n s = String.sub s n (String.length s - n)

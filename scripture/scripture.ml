@@ -1,14 +1,18 @@
 open Common
 
 type choice = {
+  guard : string list;
   initial : cmd list;
   code : cmd list;
   rest : cmd;
+  sticky : bool;
 }
 
 and cmd =
   | Verbatim of string
   | Para of cmd list
+  (* | Guard of string *)
+  (* | Sticky of string *)
   | Text of string
   | LinkCode of string * string
   | LinkJump of string * string
@@ -60,12 +64,12 @@ module Convert = struct
       | Inline.Code_span (cs, _) ->
         let c = Inline.Code_span.code cs in
         let r =
-          if String.starts_with ~prefix:"$" c then
-            Interpolate (String.sub c 1 (String.length c - 1))
-          else if String.starts_with ~prefix:"~" c then
-            Meta (String.sub c 1 (String.length c - 1))
-          else if String.starts_with ~prefix:"jump " c then
-            Jump (String.sub c 5 (String.length c - 5))
+          if String.starts_with ~prefix:"$" c then Interpolate (suffix 1 c)
+          else if String.starts_with ~prefix:"~" c then Meta (suffix 1 c)
+          else if String.starts_with ~prefix:"jump " c then Jump (suffix 5 c)
+            (* else if String.starts_with ~prefix:"guard " c then *)
+            (* Guard (String.sub c 6 (String.length c - 6)) *)
+            (* else if String.starts_with ~prefix:"sticky" c then Sticky *)
           else Run c
         in
         Folder.ret (Acc.add r acc)
@@ -176,10 +180,12 @@ module Convert = struct
         Folder.ret (Acc.change_last (fun (_, cmds) -> (name, cmds)) acc)
       | Block.Html_block (b, _) ->
         let l = List.map Block_line.to_string b |> String.concat "\n" in
-        Folder.ret
-          (Acc.change_last
-             (fun (name, cmds) -> (name, Acc.add (Verbatim l) cmds))
-             acc)
+        if String.starts_with ~prefix:"<!--" l then Folder.default
+        else
+          Folder.ret
+            (Acc.change_last
+               (fun (name, cmds) -> (name, Acc.add (Verbatim l) cmds))
+               acc)
       | Block.Link_reference_definition (_, _) ->
         failwith "unimplemented Link_reference_definition"
       | Block.List (l, _) ->
@@ -199,22 +205,39 @@ module Convert = struct
                 | [Para b] -> b
                 | _ -> failwith "not a para?"
               in
-              let _, i, c, r =
+              let _, gs, st, i, c, r =
                 List.fold_left
-                  (fun (b, i, c, r) e ->
+                  (fun (b, gs, st, i, c, r) e ->
                     match (e, b) with
-                    | Run _, false -> (true, i, Some e, r)
-                    | Jump _, false -> (true, i, Some e, r)
-                    | _, true -> (true, i, c, Acc.add e r)
-                    | _, false -> (false, Acc.add e i, c, r))
-                  (false, Acc.empty, None, Acc.empty)
+                    | Run "sticky", _ -> (true, gs, true, i, Some e, r)
+                    | Run s, _ when String.starts_with ~prefix:"guard " s ->
+                      (true, Acc.add (suffix 6 s) gs, st, i, Some e, r)
+                    | Run _, false -> (true, gs, st, i, Some e, r)
+                    | Jump _, false -> (true, gs, st, i, Some e, r)
+                    | _, true -> (true, gs, st, i, c, Acc.add e r)
+                    | _, false -> (false, gs, st, Acc.add e i, c, r))
+                  (false, Acc.empty, false, Acc.empty, None, Acc.empty)
                   bs
               in
-              {
-                initial = Acc.to_list i;
-                code = Option.to_list c;
-                rest = Para (Acc.to_list r);
-              })
+              let res =
+                {
+                  guard = Acc.to_list gs;
+                  initial = Acc.to_list i;
+                  code = Option.to_list c;
+                  rest = Para (Acc.to_list r);
+                  sticky = st;
+                }
+              in
+              (* if st then res
+                 else
+                   let res =
+                     {
+                       res with
+                       guard = _ :: res.guard;
+                       code = res.code @ [Run ""];
+                     }
+                   in *)
+              res)
             (Block.List'.items l)
         in
         Folder.ret

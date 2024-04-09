@@ -1,6 +1,9 @@
 let scenes = {};
 let content = document.querySelector("#content");
-window.on_interact = {};
+window.on_interact = () => {};
+window.choice_state = {};
+let fresh = 0;
+let choices_disappear = true;
 
 function main() {
   for (const scene of data) {
@@ -13,7 +16,7 @@ function main() {
 function interpret(instrs, parent, k) {
   loop: for (var i = 0; i < instrs.length; i++) {
     const instr = instrs[i];
-    // console.log("interpret", instr, parent);
+    console.log("interpret", instr, parent);
     switch (instr[0]) {
       case "Meta":
         try {
@@ -144,6 +147,23 @@ function interpret(instrs, parent, k) {
           });
         };
         for (const item of alts) {
+          if (!item.sticky) {
+            let id = `c${fresh++}`;
+            window.choice_state[id] = false;
+            item.code.push(["Run", `window.choice_state.${id} = true;`]);
+            item.guard.unshift(`!window.choice_state.${id}`);
+          }
+          let generate = true;
+          for (const g of item.guard) {
+            try {
+              generate &&= !!eval?.(g);
+            } catch (e) {
+              console.log(e);
+            }
+          }
+          if (!generate) {
+            continue;
+          }
           let li = document.createElement("li");
           ul.appendChild(li);
           let a = document.createElement("a");
@@ -153,7 +173,11 @@ function interpret(instrs, parent, k) {
           a.onclick = (ev) => {
             ev.preventDefault();
             window.on_interact();
-            indicate_clicked(a);
+            if (choices_disappear) {
+              parent.removeChild(ul);
+            } else {
+              indicate_clicked(a);
+            }
             interpret(item.code, document.createElement("div"), () => {
               interpret([item.rest], parent, () => {
                 interpret(rest, parent, () => {});
