@@ -57,7 +57,16 @@ Turns: `$turns`
 
 # Nested
 
-<!-- - Choice 1 `1`
+- Choice 1 `1`
     - Did you choose choice 1? `1`
     - Or not? `1`
-- Choice 2 `1` -->
+- Choice 2 `1` after
+    break
+- Choice 3 `1`
+
+    para
+- Choice 4 `1`
+
+    ```js
+    1;
+    ```

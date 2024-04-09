@@ -12,6 +12,7 @@ and cmd =
   | Verbatim of string
   | Para of cmd list
   | Text of string
+  | Break
   | LinkCode of string * string
   | LinkJump of string * string
   | Run of string
@@ -58,7 +59,7 @@ module Convert = struct
       match i with
       | Inline.Text (s, _) -> Folder.ret (Acc.add (Text s) acc)
       | Inline.Autolink (_, _) -> failwith "unimplemented Autolink"
-      | Inline.Break (_, _) -> failwith "unimplemented Break"
+      | Inline.Break (_, _) -> Folder.ret (Acc.add Break acc)
       | Inline.Code_span (cs, _) ->
         let c = Inline.Code_span.code cs in
         let r =
@@ -187,63 +188,53 @@ module Convert = struct
       | Block.Link_reference_definition (_, _) ->
         failwith "unimplemented Link_reference_definition"
       | Block.List (l, _) ->
-        let cs =
-          List.map
-            (fun (i, _) ->
-              let bs =
-                Folder.fold_block self
-                  (Acc.add ("", Acc.empty) Acc.empty)
-                  (Block.List_item.block i)
-              in
-              let _, bs = List.hd (Acc.to_list bs) in
-              (* flatten multiple paras *)
-              let bs =
-                bs |> Acc.to_list
-                |> List.concat_map (fun e ->
-                       match e with
-                       | Para b -> b
-                       | _ ->
-                         show_block (Block.List_item.block i);
-                         failwith "not a para?")
-              in
-              let _, gs, st, i, c, r =
-                List.fold_left
-                  (fun (b, gs, st, i, c, r) e ->
-                    match (e, b) with
-                    | Run "sticky", _ -> (b, gs, true, i, Some e, r)
-                    | Run s, _ when String.starts_with ~prefix:"guard " s ->
-                      (b, Acc.add (suffix 6 s) gs, st, i, Some e, r)
-                    | Run _, false -> (true, gs, st, i, Some e, r)
-                    | Jump _, false -> (true, gs, st, i, Some e, r)
-                    | _, true -> (true, gs, st, i, c, Acc.add e r)
-                    | _, false -> (false, gs, st, Acc.add e i, c, r))
-                  (false, Acc.empty, false, Acc.empty, None, Acc.empty)
-                  bs
-              in
-              let res =
-                {
-                  guard = Acc.to_list gs;
-                  initial = Acc.to_list i;
-                  code = Option.to_list c;
-                  rest = Para (Acc.to_list r);
-                  sticky = st;
-                }
-              in
-              (* if st then res
-                 else
-                   let res =
-                     {
-                       res with
-                       guard = _ :: res.guard;
-                       code = res.code @ [Run ""];
-                     }
-                   in *)
-              res)
-            (Block.List'.items l)
+        let choices =
+          l |> Block.List'.items
+          |> List.map (fun (i, _) ->
+                 let bs =
+                   Folder.fold_block self
+                     (Acc.add ("", Acc.empty) Acc.empty)
+                     (Block.List_item.block i)
+                   |> Acc.to_list
+                 in
+                 (* the first block is expected to be a paragraph *)
+                 let para, after_first =
+                   match bs with
+                   | [(_, bs)] ->
+                     (match Acc.to_list bs with
+                     | Para b :: rest -> (b, rest)
+                     | _ ->
+                       show_block (Block.List_item.block i);
+                       failwith "not a para followed by rest")
+                   | _ -> failwith "not a singleton scene"
+                 in
+                 (* only look for special syntax in the first paragraph *)
+                 let _, gs, st, i, c, r =
+                   para
+                   |> List.fold_left
+                        (fun (b, gs, st, i, c, r) e ->
+                          match (e, b) with
+                          | Run "sticky", _ -> (b, gs, true, i, Some e, r)
+                          | Run s, _ when String.starts_with ~prefix:"guard " s
+                            ->
+                            (b, Acc.add (suffix 6 s) gs, st, i, Some e, r)
+                          | Run _, false -> (true, gs, st, i, Some e, r)
+                          | Jump _, false -> (true, gs, st, i, Some e, r)
+                          | _, true -> (true, gs, st, i, c, Acc.add e r)
+                          | _, false -> (false, gs, st, Acc.add e i, c, r))
+                        (false, Acc.empty, false, Acc.empty, None, Acc.empty)
+                 in
+                 {
+                   guard = Acc.to_list gs;
+                   initial = Acc.to_list i;
+                   code = Option.to_list c;
+                   rest = Para (Acc.to_list r @ after_first);
+                   sticky = st;
+                 })
         in
         Folder.ret
           (Acc.change_last
-             (fun (name, cmds) -> (name, Acc.add (Choices cs) cmds))
+             (fun (name, cmds) -> (name, Acc.add (Choices choices) cmds))
              acc)
       | Block.Thematic_break (_, _) -> Folder.default
       | _ -> Folder.default (* let the folder thread the fold *)

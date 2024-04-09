@@ -71,6 +71,11 @@ function interpret(instrs, parent, k) {
           parent.appendChild(d);
         }
         break;
+      case "Break":
+        {
+          parent.appendChild(document.createElement("br"));
+        }
+        break;
       case "LinkCode":
       case "LinkJump":
         {

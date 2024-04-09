@@ -210,6 +210,165 @@
     },
     {
       "name": "Nested",
-      "cmds": []
+      "cmds": [
+        [
+          "Choices",
+          [
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Choice 1 "
+                ]
+              ],
+              "code": [
+                [
+                  "Run",
+                  "1"
+                ]
+              ],
+              "rest": [
+                "Para",
+                [
+                  [
+                    "Choices",
+                    [
+                      {
+                        "guard": [],
+                        "initial": [
+                          [
+                            "Text",
+                            "Did you choose choice 1? "
+                          ]
+                        ],
+                        "code": [
+                          [
+                            "Run",
+                            "1"
+                          ]
+                        ],
+                        "rest": [
+                          "Para",
+                          []
+                        ],
+                        "sticky": false
+                      },
+                      {
+                        "guard": [],
+                        "initial": [
+                          [
+                            "Text",
+                            "Or not? "
+                          ]
+                        ],
+                        "code": [
+                          [
+                            "Run",
+                            "1"
+                          ]
+                        ],
+                        "rest": [
+                          "Para",
+                          []
+                        ],
+                        "sticky": false
+                      }
+                    ]
+                  ]
+                ]
+              ],
+              "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Choice 2 "
+                ]
+              ],
+              "code": [
+                [
+                  "Run",
+                  "1"
+                ]
+              ],
+              "rest": [
+                "Para",
+                [
+                  [
+                    "Text",
+                    " after"
+                  ],
+                  [
+                    "Break"
+                  ],
+                  [
+                    "Text",
+                    "break"
+                  ]
+                ]
+              ],
+              "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Choice 3 "
+                ]
+              ],
+              "code": [
+                [
+                  "Run",
+                  "1"
+                ]
+              ],
+              "rest": [
+                "Para",
+                [
+                  [
+                    "Para",
+                    [
+                      [
+                        "Text",
+                        "para"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Choice 4 "
+                ]
+              ],
+              "code": [
+                [
+                  "Run",
+                  "1"
+                ]
+              ],
+              "rest": [
+                "Para",
+                [
+                  [
+                    "Run",
+                    "1;"
+                  ]
+                ]
+              ],
+              "sticky": false
+            }
+          ]
+        ]
+      ]
     }
   ]
