@@ -29,8 +29,9 @@ Make a choice:
 - Say something, then go to Scene 1 `1` should show. `jump One`
 - Go to Scene 3 `jump Three`
 - Continue
+- Nested lists `jump Nested`
 
-after all
+End of first scene
 
 # One
 
@@ -45,28 +46,28 @@ items.map(i => `- ${i}`).join('\n') + `
 </details>`
 ```
 
----
-
 # Three
 
 text from Scene 3
 
 Turns: `$turns`
 
----
-
 # Nested
 
 - Choice 1 `1`
-    - Did you choose choice 1? `1`
+    - Nested choice. Did you choose choice 1? `1`
     - Or not? `1`
 - Choice 2 `1` after
     break
 - Choice 3 `1`
 
-    para
+    A paragraph
 - Choice 4 `1`
 
     ```js
-    1;
+    console.log('you chose choice 4');
     ```
+
+Right before going back to Nested
+
+`jump Nested`

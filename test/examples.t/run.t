@@ -76,11 +76,13 @@
                 ]
               ],
               "rest": [
-                "Para",
                 [
+                  "Para",
                   [
-                    "Text",
-                    " should not show"
+                    [
+                      "Text",
+                      " should not show"
+                    ]
                   ]
                 ]
               ],
@@ -101,15 +103,17 @@
                 ]
               ],
               "rest": [
-                "Para",
                 [
+                  "Para",
                   [
-                    "Text",
-                    " should show. "
-                  ],
-                  [
-                    "Jump",
-                    "One"
+                    [
+                      "Text",
+                      " should show. "
+                    ],
+                    [
+                      "Jump",
+                      "One"
+                    ]
                   ]
                 ]
               ],
@@ -129,10 +133,7 @@
                   "Three"
                 ]
               ],
-              "rest": [
-                "Para",
-                []
-              ],
+              "rest": [],
               "sticky": false
             },
             {
@@ -144,10 +145,24 @@
                 ]
               ],
               "code": [],
-              "rest": [
-                "Para",
-                []
+              "rest": [],
+              "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Nested lists "
+                ]
               ],
+              "code": [
+                [
+                  "Jump",
+                  "Nested"
+                ]
+              ],
+              "rest": [],
               "sticky": false
             }
           ]
@@ -157,7 +172,7 @@
           [
             [
               "Text",
-              "after all"
+              "End of first scene"
             ]
           ]
         ]
@@ -229,52 +244,43 @@
                 ]
               ],
               "rest": [
-                "Para",
                 [
+                  "Choices",
                   [
-                    "Choices",
-                    [
-                      {
-                        "guard": [],
-                        "initial": [
-                          [
-                            "Text",
-                            "Did you choose choice 1? "
-                          ]
-                        ],
-                        "code": [
-                          [
-                            "Run",
-                            "1"
-                          ]
-                        ],
-                        "rest": [
-                          "Para",
-                          []
-                        ],
-                        "sticky": false
-                      },
-                      {
-                        "guard": [],
-                        "initial": [
-                          [
-                            "Text",
-                            "Or not? "
-                          ]
-                        ],
-                        "code": [
-                          [
-                            "Run",
-                            "1"
-                          ]
-                        ],
-                        "rest": [
-                          "Para",
-                          []
-                        ],
-                        "sticky": false
-                      }
-                    ]
+                    {
+                      "guard": [],
+                      "initial": [
+                        [
+                          "Text",
+                          "Nested choice. Did you choose choice 1? "
+                        ]
+                      ],
+                      "code": [
+                        [
+                          "Run",
+                          "1"
+                        ]
+                      ],
+                      "rest": [],
+                      "sticky": false
+                    },
+                    {
+                      "guard": [],
+                      "initial": [
+                        [
+                          "Text",
+                          "Or not? "
+                        ]
+                      ],
+                      "code": [
+                        [
+                          "Run",
+                          "1"
+                        ]
+                      ],
+                      "rest": [],
+                      "sticky": false
+                    }
                   ]
                 ]
               ],
@@ -295,18 +301,20 @@
                 ]
               ],
               "rest": [
-                "Para",
                 [
+                  "Para",
                   [
-                    "Text",
-                    " after"
-                  ],
-                  [
-                    "Break"
-                  ],
-                  [
-                    "Text",
-                    "break"
+                    [
+                      "Text",
+                      " after"
+                    ],
+                    [
+                      "Break"
+                    ],
+                    [
+                      "Text",
+                      "break"
+                    ]
                   ]
                 ]
               ],
@@ -327,15 +335,12 @@
                 ]
               ],
               "rest": [
-                "Para",
                 [
+                  "Para",
                   [
-                    "Para",
                     [
-                      [
-                        "Text",
-                        "para"
-                      ]
+                      "Text",
+                      "A paragraph"
                     ]
                   ]
                 ]
@@ -357,16 +362,31 @@
                 ]
               ],
               "rest": [
-                "Para",
                 [
-                  [
-                    "Run",
-                    "1;"
-                  ]
+                  "Run",
+                  "console.log('you chose choice 4');"
                 ]
               ],
               "sticky": false
             }
+          ]
+        ],
+        [
+          "Para",
+          [
+            [
+              "Text",
+              "Right before going back to Nested"
+            ]
+          ]
+        ],
+        [
+          "Para",
+          [
+            [
+              "Jump",
+              "Nested"
+            ]
           ]
         ]
       ]

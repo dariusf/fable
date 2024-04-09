@@ -60,6 +60,7 @@ var bed_state = 'made_up';
     Either the body had been moved here before being dragged to the floor - or this is was where the murder had taken place.
 
 - `guard bed_state != 'made_up'` Remake the bed `bed_state = 'made_up'` Carefully, I pulled the bedsheets back into place, trying to make it seem undisturbed.
+  <!-- seems like there's a bug here, shouldn't be able to pull back duvet after making -->
 
 - Test the bed `1`  I pushed the bed with spread fingers. It creaked a little, but not so much as to be obnoxious.
 
