@@ -13,6 +13,24 @@ function main() {
   interpret(scenes[scene], content, () => {});
 }
 
+function mayHaveText(str) {
+  switch (str[0]) {
+    case "Para":
+      return str[1].some((p) => mayHaveText(p));
+    case "Choice":
+    case "Interpolate":
+    case "LinkCode":
+    case "LinkJump":
+    case "Text":
+    case "Verbatim":
+    case "Meta": // overapproximation
+      return true;
+    case "Run":
+    case "Jump":
+      return false;
+  }
+}
+
 function interpret(instrs, parent, k) {
   loop: for (var i = 0; i < instrs.length; i++) {
     const instr = instrs[i];
@@ -111,21 +129,26 @@ function interpret(instrs, parent, k) {
   let rest = instrs.slice(i + 1);
 
   switch (current[0]) {
-    case "Jump":
-      {
-        // abandon current k and instructions, go back to top element
-        return interpret(scenes[current[1]], content, () => {});
-      }
-      break;
+    case "Jump": {
+      // abandon current k and instructions, go back to top element
+      return interpret(scenes[current[1]], content, () => {});
+    }
     case "Para":
       {
-        if (current[1].length > 0) {
-          let d = document.createElement("div");
-          parent.appendChild(d);
+        if (current[0].length > 0) {
+          let d;
+          if (mayHaveText(current)) {
+            // removes unneccessary divs
+            d = document.createElement("div");
+            parent.appendChild(d);
+          } else {
+            d = parent;
+          }
           interpret(current[1], d, () => {
             interpret(rest, parent, k);
           });
         } else {
+          // optimization
           interpret(rest, parent, k);
         }
       }
@@ -178,11 +201,18 @@ function interpret(instrs, parent, k) {
             } else {
               indicate_clicked(a);
             }
-            interpret(item.code, document.createElement("div"), () => {
+            if (item.code.length > 0) {
+              // we want to separate code and rest because we don't want to create an empty div for a code instr that doesn't have any output
+              interpret(item.code, document.createElement("div"), () => {
+                interpret([item.rest], parent, () => {
+                  interpret(rest, parent, () => {});
+                });
+              });
+            } else {
               interpret([item.rest], parent, () => {
                 interpret(rest, parent, () => {});
               });
-            });
+            }
           };
           interpret(item.initial, a, (x) => x);
         }
