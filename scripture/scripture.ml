@@ -4,7 +4,7 @@ type choice = {
   guard : string list;
   initial : cmd list;
   code : cmd list;
-  rest : cmd;
+  rest : cmd list;
   sticky : bool;
 }
 
@@ -228,7 +228,11 @@ module Convert = struct
                    guard = Acc.to_list gs;
                    initial = Acc.to_list i;
                    code = Option.to_list c;
-                   rest = Para (Acc.to_list r @ after_first);
+                   rest =
+                     (let r = Acc.to_list r in
+                      match r with
+                      | [] -> after_first
+                      | _ -> Para r :: after_first);
                    sticky = st;
                  })
         in

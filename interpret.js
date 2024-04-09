@@ -206,12 +206,12 @@ function interpret(instrs, parent, k) {
             if (item.code.length > 0) {
               // we want to separate code and rest because we don't want to create an empty div for a code instr that doesn't have any output
               interpret(item.code, document.createElement("div"), () => {
-                interpret([item.rest], parent, () => {
+                interpret(item.rest, parent, () => {
                   interpret(rest, parent, () => {});
                 });
               });
             } else {
-              interpret([item.rest], parent, () => {
+              interpret(item.rest, parent, () => {
                 interpret(rest, parent, () => {});
               });
             }
