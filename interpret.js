@@ -44,14 +44,14 @@ function interpret(instrs, parent, k) {
           interpret(instrs, parent, () => {});
         } catch (e) {
           // TODO surface errors
-          console.error(e);
+          console.error("failure", instr[1], e);
         }
         break;
       case "Run":
         try {
           eval?.(instr[1]);
         } catch (e) {
-          console.error(e);
+          console.error("failure", instr[1], e);
         }
         break;
       case "Verbatim":
@@ -105,7 +105,7 @@ function interpret(instrs, parent, k) {
             v = eval?.(instr[1]);
           } catch (e) {
             v = "(" + e + ")";
-            console.error(e);
+            console.error("failure", instr[1], e);
           }
           d.textContent = v + "";
           parent.appendChild(d);
