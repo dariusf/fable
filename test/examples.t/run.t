@@ -164,6 +164,23 @@
               ],
               "rest": [],
               "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Copy "
+                ]
+              ],
+              "code": [
+                [
+                  "Jump",
+                  "Copy"
+                ]
+              ],
+              "rest": [],
+              "sticky": false
             }
           ]
         ],
@@ -388,6 +405,15 @@
               "Nested"
             ]
           ]
+        ]
+      ]
+    },
+    {
+      "name": "Copy",
+      "cmds": [
+        [
+          "Run",
+          "interpret(scenes['One'], content, ()=>{});"
         ]
       ]
     }

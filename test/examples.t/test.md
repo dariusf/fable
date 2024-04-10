@@ -30,6 +30,7 @@ Make a choice:
 - Go to Scene 3 `jump Three`
 - Continue
 - Nested lists `jump Nested`
+- Copy `jump Copy`
 
 End of first scene
 
@@ -71,3 +72,9 @@ Turns: `$turns`
 Right before going back to Nested
 
 `jump Nested`
+
+# Copy
+
+```js
+interpret(scenes['One'], content, ()=>{});
+```

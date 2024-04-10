@@ -246,9 +246,12 @@ module Convert = struct
     Folder.make ~block ()
 
   let to_program doc =
-    let prog = Folder.fold_doc block_cmd_folder Acc.empty doc in
+    let acc = Acc.add ("default", Acc.empty) Acc.empty in
+    let prog = Folder.fold_doc block_cmd_folder acc doc in
     Acc.to_list prog
-    |> List.map (fun (name, cmds) -> { name; cmds = Acc.to_list cmds })
+    |> List.filter_map (fun (name, cmds) ->
+           let cmds = Acc.to_list cmds in
+           match cmds with [] -> None | _ -> Some { name; cmds })
 end
 
 let print_json program =
