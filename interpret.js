@@ -14,6 +14,7 @@ function main() {
 }
 
 function mayHaveText(str) {
+  // TODO ocaml
   switch (str[0]) {
     case "Para":
       return str[1].some((p) => mayHaveText(p));
@@ -227,4 +228,27 @@ function interpret(instrs, parent, k) {
 
 function render(s) {
   interpret(s, content, () => {});
+}
+
+function instantiate(s, bindings) {
+  // TODO write in ocaml
+  switch (s[0]) {
+    case "Para":
+      return ["Para", s[1].map((p) => instantiate(p, bindings))];
+    case "Choice":
+      console.error("TODO");
+    case "Interpolate":
+      if (bindings.hasOwnProperty(s[1])) {
+        return ["Interpolate", bindings[s[1]]];
+      } else {
+        return s;
+      }
+    case "LinkCode":
+    case "LinkJump":
+    case "Text":
+    case "Verbatim":
+    case "Meta":
+    case "Run":
+    case "Jump":
+  }
 }
