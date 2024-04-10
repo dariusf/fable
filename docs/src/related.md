@@ -17,8 +17,49 @@ There is some overlap between these goals, but they favour different design trad
 - Scripture's runtime is smaller (150 LoC of JS). [InkJS](https://github.com/y-lohse/inkjs) is 18K LoC of TypeScript.
 - Ink is mature, has [a significant ecosystem](https://github.com/inkle/ink-library), and is appropriate for production games. Scripture is appropriate for small games, experiments, and prototypes.
 
+## Feature-by-feature comparison
+
+| Scripture     | Ink              |
+| ------------- | ---------------- |
+| section       | knot             |
+| -             | stitch           |
+| -             | labels           |
+| jump          | divert           |
+| -             | tags             |
+| -             | glue             |
+| - (default)   | weave/gather     |
+| - (implicit)  | END              |
+| interpolation | conditional text |
+| script tags   | include          |
+| seen TODO     | read counts      |
+| TODO          | tunnels          |
+
+Many features are subsumed by simply using JS.
+
+- alternatives, cycles, shuffles
+- functions, conditionals, constants
+- builtins like SINCE
+
+### Choices
+
+Largely similar, but simplified.
+
+| Scripture | Ink         |
+| --------- | ----------- |
+| guarded   | conditional |
+
+- Ink choices support mixing choice and output text, can be jumped to, fallback choices
+- Scripture choices allow interpolated options, and are weaved by default
+
+### Threads
+
+Templates and interpolated options
+
+### Lists
+
+Ink list is an enum map
+
 <!--
 # [YarnSpinner](https://github.com/YarnSpinnerTool)
 https://www.gamedeveloper.com/programming/deep-dive-yarn-spinner
 -->
-
