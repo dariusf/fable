@@ -6,5 +6,5 @@ default:
 
 .PHONY: all
 all: default
-	dune test
 	dune build --release ./web.bc.js
+	dune test
