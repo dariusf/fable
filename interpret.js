@@ -224,3 +224,7 @@ function interpret(instrs, parent, k) {
       throw `unknown kind ${current[0]}`;
   }
 }
+
+function render(s) {
+  interpret(s, content, () => {});
+}

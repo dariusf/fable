@@ -76,5 +76,5 @@ Right before going back to Nested
 # Copy
 
 ```js
-interpret(scenes['One'], content, ()=>{});
+render(scenes['One']);
 ```

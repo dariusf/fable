@@ -413,7 +413,7 @@
       "cmds": [
         [
           "Run",
-          "interpret(scenes['One'], content, ()=>{});"
+          "render(scenes['One']);"
         ]
       ]
     }
