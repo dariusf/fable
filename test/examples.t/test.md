@@ -31,6 +31,7 @@ Make a choice:
 - Continue
 - Nested lists `jump Nested`
 - Copy `jump Copy`
+- More `jump More`
 
 End of first scene
 
@@ -78,3 +79,13 @@ Right before going back to Nested
 ```js
 render(scenes['One']);
 ```
+
+# Some choices
+
+- a
+- b
+
+# More
+
+- Hi
+- `more Some choices`

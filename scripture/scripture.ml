@@ -19,7 +19,7 @@ and cmd =
   | Interpolate of string
   | Meta of string
   | Jump of string
-  | Choices of choice list
+  | Choices of string list * choice list
 [@@deriving show { with_path = false }, yojson]
 
 type scene = {
@@ -29,6 +29,8 @@ type scene = {
 [@@deriving show { with_path = false }, yojson]
 
 type program = scene list [@@deriving show { with_path = false }, yojson]
+type cmds = cmd list [@@deriving yojson]
+type choices = choice list [@@deriving yojson]
 
 let _ = pp_program
 
@@ -66,9 +68,6 @@ module Convert = struct
           if String.starts_with ~prefix:"$" c then Interpolate (suffix 1 c)
           else if String.starts_with ~prefix:"~" c then Meta (suffix 1 c)
           else if String.starts_with ~prefix:"jump " c then Jump (suffix 5 c)
-            (* else if String.starts_with ~prefix:"guard " c then *)
-            (* Guard (String.sub c 6 (String.length c - 6)) *)
-            (* else if String.starts_with ~prefix:"sticky" c then Sticky *)
           else Run c
         in
         Folder.ret (Acc.add r acc)
@@ -188,57 +187,66 @@ module Convert = struct
       | Block.Link_reference_definition (_, _) ->
         failwith "unimplemented Link_reference_definition"
       | Block.List (l, _) ->
-        let choices =
-          l |> Block.List'.items
-          |> List.map (fun (i, _) ->
-                 let bs =
-                   Folder.fold_block self
-                     (Acc.add ("", Acc.empty) Acc.empty)
-                     (Block.List_item.block i)
-                   |> Acc.to_list
-                 in
-                 (* the first block is expected to be a paragraph *)
-                 let para, after_first =
-                   match bs with
-                   | [(_, bs)] ->
-                     (match Acc.to_list bs with
-                     | Para b :: rest -> (b, rest)
-                     | _ ->
-                       show_block (Block.List_item.block i);
-                       failwith "not a para followed by rest")
-                   | _ -> failwith "not a singleton scene"
-                 in
-                 (* only look for special syntax in the first paragraph *)
-                 let _, gs, st, i, c, r =
-                   para
-                   |> List.fold_left
-                        (fun (b, gs, st, i, c, r) e ->
-                          match (e, b) with
-                          | Run "sticky", _ -> (b, gs, true, i, Some e, r)
-                          | Run s, _ when String.starts_with ~prefix:"guard " s
-                            ->
-                            (b, Acc.add (suffix 6 s) gs, st, i, Some e, r)
-                          | Run _, false -> (true, gs, st, i, Some e, r)
-                          | Jump _, false -> (true, gs, st, i, Some e, r)
-                          | _, true -> (true, gs, st, i, c, Acc.add e r)
-                          | _, false -> (false, gs, st, Acc.add e i, c, r))
-                        (false, Acc.empty, false, Acc.empty, None, Acc.empty)
-                 in
-                 {
-                   guard = Acc.to_list gs;
-                   initial = Acc.to_list i;
-                   code = Option.to_list c;
-                   rest =
-                     (let r = Acc.to_list r in
-                      match r with
-                      | [] -> after_first
-                      | _ -> Para r :: after_first);
-                   sticky = st;
-                 })
+        let list_item_to_choice i =
+          let bs =
+            Folder.fold_block self
+              (Acc.add ("", Acc.empty) Acc.empty)
+              (Block.List_item.block i)
+            |> Acc.to_list
+          in
+          (* the first block is expected to be a paragraph *)
+          let para, after_first =
+            match bs with
+            | [(_, bs)] ->
+              (match Acc.to_list bs with
+              | Para b :: rest -> (b, rest)
+              | _ ->
+                show_block (Block.List_item.block i);
+                failwith "not a para followed by rest")
+            | _ -> failwith "not a singleton scene"
+          in
+          match (para, after_first) with
+          | [Run m], [] when String.starts_with ~prefix:"more " m ->
+            `More (suffix 5 m)
+          | _ ->
+            (* only look for special syntax in the first paragraph *)
+            let _, gs, st, i, c, r =
+              para
+              |> List.fold_left
+                   (fun (b, gs, st, i, c, r) e ->
+                     match (e, b) with
+                     | Run "sticky", _ -> (b, gs, true, i, Some e, r)
+                     | Run s, _ when String.starts_with ~prefix:"guard " s ->
+                       (b, Acc.add (suffix 6 s) gs, st, i, Some e, r)
+                     | Run _, false -> (true, gs, st, i, Some e, r)
+                     | Jump _, false -> (true, gs, st, i, Some e, r)
+                     | _, true -> (true, gs, st, i, c, Acc.add e r)
+                     | _, false -> (false, gs, st, Acc.add e i, c, r))
+                   (false, Acc.empty, false, Acc.empty, None, Acc.empty)
+            in
+            `Choice
+              {
+                guard = Acc.to_list gs;
+                initial = Acc.to_list i;
+                code = Option.to_list c;
+                rest =
+                  (let r = Acc.to_list r in
+                   match r with [] -> after_first | _ -> Para r :: after_first);
+                sticky = st;
+              }
+        in
+        let more, choices =
+          List.fold_right
+            (fun (i, _) (more, cs) ->
+              match list_item_to_choice i with
+              | `Choice c -> (more, c :: cs)
+              | `More m -> (m :: more, cs))
+            (Block.List'.items l) ([], [])
         in
         Folder.ret
           (Acc.change_last
-             (fun (name, cmds) -> (name, Acc.add (Choices choices) cmds))
+             (fun (name, cmds) ->
+               (name, Acc.add (Choices (more, choices)) cmds))
              acc)
       | Block.Thematic_break (_, _) -> Folder.default
       | _ -> Folder.default (* let the folder thread the fold *)
@@ -253,6 +261,48 @@ module Convert = struct
            let cmds = Acc.to_list cmds in
            match cmds with [] -> None | _ -> Some { name; cmds })
 end
+
+let rec may_have_text s =
+  match s with
+  | Para p -> List.exists may_have_text p
+  | Break | Verbatim _ | Text _ | LinkCode _ | LinkJump _ | Interpolate _
+  | Choices _ ->
+    true
+  | Meta _ ->
+    (* overapproximation *)
+    true
+  | Run _ | Jump _ -> false
+
+let rec instantiate bs s =
+  match s with
+  | Para p -> Para (List.map (instantiate bs) p)
+  | Verbatim _ | Break | Text _ | LinkCode _ | LinkJump _ | Run _ | Jump _ -> s
+  | Meta _ ->
+    (* for now *)
+    s
+  | Interpolate i when List.mem_assoc i bs -> Interpolate (List.assoc i bs)
+  | Interpolate _ -> s
+  | Choices (m, cs) ->
+    Choices
+      ( m,
+        List.map
+          (fun c ->
+            {
+              c with
+              initial = List.map (instantiate bs) c.initial;
+              code = List.map (instantiate bs) c.code;
+              rest = List.map (instantiate bs) c.rest;
+            })
+          cs )
+
+let rec recursively_add_choices f ss =
+  List.concat_map
+    (fun s ->
+      match f s with
+      | [Choices (m, cs)] -> cs @ recursively_add_choices f m
+      | _e ->
+        failwith (s ^ " is not a scene with a single choice in it"))
+    ss
 
 let print_json program =
   let compact = true in

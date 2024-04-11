@@ -60,6 +60,7 @@
         ],
         [
           "Choices",
+          [],
           [
             {
               "guard": [],
@@ -181,6 +182,23 @@
               ],
               "rest": [],
               "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "More "
+                ]
+              ],
+              "code": [
+                [
+                  "Jump",
+                  "More"
+                ]
+              ],
+              "rest": [],
+              "sticky": false
             }
           ]
         ],
@@ -245,6 +263,7 @@
       "cmds": [
         [
           "Choices",
+          [],
           [
             {
               "guard": [],
@@ -263,6 +282,7 @@
               "rest": [
                 [
                   "Choices",
+                  [],
                   [
                     {
                       "guard": [],
@@ -414,6 +434,66 @@
         [
           "Run",
           "render(scenes['One']);"
+        ]
+      ]
+    },
+    {
+      "name": "Some choices",
+      "cmds": [
+        [
+          "Choices",
+          [],
+          [
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "a"
+                ]
+              ],
+              "code": [],
+              "rest": [],
+              "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "b"
+                ]
+              ],
+              "code": [],
+              "rest": [],
+              "sticky": false
+            }
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "More",
+      "cmds": [
+        [
+          "Choices",
+          [
+            "Some choices"
+          ],
+          [
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Hi"
+                ]
+              ],
+              "code": [],
+              "rest": [],
+              "sticky": false
+            }
+          ]
         ]
       ]
     }

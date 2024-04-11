@@ -13,25 +13,6 @@ function main() {
   interpret(scenes[scene], content, () => {});
 }
 
-function mayHaveText(str) {
-  // TODO ocaml
-  switch (str[0]) {
-    case "Para":
-      return str[1].some((p) => mayHaveText(p));
-    case "Choice":
-    case "Interpolate":
-    case "LinkCode":
-    case "LinkJump":
-    case "Text":
-    case "Verbatim":
-    case "Meta": // overapproximation
-      return true;
-    case "Run":
-    case "Jump":
-      return false;
-  }
-}
-
 function interpret(instrs, parent, k) {
   loop: for (var i = 0; i < instrs.length; i++) {
     const instr = instrs[i];
@@ -40,7 +21,7 @@ function interpret(instrs, parent, k) {
       case "Meta":
         try {
           let s = eval?.(instr[1]);
-          let instrs = scripture_parse(s)[0].cmds;
+          let instrs = Scripture.parse(s)[0].cmds;
           // console.log("meta produced", instrs);
           interpret(instrs, parent, () => {});
         } catch (e) {
@@ -139,7 +120,7 @@ function interpret(instrs, parent, k) {
       {
         if (current[0].length > 0) {
           let d;
-          if (mayHaveText(current)) {
+          if (Scripture.mayHaveText(current)) {
             // removes unneccessary divs
             d = document.createElement("div");
             parent.appendChild(d);
@@ -157,7 +138,7 @@ function interpret(instrs, parent, k) {
       break;
     case "Choices":
       {
-        let alts = current[1];
+        let [_, more, alts] = current;
         let ul = document.createElement("ul");
         parent.appendChild(ul);
         let links = [];
@@ -171,6 +152,10 @@ function interpret(instrs, parent, k) {
             };
           });
         };
+        // add more alternatives
+        let extra = Scripture.recursivelyAddChoices((s) => scenes[s], more);
+        extra.forEach((c) => alts.push(c));
+
         for (const item of alts) {
           if (!item.sticky) {
             let id = `c${fresh++}`;
@@ -228,27 +213,4 @@ function interpret(instrs, parent, k) {
 
 function render(s) {
   interpret(s, content, () => {});
-}
-
-function instantiate(s, bindings) {
-  // TODO write in ocaml
-  switch (s[0]) {
-    case "Para":
-      return ["Para", s[1].map((p) => instantiate(p, bindings))];
-    case "Choice":
-      console.error("TODO");
-    case "Interpolate":
-      if (bindings.hasOwnProperty(s[1])) {
-        return ["Interpolate", bindings[s[1]]];
-      } else {
-        return s;
-      }
-    case "LinkCode":
-    case "LinkJump":
-    case "Text":
-    case "Verbatim":
-    case "Meta":
-    case "Run":
-    case "Jump":
-  }
 }

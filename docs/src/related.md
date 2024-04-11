@@ -53,6 +53,8 @@ Largely similar, but simplified.
 
 ### Threads
 
+Threads in Ink are like story mixins. They can have parameters to say, e.g. where to divert back to.
+
 Templates and interpolated options
 
 ### Lists
