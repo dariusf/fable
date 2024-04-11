@@ -300,8 +300,7 @@ let rec recursively_add_choices f ss =
     (fun s ->
       match f s with
       | [Choices (m, cs)] -> cs @ recursively_add_choices f m
-      | _e ->
-        failwith (s ^ " is not a scene with a single choice in it"))
+      | _e -> failwith (s ^ " is not a scene with a single choice in it"))
     ss
 
 let print_json program =
@@ -324,5 +323,4 @@ let md_file_to_json file =
 let md_to_instrs str =
   (* ~resolver:Convert.resolver  *)
   let doc = Cmarkit.Doc.of_string str in
-  doc |> Convert.to_program |> program_to_yojson
-  |> Yojson.Safe.to_string ~std:true
+  doc |> Convert.to_program
