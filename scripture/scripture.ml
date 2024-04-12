@@ -222,6 +222,8 @@ module Convert = struct
                      | Run "sticky", _ -> (b, gs, true, i, Some e, r)
                      | Run s, _ when String.starts_with ~prefix:"guard " s ->
                        (b, Acc.add (suffix 6 s) gs, st, i, Some e, r)
+                     | Run s, _ when String.starts_with ~prefix:"?" s ->
+                       (b, Acc.add (suffix 1 s) gs, st, i, Some e, r)
                      | Run _, false -> (true, gs, st, i, Some e, r)
                      | Jump _, false -> (true, gs, st, i, Some e, r)
                      | _, true -> (true, gs, st, i, c, Acc.add e r)
