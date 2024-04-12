@@ -19,6 +19,7 @@ and cmd =
   | Interpolate of string
   | Meta of string
   | Jump of string
+  | Tunnel of string
   | JumpDynamic of string
   | Choices of string list * choice list
 [@@deriving show { with_path = false }, yojson]
@@ -72,6 +73,9 @@ module Convert = struct
             JumpDynamic (suffix 3 c)
           else if String.starts_with ~prefix:"jump " c then Jump (suffix 5 c)
           else if String.starts_with ~prefix:"->" c then Jump (suffix 2 c)
+          else if String.starts_with ~prefix:"tunnel " c then
+            Tunnel (suffix 7 c)
+          else if String.starts_with ~prefix:">->" c then Tunnel (suffix 3 c)
           else Run c
         in
         Folder.ret (Acc.add r acc)
@@ -226,9 +230,8 @@ module Convert = struct
                      | Run s, _ when String.starts_with ~prefix:"?" s ->
                        (b, Acc.add (suffix 1 s) gs, st, i, Some e, r)
                        (* things to stop at *)
-                     | Run _, false -> (true, gs, st, i, Some e, r)
-                     | Jump _, false -> (true, gs, st, i, Some e, r)
-                     | JumpDynamic _, false -> (true, gs, st, i, Some e, r)
+                     | (Run _ | Jump _ | JumpDynamic _ | Tunnel _), false ->
+                       (true, gs, st, i, Some e, r)
                      (* the rest *)
                      | _, true -> (true, gs, st, i, c, Acc.add e r)
                      | _, false -> (false, gs, st, Acc.add e i, c, r))
@@ -281,7 +284,7 @@ let rec may_have_text s =
   | Meta _ ->
     (* overapproximation *)
     true
-  | Run _ | Jump _ | JumpDynamic _ -> false
+  | Run _ | Tunnel _ | Jump _ | JumpDynamic _ -> false
 
 (* let rec instantiate bs s =
    match s with

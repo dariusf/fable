@@ -35,6 +35,7 @@ Make a choice:
 - Copy `jump Copy`
 - More `->More`
 - Jump dynamic `->$items[0]`
+- Tunnel `>->Tunnel`
 
 End of first scene
 
@@ -96,3 +97,7 @@ render(scenes['One']);
 # Apple
 
 Apple scene
+
+# Tunnel
+
+Tunnel

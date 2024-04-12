@@ -216,6 +216,23 @@
               ],
               "rest": [],
               "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Tunnel "
+                ]
+              ],
+              "code": [
+                [
+                  "Tunnel",
+                  "Tunnel"
+                ]
+              ],
+              "rest": [],
+              "sticky": false
             }
           ]
         ],
@@ -523,6 +540,20 @@
             [
               "Text",
               "Apple scene"
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Tunnel",
+      "cmds": [
+        [
+          "Para",
+          [
+            [
+              "Text",
+              "Tunnel"
             ]
           ]
         ]

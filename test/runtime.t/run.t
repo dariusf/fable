@@ -33,3 +33,6 @@
 
   $ ./test.py 'Jump dynamic'
   <div><span>Hello </span><span>Apple</span><span>!</span></div><div><a href="#">jump</a></div><div><a href="#">code</a></div><div><span>Make a choice:</span></div><div><span>Apple scene</span></div>
+
+  $ ./test.py 'Tunnel'
+  <div><span>Hello </span><span>Apple</span><span>!</span></div><div><a href="#">jump</a></div><div><a href="#">code</a></div><div><span>Make a choice:</span></div><div><span>Tunnel</span></div><div><span>End of first scene</span></div>

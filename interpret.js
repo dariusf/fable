@@ -119,6 +119,10 @@ function interpret(instrs, parent, k) {
   let rest = instrs.slice(i + 1);
 
   switch (current[0]) {
+    case "Tunnel": {
+      // keep current k
+      return interpret(scenes[current[1]], content, k);
+    }
     case "Jump": {
       // abandon current k and instructions, go back to top element
       return interpret(scenes[current[1]], content, () => {});
