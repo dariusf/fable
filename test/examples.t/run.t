@@ -199,6 +199,23 @@
               ],
               "rest": [],
               "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Jump dynamic "
+                ]
+              ],
+              "code": [
+                [
+                  "JumpDynamic",
+                  "items[0]"
+                ]
+              ],
+              "rest": [],
+              "sticky": false
             }
           ]
         ],
@@ -493,6 +510,20 @@
               "rest": [],
               "sticky": false
             }
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Apple",
+      "cmds": [
+        [
+          "Para",
+          [
+            [
+              "Text",
+              "Apple scene"
+            ]
           ]
         ]
       ]

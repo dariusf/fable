@@ -33,7 +33,8 @@ Make a choice:
 - Continue
 - Nested lists `jump Nested`
 - Copy `jump Copy`
-- More `jump More`
+- More `->More`
+- Jump dynamic `->$items[0]`
 
 End of first scene
 
@@ -91,3 +92,7 @@ render(scenes['One']);
 
 - Hi
 - `more Some choices`
+
+# Apple
+
+Apple scene

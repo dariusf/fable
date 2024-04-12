@@ -30,3 +30,6 @@
 
   $ ./test.py 'More' 'a'
   <div><span>Hello </span><span>Apple</span><span>!</span></div><div><a href="#">jump</a></div><div><a href="#">code</a></div><div><span>Make a choice:</span></div>
+
+  $ ./test.py 'Jump dynamic'
+  <div><span>Hello </span><span>Apple</span><span>!</span></div><div><a href="#">jump</a></div><div><a href="#">code</a></div><div><span>Make a choice:</span></div><div><span>Apple scene</span></div>

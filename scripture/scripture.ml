@@ -68,10 +68,10 @@ module Convert = struct
         let r =
           if String.starts_with ~prefix:"$" c then Interpolate (suffix 1 c)
           else if String.starts_with ~prefix:"~" c then Meta (suffix 1 c)
-          else if String.starts_with ~prefix:"jump " c then Jump (suffix 5 c)
-          else if String.starts_with ~prefix:"->" c then Jump (suffix 2 c)
           else if String.starts_with ~prefix:"->$" c then
             JumpDynamic (suffix 3 c)
+          else if String.starts_with ~prefix:"jump " c then Jump (suffix 5 c)
+          else if String.starts_with ~prefix:"->" c then Jump (suffix 2 c)
           else Run c
         in
         Folder.ret (Acc.add r acc)
@@ -219,13 +219,17 @@ module Convert = struct
               |> List.fold_left
                    (fun (b, gs, st, i, c, r) e ->
                      match (e, b) with
+                     (* special things encoded as Runs *)
                      | Run "sticky", _ -> (b, gs, true, i, Some e, r)
                      | Run s, _ when String.starts_with ~prefix:"guard " s ->
                        (b, Acc.add (suffix 6 s) gs, st, i, Some e, r)
                      | Run s, _ when String.starts_with ~prefix:"?" s ->
                        (b, Acc.add (suffix 1 s) gs, st, i, Some e, r)
+                       (* things to stop at *)
                      | Run _, false -> (true, gs, st, i, Some e, r)
                      | Jump _, false -> (true, gs, st, i, Some e, r)
+                     | JumpDynamic _, false -> (true, gs, st, i, Some e, r)
+                     (* the rest *)
                      | _, true -> (true, gs, st, i, c, Acc.add e r)
                      | _, false -> (false, gs, st, Acc.add e i, c, r))
                    (false, Acc.empty, false, Acc.empty, None, Acc.empty)
