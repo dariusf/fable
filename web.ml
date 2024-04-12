@@ -1,9 +1,9 @@
-let obj_to_assoc obj =
-  let ks =
-    Jv.call (Jv.get Jv.global "Object") "keys" [| obj |]
-    |> Jv.to_array Jv.to_string
-  in
-  Array.map (fun k -> (k, Jv.get obj k |> Jv.to_string)) ks |> Array.to_list
+(* let obj_to_assoc obj =
+   let ks =
+     Jv.call (Jv.get Jv.global "Object") "keys" [| obj |]
+     |> Jv.to_array Jv.to_string
+   in
+   Array.map (fun k -> (k, Jv.get obj k |> Jv.to_string)) ks |> Array.to_list *)
 
 let jv_to_ocaml f v =
   Brr.Json.encode v |> Jstr.to_string |> Yojson.Safe.from_string |> f
@@ -26,11 +26,11 @@ let () =
            Jv.callback ~arity:1 (fun s ->
                Scripture.may_have_text (jv_to_ocaml Scripture.cmd_of_yojson s)
                |> Jv.of_bool) );
-         ( "instantiate",
-           Jv.callback ~arity:2 (fun s bs ->
-               Scripture.instantiate (obj_to_assoc bs)
-                 (jv_to_ocaml Scripture.cmd_of_yojson s)
-               |> ocaml_to_jv Scripture.cmd_to_yojson) );
+         (* ( "instantiate",
+            Jv.callback ~arity:2 (fun s bs ->
+                Scripture.instantiate (obj_to_assoc bs)
+                  (jv_to_ocaml Scripture.cmd_of_yojson s)
+                |> ocaml_to_jv Scripture.cmd_to_yojson) ); *)
          ( "recursivelyAddChoices",
            Jv.callback ~arity:2 (fun f ss ->
                Scripture.recursively_add_choices

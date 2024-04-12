@@ -13,6 +13,15 @@ function main() {
   interpret(scenes[scene], content, () => {});
 }
 
+function surfaceError(...args) {
+  console.error(args);
+  let elt = document.createElement("div");
+  elt.style.color = "red";
+  elt.textContent = args.join(" ");
+  content.append(elt);
+  throw "failure";
+}
+
 function interpret(instrs, parent, k) {
   loop: for (var i = 0; i < instrs.length; i++) {
     const instr = instrs[i];
@@ -25,15 +34,14 @@ function interpret(instrs, parent, k) {
           // console.log("meta produced", instrs);
           interpret(instrs, parent, () => {});
         } catch (e) {
-          // TODO surface errors
-          console.error("failure", instr[1], e);
+          surfaceError("meta", instr[1], e);
         }
         break;
       case "Run":
         try {
           eval?.(instr[1]);
         } catch (e) {
-          console.error("failure", instr[1], e);
+          surfaceError("run", instr[1], e);
         }
         break;
       case "Verbatim":
@@ -86,8 +94,7 @@ function interpret(instrs, parent, k) {
           try {
             v = eval?.(instr[1]);
           } catch (e) {
-            v = "(" + e + ")";
-            console.error("failure", instr[1], e);
+            surfaceError("interpolate", instr[1], e);
           }
           d.textContent = v + "";
           parent.appendChild(d);
@@ -115,6 +122,15 @@ function interpret(instrs, parent, k) {
     case "Jump": {
       // abandon current k and instructions, go back to top element
       return interpret(scenes[current[1]], content, () => {});
+    }
+    case "JumpDynamic": {
+      let scene;
+      try {
+        scene = eval?.(current[1]);
+      } catch (e) {
+        surfaceError("JumpDynamic", current[1], e);
+      }
+      return interpret(scenes[scene], content, () => {});
     }
     case "Para":
       {

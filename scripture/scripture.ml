@@ -19,6 +19,7 @@ and cmd =
   | Interpolate of string
   | Meta of string
   | Jump of string
+  | JumpDynamic of string
   | Choices of string list * choice list
 [@@deriving show { with_path = false }, yojson]
 
@@ -68,6 +69,9 @@ module Convert = struct
           if String.starts_with ~prefix:"$" c then Interpolate (suffix 1 c)
           else if String.starts_with ~prefix:"~" c then Meta (suffix 1 c)
           else if String.starts_with ~prefix:"jump " c then Jump (suffix 5 c)
+          else if String.starts_with ~prefix:"->" c then Jump (suffix 2 c)
+          else if String.starts_with ~prefix:"->$" c then
+            JumpDynamic (suffix 3 c)
           else Run c
         in
         Folder.ret (Acc.add r acc)
@@ -271,29 +275,31 @@ let rec may_have_text s =
   | Meta _ ->
     (* overapproximation *)
     true
-  | Run _ | Jump _ -> false
+  | Run _ | Jump _ | JumpDynamic _ -> false
 
-let rec instantiate bs s =
-  match s with
-  | Para p -> Para (List.map (instantiate bs) p)
-  | Verbatim _ | Break | Text _ | LinkCode _ | LinkJump _ | Run _ | Jump _ -> s
-  | Meta _ ->
-    (* for now *)
-    s
-  | Interpolate i when List.mem_assoc i bs -> Interpolate (List.assoc i bs)
-  | Interpolate _ -> s
-  | Choices (m, cs) ->
-    Choices
-      ( m,
-        List.map
-          (fun c ->
-            {
-              c with
-              initial = List.map (instantiate bs) c.initial;
-              code = List.map (instantiate bs) c.code;
-              rest = List.map (instantiate bs) c.rest;
-            })
-          cs )
+(* let rec instantiate bs s =
+   match s with
+   | Para p -> Para (List.map (instantiate bs) p)
+   | Verbatim _ | Break | Text _ | LinkCode _ | LinkJump _ | Run _ | Jump _ -> s
+   | Meta _ ->
+     (* for now *)
+     s
+   | Interpolate i when List.mem_assoc i bs -> Interpolate (List.assoc i bs)
+   | Interpolate _ -> s
+   | JumpDynamic i when List.mem_assoc i bs -> JumpDynamic (List.assoc i bs)
+   | JumpDynamic _ -> s
+   | Choices (m, cs) ->
+     Choices
+       ( m,
+         List.map
+           (fun c ->
+             {
+               c with
+               initial = List.map (instantiate bs) c.initial;
+               code = List.map (instantiate bs) c.code;
+               rest = List.map (instantiate bs) c.rest;
+             })
+           cs ) *)
 
 let rec recursively_add_choices f ss =
   List.concat_map
