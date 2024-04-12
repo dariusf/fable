@@ -6,7 +6,7 @@
       "cmds": [
         [
           "Run",
-          "var turns = 0;\nfunction on_interact() {\n  turns++;\n}\nvar items = ['Apple', 'Banana', 'Carrot'];\nvar a = items[Math.floor(Math.random()*items.length)];"
+          "var turns = 0;\nfunction on_interact() {\n  turns++;\n}\nvar items = ['Apple', 'Banana', 'Carrot'];\n// This makes testing tough\n// var a = items[Math.floor(Math.random()*items.length)];\nvar a = items[2-3+1];"
         ],
         [
           "Para",

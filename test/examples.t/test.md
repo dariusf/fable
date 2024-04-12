@@ -7,7 +7,9 @@ function on_interact() {
   turns++;
 }
 var items = ['Apple', 'Banana', 'Carrot'];
-var a = items[Math.floor(Math.random()*items.length)];
+// This makes testing tough
+// var a = items[Math.floor(Math.random()*items.length)];
+var a = items[2-3+1];
 ```
 
 Hello `$a`!
