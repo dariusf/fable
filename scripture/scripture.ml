@@ -67,15 +67,18 @@ module Convert = struct
       | Inline.Code_span (cs, _) ->
         let c = Inline.Code_span.code cs in
         let r =
-          if String.starts_with ~prefix:"$" c then Interpolate (suffix 1 c)
-          else if String.starts_with ~prefix:"~" c then Meta (suffix 1 c)
+          if String.starts_with ~prefix:"$" c then
+            Interpolate (strip_prefix 1 c)
+          else if String.starts_with ~prefix:"~" c then Meta (strip_prefix 1 c)
           else if String.starts_with ~prefix:"->$" c then
-            JumpDynamic (suffix 3 c)
-          else if String.starts_with ~prefix:"jump " c then Jump (suffix 5 c)
-          else if String.starts_with ~prefix:"->" c then Jump (suffix 2 c)
+            JumpDynamic (strip_prefix 3 c)
+          else if String.starts_with ~prefix:"jump " c then
+            Jump (strip_prefix 5 c)
+          else if String.starts_with ~prefix:"->" c then Jump (strip_prefix 2 c)
           else if String.starts_with ~prefix:"tunnel " c then
-            Tunnel (suffix 7 c)
-          else if String.starts_with ~prefix:">->" c then Tunnel (suffix 3 c)
+            Tunnel (strip_prefix 7 c)
+          else if String.starts_with ~prefix:">->" c then
+            Tunnel (strip_prefix 3 c)
           else Run c
         in
         Folder.ret (Acc.add r acc)
@@ -215,7 +218,7 @@ module Convert = struct
           in
           match (para, after_first) with
           | [Run m], [] when String.starts_with ~prefix:"more " m ->
-            `More (suffix 5 m)
+            `More (strip_prefix 5 m)
           | _ ->
             (* only look for special syntax in the first paragraph *)
             let _, gs, st, i, c, r =
@@ -226,9 +229,9 @@ module Convert = struct
                      (* special things encoded as Runs *)
                      | Run "sticky", _ -> (b, gs, true, i, Some e, r)
                      | Run s, _ when String.starts_with ~prefix:"guard " s ->
-                       (b, Acc.add (suffix 6 s) gs, st, i, Some e, r)
+                       (b, Acc.add (strip_prefix 6 s) gs, st, i, Some e, r)
                      | Run s, _ when String.starts_with ~prefix:"?" s ->
-                       (b, Acc.add (suffix 1 s) gs, st, i, Some e, r)
+                       (b, Acc.add (strip_prefix 1 s) gs, st, i, Some e, r)
                        (* things to stop at *)
                      | (Run _ | Jump _ | JumpDynamic _ | Tunnel _), false ->
                        (true, gs, st, i, Some e, r)

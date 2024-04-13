@@ -188,7 +188,7 @@ function interpret(instrs, parent, k) {
             try {
               generate &&= !!eval?.(g);
             } catch (e) {
-              console.error(e);
+              surfaceError("guard", g, e);
               continue;
             }
           }

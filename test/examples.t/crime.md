@@ -7,6 +7,15 @@ function on_interact() {
   turns++;
 }
 
+var turn_reaching = 0;
+var turn_desk = 0;
+
+var seen = {murder_scene: 0, desk: 0};
+
+var inventory = new Set();
+
+var dark_under = false;
+
 var bedroom_light_seen = false;
 var bedroom_light_on = false;
 var bedroom_light_loc = 'desk'; // desk, floor, bed
@@ -41,21 +50,62 @@ function reach(st, which) {
 }
 ```
 
-The bedroom. This is where it happened. Now to look for clues. `jump murder_scene`
+The bedroom. This is where it happened. Now to look for clues. `->murder_scene`
 
 # murder_scene
 
 ```js
 go_back_to = 'murder_scene'
+seen.murder_scene++;
 ```
 
 - `?bedroom_light_seen` `more seen_light`
 - `more compare_prints`
-- The bed... `1` The bed was low to the ground, but not so low something might not roll underneath. It was still neatly made. `jump prebed`
-- The desk...
-- The window...
+- The bed... `1` The bed was low to the ground, but not so low something might not roll underneath. It was still neatly made. `->prebed`
+- `?dark_under && bedroom_light_loc === 'floor' && bedroom_light_on`
+    Look under the bed `1`
+    I peered under the bed. Something glinted back at me.
+    `turn_reaching = turns`
 
-`jump murder_scene`
+    - Reach for it `1` I fished with one arm under the bed, but whatever it was, it had been kicked far enough back that I couldn't get my fingers on it.  `->reaching`
+    - `?inventory.has('cane')` Knock it with the cane `->knock_with_cane`
+    - `?(turns-turn_reaching)>1` Stand up `1` I stood up once more, and brushed my coat down. `->murder_scene`
+
+- `more knock_with_cane`
+
+- `?knife_loc == 'floor'`
+    Pick up the knife `1`
+    Careful not to touch the handle, I lifted the blade from the carpet.
+    `inventory.add('knife')`
+
+- `?inventory.has('knife')`
+    Look at the knife `1`
+    The blood was dry enough. Dry enough to show up partial prints on the hilt!
+    `reach(knife_knowledge, prints_on_knife)`
+
+- The desk... `1`
+
+    I turned my attention to the desk. A lamp sat in one corner, a neat, empty in-tray in the other. There was nothing else out.
+
+    Leaning against the desk was a wooden cane.
+
+    `bedroom_light_seen = true`
+
+    `->predesk`
+
+- `?inventory.has('cane') && (turns-turn_desk) <= 2` Swoosh the cane `1`
+    I was still holding the cane: I gave it an experimental swoosh. It was heavy indeed, though not heavy enough to be used as a bludgeon.
+    But it might have been useful in self-defence. Why hadn't the victim reached for it? Knocked it over?
+
+- The window... `1`
+    I went over to the window and peered out. A dismal view of the little brook that ran down beside the house.
+    `->prewindow`
+
+- `?seen.murder_scene>=5` Leave the room
+    I'd seen enough. I `$bedroom_bedroom_light_on ? 'switched off the lamp, then ' : ''`turned and left the room.
+    `->joe_in_hall`
+
+`->murder_scene`
 
 # prebed
 
@@ -65,46 +115,153 @@ reach(bed_knowledge, 'neatly_made');
 var bed_state = 'made_up'; // made_up, covers_shifted, covers_off, bloodstain_visible
 ```
 
-`jump bed`
+`->bed`
 
 # bed
 
 - Lift the bedcover `reach(bed_knowledge, 'crumpled_duvet'); bed_state = 'covers_shifted'` I lifted back the bedcover. The duvet underneath was crumpled.
 
-- `guard reached(bed_knowledge, 'crumpled_duvet')` Remove the cover `reach(bed_knowledge, 'hastily_remade'); bed_state = 'covers_off'` Careful not to disturb anything beneath, I removed the cover entirely. The duvet below was rumpled.
+- `?reached(bed_knowledge, 'crumpled_duvet')` Remove the cover `reach(bed_knowledge, 'hastily_remade'); bed_state = 'covers_off'` Careful not to disturb anything beneath, I removed the cover entirely. The duvet below was rumpled.
 
     Not the work of the maid, who was conscientious to a point. Clearly this had been thrown on in a hurry.
 
-- `guard bed_state == 'covers_off'` Pull back the duvet `reach(bed_knowledge, 'body_on_bed'); bed_state = 'bloodstain_visible'` I pulled back the duvet. Beneath it was a sheet, sticky with blood.
+- `?bed_state == 'covers_off'` Pull back the duvet `reach(bed_knowledge, 'body_on_bed'); bed_state = 'bloodstain_visible'` I pulled back the duvet. Beneath it was a sheet, sticky with blood.
 
     Either the body had been moved here before being dragged to the floor - or this is was where the murder had taken place.
 
-- `guard bed_state != 'made_up'` Remake the bed `bed_state = 'made_up'` Carefully, I pulled the bedsheets back into place, trying to make it seem undisturbed.
+- `?bed_state != 'made_up'` Remake the bed `bed_state = 'made_up'` Carefully, I pulled the bedsheets back into place, trying to make it seem undisturbed.
   <!-- seems like there's a bug here, shouldn't be able to pull back duvet after making -->
 
 - Test the bed `1`  I pushed the bed with spread fingers. It creaked a little, but not so much as to be obnoxious.
 
-- Look under the bed `1` Lying down, I peered under the bed, but could make nothing out.
+- Look under the bed `dark_under = true;` Lying down, I peered under the bed, but could make nothing out.
 
-- `guard (turns-turn_entered_room)>1` Something else? `1` I took a step back from the bed and looked around. `jump murder_scene`
+- `?(turns-turn_entered_room)>1` Something else? `1` I took a step back from the bed and looked around. `->murder_scene`
 
-`jump bed`
+`->bed`
+
+# predesk
+
+```js
+var open = 0;
+```
+
+`->desk`
+
+# desk
+
+```js
+seen.desk++
+turn_desk = turns;
+```
+
+- `?!inventory.has('cane')` Pick up the cane `inventory.add('cane')` I picked up the wooden cane. It was heavy, and unmarked.
+
+- `?!bedroom_light_on` Turn on the lamp `1` `>->operate_lamp`
+
+- Look at the in-tray `1`
+
+  I regarded the in-tray, but there was nothing to be seen. Either the victim's papers were taken, or his line of work had seriously dried up. Or the in-tray was all for show.
+
+- `sticky` `?open<3` Open a drawer `1`
+
+    I tried `$['a drawer at random', 'another drawer', 'a third drawer'][open]`. `$['Locked', 'Also locked', 'Unsurprisingly, locked as well'][open]`.
+
+    `open++`
+
+- `?seen.desk >= 2` Something else? `1` I took a step away from the desk once more. `->murder_scene`
+
+`->desk`
+
+# prewindow
+
+```js
+var window_state = 'none'; // none, steamed, steam_gone
+```
+
+`->window`
+
+# window
+
+```js
+go_back_to = 'window';
+```
+
+- `more compare_prints`
+- Look down at the brook `>->downy`
+- Look at the glass
+    ```js
+    if (window_state === 'steamed') {
+      render(Scripture.parse('`->downy`')[0].cmds);
+    } else {
+      render(Scripture.parse('The glass in the window was greasy. No one had cleaned it in a while, inside or out.')[0].cmds);
+    }
+    ```
+- `?window_state == 'steamed' && !see_prints_on_glass && downy && greasy`
+    Look at the steam `1`
+    A cold day outside. Natural my breath should steam. `>->see_prints_on_glass`
+- `sticky`  `?window_state == 'steam_gone'` Breathe on the glass `1`
+    I breathed gently on the glass once more.
+    ```js
+    if (reached(window_knowledge, 'fingerprints_on_glass')) {
+      render(Scripture.parse('The fingerprints reappeared.')[0].cmds);
+    }
+    window_state = 'steamed';
+    ```
+
+- `sticky` Something else? `1`
+    ```js
+    if (window_opts < 2 || reached(window_knowledge, 'fingerprints_on_glass') || window_state == 'steamed') {
+      render(Scripture.parse('I looked away from the dreary glass.')[0].cmds);
+      if (window_state == 'steamed') {
+        window_state = 'steam_gone';
+        render(Scripture.parse('The steam from my breath faded.')[0].cmds);
+      }
+    }
+    render(Scripture.parse('->window')[0].cmds);
+    ```
+    I leant back from the glass. My breath had steamed up the pane a little.
+    `window_state = 'steamed'`
+
+`->window`
+
+# downy
+
+```js
+if (window_state == 'steamed') {
+  // TODO higher-level helper
+  render(Scripture.parse("Through the steamed glass I couldn't see the brook. `>->see_prints_on_glass` `->window`")[0].cmds);
+}
+```
+I watched the little stream rush past for a while. The house probably had damp but otherwise, it told me nothing.
+
+# knock_with_cane
+
+- `?turn_reaching && (turns-turn_reaching) >= 4 &&  inventory.has('cane')` Use the cane to reach under the bed `1`
+
+    Positioning the cane above the carpet, I gave the glinting thing a sharp tap. It slid out from the under the foot of the bed.
+    `knife_loc = 'floor'`
+
+    - Stand up `1`
+    - Look under the bed once more `1` Moving the cane aside, I looked under the bed once more, but there was nothing more there.
+
+    Satisfied, I stood up, and saw I had knocked free a bloodied knife. `->murder_scene`
 
 # seen_light
 
 - `?!bedroom_light_on` Turn on lamp `1` `>->operate_lamp`
 
-- `? bedroom_light_loc === 'bed'  && bed_state == 'bloodstain_visible'`
+- `?bedroom_light_loc === 'bed'  && bed_state == 'bloodstain_visible'`
     Move the light to the bed `bedroom_light_loc = 'bed'`
 
     I moved the light over to the bloodstain and peered closely at it. It had soaked deeply into the fibres of the cotton sheet.
     There was no doubt about it. This was where the blow had been struck. `reach(bed_knowledge, murdered_in_bed)`
 
-- `? bedroom_light_loc != 'desk' && (turn-turn_moved_light_to_floor) >= 2`
+- `?bedroom_light_loc != 'desk' && (turn-turn_moved_light_to_floor) >= 2`
     Move the light back to the desk
     `bedroom_light_loc = 'desk'`
     I moved the light back to the desk, setting it down where it had originally been.
-- `? bedroom_light_loc != 'floor' && darkunder`
+- `?bedroom_light_loc != 'floor' && darkunder`
     Move the light to the floor
     `bedroom_light_loc != 'floor'`
     I picked the light up and set it down on the floor.
@@ -114,18 +271,26 @@ var bed_state = 'made_up'; // made_up, covers_shifted, covers_off, bloodstain_vi
 
 # compare_prints
 
-- `? reached(window_knowledge, 'fingerprints_on_glass') && reached(knife_knowledge, 'prints_on_knife') && !reached(window_knowledge, 'fingerprints_on_glass_match_knife'))`
+- `?reached(window_knowledge, 'fingerprints_on_glass') && reached(knife_knowledge, 'prints_on_knife') && !reached(window_knowledge, 'fingerprints_on_glass_match_knife')`
     Compare the prints on the knife and the window `1`
     Holding the bloodied knife near the window, I breathed to bring out the prints once more, and compared them as best I could.
     Hardly scientific, but they seemed very similar - very similiar indeed.
     `reach(window_knowledge, 'fingerprints_on_glass_match_knife')`
     `->$go_back_to`
 
+# see_prints_on_glass
+
+`reach(window_knowledge, fingerprints_on_glass)`
+`$['But I could see a few fingerprints, as though someone hadpressed their palm against it.', 'The fingerprints were quite clear and well-formed.'][0]`
+They faded as I watched.
+
+`window_state= 'steam_gone'`
+
 # operate_lamp
 
 I flicked the light switch.
 
-```
+```js
 if (bedroom_light_on) {
   render([['Text', 'The bulb fell dark']]);
   bedroom_light_on = false;
@@ -138,3 +303,75 @@ if (bedroom_light_on) {
   bedroom_light_on = true;
 }
 ```
+
+# joe_in_hall
+
+My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you find anything interesting?'
+
+`->joe_in_hall1`
+
+# joe_in_hall1
+
+- `?found == 1` 'Nothing.'
+    He shrugged. 'Shame.'
+    `->done`
+
+- `?inventory.has('knife')`
+    'I found the murder weapon.' `1`
+    'Good going!' Joe replied with a grin. 'We thought the murderer had gotten rid of it. I'll bag that for you now.'
+    `knife_loc = 'joe'`
+
+- `reached(knife_knowledge, 'prints_on_knife') && knife_loc == 'joe'`
+    'There are prints on the blade[.'],' I told him.
+    He regarded them carefully.
+    'Hrm. Not very complete. It'll be hard to get a match from these.'
+    `reach(knife_knowledge, 'joe_seen_prints_on_knife')`
+- `reached(window_knowledge, 'fingerprints_on_glass_match_knife') && reached(knife_knowledge, 'joe_seen_prints_on_knife') `
+    'They match a set of prints on the window, too.'
+    'Anyone could have touched the window,' Joe replied thoughtfully. 'But if they're more complete, they should help us get a decent match!'
+    `reach(knife_knowledge, 'joe_wants_better_prints')`
+- `reached(bed_knowledge, 'body_on_bed') && !reached(bed_knowledge, 'murdered_in_bed')`
+    'The body was moved to the bed at some point[.'],' I told him. 'And then moved back to the floor.'
+    'Why?'
+    - 'I don't know.' `1`
+        Joe nods. 'All right.'
+    - 'Perhaps to get something from the floor?' `1`
+        'You wouldn't move a whole body for that.'
+    - 'Perhaps he was killed in bed.' `1`
+        'It's just speculation at this point,' Joe remarks.
+- ` reached(murdered_in_bed) `
+    'The victim was murdered in bed, and then the body was moved to the floor.'
+    'Why?'
+    - 'I don't know.' `1`
+        Joe nods. 'All right, then.'
+    - 'Perhaps the murderer wanted to mislead us.'
+        'How so?'
+
+        - 'They wanted us to think the victim was awake[.'], I replied thoughtfully. 'That they were meeting their attacker, rather than being stabbed in their sleep.'
+        - 'They wanted us to think there was some kind of struggle[.'],' I replied. 'That the victim wasn't simply stabbed in their sleep.'
+
+        'But if they were killed in bed, that's most likely what happened. Stabbed, while sleeping.'
+        `reach(bed_knowledge, 'murdered_while_asleep')`
+    - 'Perhaps the murderer hoped to clean up the scene.'
+        'But they were disturbed? It's possible.'
+
+  - `?found > 1` 'That's it.' `1`
+      'All right. It's a start,' Joe replied.
+      `->done`
+
+`->found`
+
+# done
+<!-- this is also a fallback option... -->
+
+```js
+if (reached(knife_knowledge, 'joe_wants_better_prints') && !reached(knife_knowledge, 'joe_got_better_prints')) {
+  reach(knife_knowledge, 'joe_got_better_prints');
+  render(Scripture.parse("I'll get those prints from the window now.")[0].cmds);
+} else if (reached(knife_knowledge, 'joe_seen_prints_on_knife')) {
+  render(Scripture.parse("I'll run those prints as best I can.")[0].cmds);
+} else {
+  render(Scripture.parse("'Not much to go on.'")[0].cmds);
+}
+```
+<!-- END -->

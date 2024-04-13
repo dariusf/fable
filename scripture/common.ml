@@ -47,4 +47,4 @@ module SMap = struct
       (bindings map)
 end
 
-let suffix n s = String.sub s n (String.length s - n)
+let strip_prefix n s = String.trim (String.sub s n (String.length s - n))
