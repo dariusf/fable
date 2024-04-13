@@ -31,6 +31,11 @@ let () =
                 Scripture.instantiate (obj_to_assoc bs)
                   (jv_to_ocaml Scripture.cmd_of_yojson s)
                 |> ocaml_to_jv Scripture.cmd_to_yojson) ); *)
+         ( "containsControlChange",
+           Jv.callback ~arity:1 (fun ss ->
+               Scripture.contains_control_change
+                 (jv_to_ocaml Scripture.cmds_of_yojson ss)
+               |> Jv.of_bool) );
          ( "recursivelyAddChoices",
            Jv.callback ~arity:2 (fun f ss ->
                Scripture.recursively_add_choices

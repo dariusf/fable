@@ -14,15 +14,18 @@ function turns_since(scene) {
 }
 
 var seen_scenes = {};
+
 function see(scene) {
   if (seen_scenes.hasOwnProperty(scene)) {
     seen_scenes[scene]++;
   } else {
-    scene[scene] = 1;
+    seen_scenes[scene] = 1;
   }
 }
+
 function seen(scene) {
-  return !!seen_scenes[scene];
+  // truthiness supported for this, 0 is false, nonzero is true
+  return seen_scenes[scene];
 }
 
 on_scene_visit.push((s) => {
@@ -67,16 +70,6 @@ function interpret(instrs, parent, k) {
     const instr = instrs[i];
     // console.log("interpret", instr, parent);
     switch (instr[0]) {
-      case "Meta":
-        try {
-          let s = eval?.(instr[1]);
-          let instrs = Scripture.parse(s)[0].cmds;
-          // console.log("meta produced", instrs);
-          interpret(instrs, parent, () => {});
-        } catch (e) {
-          surfaceError("meta", instr[1], e);
-        }
-        break;
       case "Run":
         try {
           eval?.(instr[1]);
@@ -161,6 +154,12 @@ function interpret(instrs, parent, k) {
   let current = instrs[i];
   let rest = instrs.slice(i + 1);
 
+  // things which go below:
+  // recursive things which can be aborted (Para),
+  // things which need access to (Meta, Tunnel) or ignore the continuation (Jump),
+
+  // corollary: from the placement of Run above, it cannot access the continuation
+
   switch (current[0]) {
     case "Tunnel": {
       // keep current k
@@ -184,6 +183,16 @@ function interpret(instrs, parent, k) {
       on_scene_visit.forEach((f) => f(scene));
       return interpret(_scenes[scene], content, () => {});
     }
+    case "Meta":
+      try {
+        let s = eval?.(current[1]);
+        let instrs = Scripture.parse(s)[0].cmds;
+        // console.log("meta produced", instrs);
+        interpret(instrs, parent, k);
+      } catch (e) {
+        surfaceError("meta", instr[1], e);
+      }
+      break;
     case "Para":
       {
         if (current[0].length > 0) {
@@ -222,9 +231,8 @@ function interpret(instrs, parent, k) {
         };
         // add more alternatives
         let extra = Scripture.recursivelyAddChoices((s) => _scenes[s], more);
-        extra.forEach((c) => alts.push(c));
 
-        for (const item of alts) {
+        for (const item of alts.concat(extra)) {
           if (!item.sticky) {
             let id = `c${fresh++}`;
             window.choice_state[id] = false;
@@ -280,11 +288,17 @@ function interpret(instrs, parent, k) {
 }
 
 function render(s) {
+  let cmds;
   if (typeof s === "string") {
-    interpret(Scripture.parse(s)[0].cmds, content, () => {});
+    cmds = Scripture.parse(s)[0].cmds;
   } else {
     // take it as a scene (a list of commands)
-    interpret(s, content, () => {});
+    cmds = s;
+  }
+  if (Scripture.containsControlChange(cmds)) {
+    surfaceError("render cannot be used to jump", cmds);
+  } else {
+    interpret(cmds, content, () => {});
   }
 }
 

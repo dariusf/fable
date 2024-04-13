@@ -3,17 +3,12 @@
 
 ```js
 var turn_reaching = 0;
-var turn_desk = 0;
-
-var seen = {murder_scene: 0, desk: 0};
 
 var inventory = new Set();
 
 var dark_under = false;
 
-var bedroom_light_seen = false;
-var bedroom_light_on = false;
-var bedroom_light_loc = 'desk'; // desk, floor, bed
+var bedroom_light = {seen: false, on: false, loc: 'desk'}; // desk, floor, bed
 
 var knife_loc = 'under_bed'; // under_bed, floor, joe
 
@@ -51,13 +46,12 @@ The bedroom. This is where it happened. Now to look for clues. `->murder_scene`
 
 ```js
 go_back_to = 'murder_scene'
-seen.murder_scene++;
 ```
 
-- `?bedroom_light_seen` `more seen_light`
+- `?bedroom_light.seen` `more seen_light`
 - `more compare_prints`
 - The bed... `1` The bed was low to the ground, but not so low something might not roll underneath. It was still neatly made. `->prebed`
-- `?dark_under && bedroom_light_loc === 'floor' && bedroom_light_on`
+- `?dark_under && bedroom_light.loc === 'floor' && bedroom_light.on`
     Look under the bed `1`
     I peered under the bed. Something glinted back at me.
     `turn_reaching = turns`
@@ -84,19 +78,19 @@ seen.murder_scene++;
 
     Leaning against the desk was a wooden cane.
 
-    `bedroom_light_seen = true`
+    `bedroom_light.seen = true`
 
     `->predesk`
 
-- `?inventory.has('cane') && (turns-turn_desk) <= 2` Swoosh the cane `1`
+- `?inventory.has('cane') && turns_since('desk') <= 2` Swoosh the cane `1`
     I was still holding the cane: I gave it an experimental swoosh. It was heavy indeed, though not heavy enough to be used as a bludgeon.
     But it might have been useful in self-defence. Why hadn't the victim reached for it? Knocked it over?
 
 - The window... `1` I went over to the window and peered out. A dismal view of the little brook that ran down beside the house.
     `->prewindow`
 
-- `?seen.murder_scene>=5` Leave the room
-    I'd seen enough. I `$bedroom_bedroom_light_on ? 'switched off the lamp, then ' : ''`turned and left the room.
+- `?seen('murder_scene')>=5` Leave the room `1`
+    I'd seen enough. I `$bedroom_light.on ? 'switched off the lamp, then ' : ''`turned and left the room.
     `->joe_in_hall`
 
 `->murder_scene`
@@ -137,33 +131,28 @@ var bed_state = 'made_up'; // made_up, covers_shifted, covers_off, bloodstain_vi
 # predesk
 
 ```js
-var open = 0;
+var drawers_opened = 0;
 ```
 
 `->desk`
 
 # desk
 
-```js
-seen.desk++
-turn_desk = turns;
-```
-
 - `?!inventory.has('cane')` Pick up the cane `inventory.add('cane')` I picked up the wooden cane. It was heavy, and unmarked.
 
-- `?!bedroom_light_on` Turn on the lamp `1` `>->operate_lamp`
+- `?!bedroom_light.on` Turn on the lamp `1` `>->operate_lamp`
 
 - Look at the in-tray `1`
 
   I regarded the in-tray, but there was nothing to be seen. Either the victim's papers were taken, or his line of work had seriously dried up. Or the in-tray was all for show.
 
-- `sticky` `?open<3` Open a drawer `1`
+- `sticky` `?drawers_opened<3` Open a drawer `1`
 
-    I tried `$['a drawer at random', 'another drawer', 'a third drawer'][open]`. `$['Locked', 'Also locked', 'Unsurprisingly, locked as well'][open]`.
+    I tried `$['a drawer at random', 'another drawer', 'a third drawer'][drawers_opened]`. `$['Locked', 'Also locked', 'Unsurprisingly, locked as well'][drawers_opened]`.
 
-    `open++`
+    `drawers_opened++`
 
-- `?seen.desk >= 2` Something else? `1` I took a step away from the desk once more. `->murder_scene`
+- `?seen('desk') >= 2` Something else? `1` I took a step away from the desk once more. `->murder_scene`
 
 `->desk`
 
@@ -183,7 +172,7 @@ go_back_to = 'window';
 
 - `more compare_prints`
 - Look down at the brook `1` `>->downy`
-- Look at the glass
+- Look at the glass `see('greasy')`
     ```js
     if (window_state === 'steamed') {
       render('`->downy`');
@@ -191,7 +180,7 @@ go_back_to = 'window';
       render('The glass in the window was greasy. No one had cleaned it in a while, inside or out.');
     }
     ```
-- `?window_state == 'steamed' && !see_prints_on_glass && downy && greasy`
+- `?window_state == 'steamed' && !seen('see_prints_on_glass') && seen('downy') && seen('greasy')`
     Look at the steam `1`
     A cold day outside. Natural my breath should steam. `>->see_prints_on_glass`
 - `sticky`  `?window_state == 'steam_gone'` Breathe on the glass `1`
@@ -205,14 +194,14 @@ go_back_to = 'window';
 
 - `sticky` Something else? `1`
     ```js
-    if (window_opts < 2 || reached(window_knowledge, 'fingerprints_on_glass') || window_state == 'steamed') {
+    if (seen('window') < 2 || reached(window_knowledge, 'fingerprints_on_glass') || window_state == 'steamed') {
       render('I looked away from the dreary glass.');
       if (window_state == 'steamed') {
         window_state = 'steam_gone';
         render('The steam from my breath faded.');
       }
+      render('`->window`');
     }
-    render('`->window`');
     ```
     I leant back from the glass. My breath had steamed up the pane a little.
     `window_state = 'steamed'`
@@ -243,21 +232,22 @@ I watched the little stream rush past for a while. The house probably had damp b
 
 # seen_light
 
-- `?!bedroom_light_on` Turn on lamp `1` `>->operate_lamp`
+- `?!bedroom_light.on` Turn on lamp `1` `>->operate_lamp`
 
-- `?bedroom_light_loc === 'bed'  && bed_state == 'bloodstain_visible'`
-    Move the light to the bed `bedroom_light_loc = 'bed'`
+- `?bedroom_light.loc === 'bed'  && bed_state == 'bloodstain_visible'`
+    Move the light to the bed `bedroom_light.loc = 'bed'`
 
     I moved the light over to the bloodstain and peered closely at it. It had soaked deeply into the fibres of the cotton sheet.
     There was no doubt about it. This was where the blow had been struck. `reach(bed_knowledge, murdered_in_bed)`
 
-- `?bedroom_light_loc != 'desk' && (turn-turn_moved_light_to_floor) >= 2`
+- `?bedroom_light.loc != 'desk' && (turns-turn_moved_light_to_floor) >= 2`
     Move the light back to the desk
-    `bedroom_light_loc = 'desk'`
+    `bedroom_light.loc = 'desk'`
     I moved the light back to the desk, setting it down where it had originally been.
-- `?bedroom_light_loc != 'floor' && dark_under`
+
+- `?bedroom_light.loc != 'floor' && dark_under`
     Move the light to the floor
-    `bedroom_light_loc != 'floor'`
+    `bedroom_light.loc = 'floor'`
     I picked the light up and set it down on the floor.
     `var turn_moved_light_to_floor = turns;`
 
@@ -274,7 +264,7 @@ I watched the little stream rush past for a while. The house probably had damp b
 
 # see_prints_on_glass
 
-`reach(window_knowledge, fingerprints_on_glass)`
+`reach(window_knowledge, 'fingerprints_on_glass')`
 `$['But I could see a few fingerprints, as though someone hadpressed their palm against it.', 'The fingerprints were quite clear and well-formed.'][0]`
 They faded as I watched.
 
@@ -285,16 +275,16 @@ They faded as I watched.
 I flicked the light switch.
 
 ```js
-if (bedroom_light_on) {
+if (bedroom_light.on) {
   render('The bulb fell dark');
-  bedroom_light_on = false;
+  bedroom_light.on = false;
 } else {
-  if (bedroom_light_loc === 'floor') {
+  if (bedroom_light.loc === 'floor') {
     render('A little light spilled under the bed.');
-  } else if (bedroom_light_loc === 'desk') {
+  } else if (bedroom_light.loc === 'desk') {
     render('The light gleamed on the polished tabletop.');
   }
-  bedroom_light_on = true;
+  bedroom_light.on = true;
 }
 ```
 
