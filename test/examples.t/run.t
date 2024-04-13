@@ -13,7 +13,7 @@
           [
             [
               "Text",
-              "Hello "
+              "Hello"
             ],
             [
               "Interpolate",
@@ -67,7 +67,7 @@
               "initial": [
                 [
                   "Text",
-                  "Go to Scene 1 "
+                  "Go to Scene 1"
                 ]
               ],
               "code": [
@@ -82,7 +82,7 @@
                   [
                     [
                       "Text",
-                      " should not show"
+                      "should not show"
                     ]
                   ]
                 ]
@@ -94,7 +94,7 @@
               "initial": [
                 [
                   "Text",
-                  "Say something, then go to Scene 1 "
+                  "Say something, then go to Scene 1"
                 ]
               ],
               "code": [
@@ -109,7 +109,7 @@
                   [
                     [
                       "Text",
-                      " should show. "
+                      "should show."
                     ],
                     [
                       "Jump",
@@ -125,7 +125,7 @@
               "initial": [
                 [
                   "Text",
-                  "Go to Scene 3 "
+                  "Go to Scene 3"
                 ]
               ],
               "code": [
@@ -154,7 +154,7 @@
               "initial": [
                 [
                   "Text",
-                  "Nested lists "
+                  "Nested lists"
                 ]
               ],
               "code": [
@@ -171,7 +171,7 @@
               "initial": [
                 [
                   "Text",
-                  "Copy "
+                  "Copy"
                 ]
               ],
               "code": [
@@ -188,7 +188,7 @@
               "initial": [
                 [
                   "Text",
-                  "More "
+                  "More"
                 ]
               ],
               "code": [
@@ -205,7 +205,7 @@
               "initial": [
                 [
                   "Text",
-                  "Jump dynamic "
+                  "Jump dynamic"
                 ]
               ],
               "code": [
@@ -222,7 +222,7 @@
               "initial": [
                 [
                   "Text",
-                  "Tunnel "
+                  "Tunnel"
                 ]
               ],
               "code": [
@@ -282,7 +282,7 @@
           [
             [
               "Text",
-              "Turns: "
+              "Turns:"
             ],
             [
               "Interpolate",
@@ -304,7 +304,7 @@
               "initial": [
                 [
                   "Text",
-                  "Choice 1 "
+                  "Choice 1"
                 ]
               ],
               "code": [
@@ -323,7 +323,7 @@
                       "initial": [
                         [
                           "Text",
-                          "Nested choice. Did you choose choice 1? "
+                          "Nested choice. Did you choose choice 1?"
                         ]
                       ],
                       "code": [
@@ -340,7 +340,7 @@
                       "initial": [
                         [
                           "Text",
-                          "Or not? "
+                          "Or not?"
                         ]
                       ],
                       "code": [
@@ -362,7 +362,7 @@
               "initial": [
                 [
                   "Text",
-                  "Choice 2 "
+                  "Choice 2"
                 ]
               ],
               "code": [
@@ -377,7 +377,7 @@
                   [
                     [
                       "Text",
-                      " after"
+                      "after"
                     ],
                     [
                       "Break"
@@ -396,7 +396,7 @@
               "initial": [
                 [
                   "Text",
-                  "Choice 3 "
+                  "Choice 3"
                 ]
               ],
               "code": [
@@ -423,7 +423,7 @@
               "initial": [
                 [
                   "Text",
-                  "Choice 4 "
+                  "Choice 4"
                 ]
               ],
               "code": [
@@ -558,6 +558,46 @@
               "Text",
               "Tunnel"
             ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "Spaces",
+      "cmds": [
+        [
+          "Choices",
+          [],
+          [
+            {
+              "guard": [
+                "a"
+              ],
+              "initial": [
+                [
+                  "Text",
+                  "choice text"
+                ]
+              ],
+              "code": [
+                [
+                  "Run",
+                  "1"
+                ]
+              ],
+              "rest": [
+                [
+                  "Para",
+                  [
+                    [
+                      "Text",
+                      "code after"
+                    ]
+                  ]
+                ]
+              ],
+              "sticky": false
+            }
           ]
         ]
       ]

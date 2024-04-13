@@ -46,7 +46,7 @@ module Convert = struct
       ~inline:(fun _f acc i ->
         match i with
         | Inline.Text (s, _) when not (is_whitespace s) ->
-          Folder.ret (Acc.add s acc)
+          Folder.ret (Acc.add (String.trim s) acc)
         | Inline.Text _ -> Folder.default
         | Inline.Autolink (_, _) -> failwith "unimplemented Autolink"
         | Inline.Break (_, _) -> failwith "unimplemented Break"
@@ -66,7 +66,7 @@ module Convert = struct
      fun _f acc i ->
       match i with
       | Inline.Text (s, _) when not (is_whitespace s) ->
-        Folder.ret (Acc.add (Text s) acc)
+        Folder.ret (Acc.add (Text (String.trim s)) acc)
       | Inline.Text _ -> Folder.default
       | Inline.Autolink (_, _) -> failwith "unimplemented Autolink"
       | Inline.Break (_, _) -> Folder.ret (Acc.add Break acc)

@@ -5,7 +5,7 @@ default:
 	dune exec ./main.exe test/examples.t/crime.md | tee data.js
 	dune build ./web.bc.js
 	# dune build --release ./web.bc.js
-	dune test test/examples.t
+	dune build @examples
 
 .PHONY: all
 all: default
