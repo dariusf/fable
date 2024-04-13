@@ -2,11 +2,6 @@
 # beginning
 
 ```js
-var turns = 0;
-function on_interact() {
-  turns++;
-}
-
 var turn_reaching = 0;
 var turn_desk = 0;
 

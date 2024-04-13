@@ -1,16 +1,56 @@
-let scenes = {};
-let content = document.querySelector("#content");
-window.on_interact = () => {};
-window.choice_state = {};
-let fresh = 0;
+// API
+
+window.on_interact = [];
+window.on_scene_visit = [];
+
+var turns = 0;
+on_interact.push(() => {
+  turns++;
+});
+
+var last_visited_turn = {};
+function turns_since(scene) {
+  return turns - (last_visited_turn[scene] || 0);
+}
+
+var seen_scenes = {};
+function see(scene) {
+  if (seen_scenes.hasOwnProperty(scene)) {
+    seen_scenes[scene]++;
+  } else {
+    scene[scene] = 1;
+  }
+}
+function seen(scene) {
+  return !!seen_scenes[scene];
+}
+
+on_scene_visit.push((s) => {
+  see(s);
+  last_visited_turn[s] = turns;
+});
+
+// CONFIG
+
 let choices_disappear = true;
+
+// INTERNALS
+
+// this shouldn't be accessed directly as on_scene_visit won't fire
+let _scenes = {};
+let content = document.querySelector("#content");
+
+// sticky choices
+let fresh = 0;
+window.choice_state = {};
 
 function main() {
   for (const scene of data) {
-    scenes[scene.name] = scene.cmds;
+    _scenes[scene.name] = scene.cmds;
   }
   let scene = data[0].name;
-  interpret(scenes[scene], content, () => {});
+  on_scene_visit.forEach((f) => f(scene));
+  interpret(_scenes[scene], content, () => {});
 }
 
 function surfaceError(...args) {
@@ -63,7 +103,10 @@ function interpret(instrs, parent, k) {
         break;
       case "Break":
         {
-          parent.appendChild(document.createElement("br"));
+          // parent.appendChild(document.createElement("br"));
+          let e = document.createElement("span");
+          e.textContent = " ";
+          parent.appendChild(e);
         }
         break;
       case "LinkCode":
@@ -75,7 +118,7 @@ function interpret(instrs, parent, k) {
           let target = instr[0] === "LinkCode" ? instr[2] + "()" : instr[2];
           e.onclick = (ev) => {
             ev.preventDefault();
-            window.on_interact();
+            window.on_interact.forEach((f) => f());
             if (kind === "Jump") {
               // ensure that it is not used
               interpret([[kind, target]], parent, null);
@@ -121,11 +164,15 @@ function interpret(instrs, parent, k) {
   switch (current[0]) {
     case "Tunnel": {
       // keep current k
-      return interpret(scenes[current[1]], content, k);
+      let scene = current[1];
+      on_scene_visit.forEach((f) => f(scene));
+      return interpret(_scenes[scene], content, k);
     }
     case "Jump": {
       // abandon current k and instructions, go back to top element
-      return interpret(scenes[current[1]], content, () => {});
+      let scene = current[1];
+      on_scene_visit.forEach((f) => f(scene));
+      return interpret(_scenes[scene], content, () => {});
     }
     case "JumpDynamic": {
       let scene;
@@ -134,7 +181,8 @@ function interpret(instrs, parent, k) {
       } catch (e) {
         surfaceError("JumpDynamic", current[1], e);
       }
-      return interpret(scenes[scene], content, () => {});
+      on_scene_visit.forEach((f) => f(scene));
+      return interpret(_scenes[scene], content, () => {});
     }
     case "Para":
       {
@@ -173,7 +221,7 @@ function interpret(instrs, parent, k) {
           });
         };
         // add more alternatives
-        let extra = Scripture.recursivelyAddChoices((s) => scenes[s], more);
+        let extra = Scripture.recursivelyAddChoices((s) => _scenes[s], more);
         extra.forEach((c) => alts.push(c));
 
         for (const item of alts) {
@@ -203,7 +251,7 @@ function interpret(instrs, parent, k) {
           li.appendChild(a);
           a.onclick = (ev) => {
             ev.preventDefault();
-            window.on_interact();
+            on_interact.forEach((f) => f());
             if (choices_disappear) {
               parent.removeChild(ul);
             } else {
@@ -238,4 +286,9 @@ function render(s) {
     // take it as a scene (a list of commands)
     interpret(s, content, () => {});
   }
+}
+
+function render_scene(s) {
+  on_scene_visit.forEach((f) => f(scene));
+  render(scenes[s]);
 }
