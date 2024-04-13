@@ -193,15 +193,20 @@ go_back_to = 'window';
     ```
 
 - `sticky` Something else? `1`
-    ```js
+    ```js ~
+    let acc = '';
     if (seen('window') < 2 || reached(window_knowledge, 'fingerprints_on_glass') || window_state == 'steamed') {
-      render('I looked away from the dreary glass.');
+      acc += 'I looked away from the dreary glass.\n\n';
+      //render('I looked away from the dreary glass.');
       if (window_state == 'steamed') {
         window_state = 'steam_gone';
-        render('The steam from my breath faded.');
+        //render('The steam from my breath faded.');
+        acc += 'The steam from my breath faded.\n\n';
       }
-      render('`->window`');
+      //render('`->window`');
+      acc += '`->window`';
     }
+    acc
     ```
     I leant back from the glass. My breath had steamed up the pane a little.
     `window_state = 'steamed'`
