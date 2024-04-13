@@ -37,6 +37,6 @@ let () =
                  (fun s ->
                    Jv.apply f [| Jv.of_string s |]
                    |> jv_to_ocaml Scripture.cmds_of_yojson)
-                 (Jv.to_list Jv.to_string ss)
+                 (jv_to_ocaml Scripture.more_of_yojson ss)
                |> ocaml_to_jv Scripture.choices_to_yojson) );
        |])

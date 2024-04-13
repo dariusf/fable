@@ -8,6 +8,8 @@ type choice = {
   sticky : bool;
 }
 
+and more = (string * string) list
+
 and cmd =
   | Verbatim of string
   | Para of cmd list
@@ -21,7 +23,7 @@ and cmd =
   | Jump of string
   | Tunnel of string
   | JumpDynamic of string
-  | Choices of string list * choice list
+  | Choices of more * choice list
 [@@deriving show { with_path = false }, yojson]
 
 type scene = {
@@ -31,7 +33,7 @@ type scene = {
 [@@deriving show { with_path = false }, yojson]
 
 type program = scene list [@@deriving show { with_path = false }, yojson]
-type cmds = cmd list [@@deriving yojson]
+type cmds = cmd list [@@deriving show { with_path = false }, yojson]
 type choices = choice list [@@deriving yojson]
 
 let _ = pp_program
@@ -43,7 +45,9 @@ module Convert = struct
     Folder.make
       ~inline:(fun _f acc i ->
         match i with
-        | Inline.Text (s, _) -> Folder.ret (Acc.add s acc)
+        | Inline.Text (s, _) when not (is_whitespace s) ->
+          Folder.ret (Acc.add s acc)
+        | Inline.Text _ -> Folder.default
         | Inline.Autolink (_, _) -> failwith "unimplemented Autolink"
         | Inline.Break (_, _) -> failwith "unimplemented Break"
         | Inline.Code_span (_, _) -> failwith "code span"
@@ -61,7 +65,9 @@ module Convert = struct
     let inline : (Inline.t, cmd Acc.t) Folder.folder =
      fun _f acc i ->
       match i with
-      | Inline.Text (s, _) -> Folder.ret (Acc.add (Text s) acc)
+      | Inline.Text (s, _) when not (is_whitespace s) ->
+        Folder.ret (Acc.add (Text s) acc)
+      | Inline.Text _ -> Folder.default
       | Inline.Autolink (_, _) -> failwith "unimplemented Autolink"
       | Inline.Break (_, _) -> Folder.ret (Acc.add Break acc)
       | Inline.Code_span (cs, _) ->
@@ -205,6 +211,7 @@ module Convert = struct
               (Block.List_item.block i)
             |> Acc.to_list
           in
+          (* show_block (Block.List_item.block i); *)
           (* the first block is expected to be a paragraph *)
           let para, after_first =
             match bs with
@@ -217,8 +224,16 @@ module Convert = struct
             | _ -> failwith "not a singleton scene"
           in
           match (para, after_first) with
+          | [Run g; Run m], []
+            when String.starts_with ~prefix:"?" g
+                 && String.starts_with ~prefix:"more " m ->
+            `More (strip_prefix 1 g, strip_prefix 5 m)
+          | [Run g; Run m], []
+            when String.starts_with ~prefix:"guard " g
+                 && String.starts_with ~prefix:"more " m ->
+            `More (strip_prefix 6 g, strip_prefix 5 m)
           | [Run m], [] when String.starts_with ~prefix:"more " m ->
-            `More (strip_prefix 5 m)
+            `More ("true", strip_prefix 5 m)
           | _ ->
             (* only look for special syntax in the first paragraph *)
             let _, gs, st, i, c, r =
@@ -256,13 +271,13 @@ module Convert = struct
             (fun (i, _) (more, cs) ->
               match list_item_to_choice i with
               | `Choice c -> (more, c :: cs)
-              | `More m -> (m :: more, cs))
+              | `More (g, m) -> ((g, m) :: more, cs))
             (Block.List'.items l) ([], [])
         in
+        let choice = Choices (more, choices) in
         Folder.ret
           (Acc.change_last
-             (fun (name, cmds) ->
-               (name, Acc.add (Choices (more, choices)) cmds))
+             (fun (name, cmds) -> (name, Acc.add choice cmds))
              acc)
       | Block.Thematic_break (_, _) -> Folder.default
       | _ -> Folder.default (* let the folder thread the fold *)
@@ -281,9 +296,9 @@ end
 let rec may_have_text s =
   match s with
   | Para p -> List.exists may_have_text p
-  | Break | Verbatim _ | Text _ | LinkCode _ | LinkJump _ | Interpolate _
-  | Choices _ ->
-    true
+  | Verbatim t | Text t -> String.length (String.trim t) > 0
+  | Break | LinkCode _ | LinkJump _ | Interpolate _ -> true
+  | Choices (ms, cs) -> (not (List.is_empty ms)) || not (List.is_empty cs)
   | Meta _ ->
     (* overapproximation *)
     true
@@ -315,10 +330,14 @@ let rec may_have_text s =
 
 let rec recursively_add_choices f ss =
   List.concat_map
-    (fun s ->
+    (fun (g, s) ->
       match f s with
-      | [Choices (m, cs)] -> cs @ recursively_add_choices f m
-      | _e -> failwith (s ^ " is not a scene with a single choice in it"))
+      | [Choices (m, cs)] ->
+        cs @ recursively_add_choices f m
+        |> List.map (fun c -> { c with guard = g :: c.guard })
+      | e ->
+        Format.printf "%a@." pp_cmds e;
+        failwith (s ^ " is not a scene with a single choice in it"))
     ss
 
 let print_json program =

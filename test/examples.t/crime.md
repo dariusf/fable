@@ -97,8 +97,7 @@ seen.murder_scene++;
     I was still holding the cane: I gave it an experimental swoosh. It was heavy indeed, though not heavy enough to be used as a bludgeon.
     But it might have been useful in self-defence. Why hadn't the victim reached for it? Knocked it over?
 
-- The window... `1`
-    I went over to the window and peered out. A dismal view of the little brook that ran down beside the house.
+- The window... `1` I went over to the window and peered out. A dismal view of the little brook that ran down beside the house.
     `->prewindow`
 
 - `?seen.murder_scene>=5` Leave the room
@@ -188,13 +187,13 @@ go_back_to = 'window';
 ```
 
 - `more compare_prints`
-- Look down at the brook `>->downy`
+- Look down at the brook `1` `>->downy`
 - Look at the glass
     ```js
     if (window_state === 'steamed') {
-      render(Scripture.parse('`->downy`')[0].cmds);
+      render('`->downy`');
     } else {
-      render(Scripture.parse('The glass in the window was greasy. No one had cleaned it in a while, inside or out.')[0].cmds);
+      render('The glass in the window was greasy. No one had cleaned it in a while, inside or out.');
     }
     ```
 - `?window_state == 'steamed' && !see_prints_on_glass && downy && greasy`
@@ -204,7 +203,7 @@ go_back_to = 'window';
     I breathed gently on the glass once more.
     ```js
     if (reached(window_knowledge, 'fingerprints_on_glass')) {
-      render(Scripture.parse('The fingerprints reappeared.')[0].cmds);
+      render('The fingerprints reappeared.');
     }
     window_state = 'steamed';
     ```
@@ -212,13 +211,13 @@ go_back_to = 'window';
 - `sticky` Something else? `1`
     ```js
     if (window_opts < 2 || reached(window_knowledge, 'fingerprints_on_glass') || window_state == 'steamed') {
-      render(Scripture.parse('I looked away from the dreary glass.')[0].cmds);
+      render('I looked away from the dreary glass.');
       if (window_state == 'steamed') {
         window_state = 'steam_gone';
-        render(Scripture.parse('The steam from my breath faded.')[0].cmds);
+        render('The steam from my breath faded.');
       }
     }
-    render(Scripture.parse('->window')[0].cmds);
+    render('`->window`');
     ```
     I leant back from the glass. My breath had steamed up the pane a little.
     `window_state = 'steamed'`
@@ -230,7 +229,7 @@ go_back_to = 'window';
 ```js
 if (window_state == 'steamed') {
   // TODO higher-level helper
-  render(Scripture.parse("Through the steamed glass I couldn't see the brook. `>->see_prints_on_glass` `->window`")[0].cmds);
+  render("Through the steamed glass I couldn't see the brook. `>->see_prints_on_glass` `->window`");
 }
 ```
 I watched the little stream rush past for a while. The house probably had damp but otherwise, it told me nothing.
@@ -261,13 +260,13 @@ I watched the little stream rush past for a while. The house probably had damp b
     Move the light back to the desk
     `bedroom_light_loc = 'desk'`
     I moved the light back to the desk, setting it down where it had originally been.
-- `?bedroom_light_loc != 'floor' && darkunder`
+- `?bedroom_light_loc != 'floor' && dark_under`
     Move the light to the floor
     `bedroom_light_loc != 'floor'`
     I picked the light up and set it down on the floor.
     `var turn_moved_light_to_floor = turns;`
 
-`->murder_scene`
+<!-- `->murder_scene` -->
 
 # compare_prints
 
@@ -292,13 +291,13 @@ I flicked the light switch.
 
 ```js
 if (bedroom_light_on) {
-  render([['Text', 'The bulb fell dark']]);
+  render('The bulb fell dark');
   bedroom_light_on = false;
 } else {
   if (bedroom_light_loc === 'floor') {
-    render([['Text', 'A little light spilled under the bed.']]);
+    render('A little light spilled under the bed.');
   } else if (bedroom_light_loc === 'desk') {
-    render([['Text', 'The light gleamed on the polished tabletop.']]);
+    render('The light gleamed on the polished tabletop.');
   }
   bedroom_light_on = true;
 }
@@ -367,11 +366,11 @@ My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you fin
 ```js
 if (reached(knife_knowledge, 'joe_wants_better_prints') && !reached(knife_knowledge, 'joe_got_better_prints')) {
   reach(knife_knowledge, 'joe_got_better_prints');
-  render(Scripture.parse("I'll get those prints from the window now.")[0].cmds);
+  render("I'll get those prints from the window now.");
 } else if (reached(knife_knowledge, 'joe_seen_prints_on_knife')) {
-  render(Scripture.parse("I'll run those prints as best I can.")[0].cmds);
+  render("I'll run those prints as best I can.");
 } else {
-  render(Scripture.parse("'Not much to go on.'")[0].cmds);
+  render("'Not much to go on.'");
 }
 ```
 <!-- END -->

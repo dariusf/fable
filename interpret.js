@@ -232,5 +232,10 @@ function interpret(instrs, parent, k) {
 }
 
 function render(s) {
-  interpret(s, content, () => {});
+  if (typeof s === "string") {
+    interpret(Scripture.parse(s)[0].cmds, content, () => {});
+  } else {
+    // take it as a scene (a list of commands)
+    interpret(s, content, () => {});
+  }
 }
