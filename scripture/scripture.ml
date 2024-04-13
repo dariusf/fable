@@ -85,7 +85,7 @@ module Convert = struct
             Tunnel (strip_prefix 7 c)
           else if String.starts_with ~prefix:">->" c then
             Tunnel (strip_prefix 3 c)
-          else Run c
+          else Run (String.trim c)
         in
         Folder.ret (Acc.add r acc)
       | Inline.Emphasis (_, _) -> failwith "unimplemented Emphasis"
@@ -102,7 +102,7 @@ module Convert = struct
       | Inline.Link (l, _) ->
         let t =
           Folder.fold_inline inline_text_folder Acc.empty (Inline.Link.text l)
-          |> Acc.to_list |> String.concat " "
+          |> Acc.to_list |> String.concat " " |> String.trim
         in
         let r =
           match Inline.Link.reference l with
@@ -112,10 +112,10 @@ module Convert = struct
             | Some (t1, _) when String.starts_with ~prefix:"#" t1 ->
               let r = String.sub t1 1 (String.length t1 - 1) in
               (* for links like [text](#id) *)
-              LinkJump (t, r)
+              LinkJump (String.trim t, String.trim r)
             | Some (t1, _) when String.starts_with ~prefix:"!" t1 ->
               let r = String.sub t1 1 (String.length t1 - 1) in
-              LinkCode (t, r)
+              LinkCode (String.trim t, String.trim r)
             | Some _ -> failwith "unknown kind of link")
           | `Ref (_, _l, _) ->
             (* for links like [text][ref] *)
@@ -145,17 +145,15 @@ module Convert = struct
              (fun (name, cmds) -> (name, Acc.add (Para (Acc.to_list a)) cmds))
              acc)
       | Block.Code_block (cb, _meta) ->
-        (* let acc = *)
         (* match Block.Code_block.info_string cb with
            | None -> acc
            | Some (info, _) ->
              (match Block.Code_block.language_of_info_string info with
              | None -> acc
              | Some (lang, _) -> SSet.add lang acc) *)
-        (* SSet.add_seq *)
         let content =
           List.map Block_line.to_string (Block.Code_block.code cb)
-          |> String.concat "\n" (* |> List.to_seq *)
+          |> String.concat "\n" |> String.trim
         in
         (* Acc.add (Run content) acc *)
         let thing =
@@ -164,8 +162,8 @@ module Convert = struct
           | Some (s, _) ->
             let segs = String.split_on_char ' ' s in
             (match segs with
-            | [_; "meta"] | [_; "~"] -> Meta content
-            | _ -> Run content)
+            | [_; "meta"] | [_; "~"] -> Meta (String.trim content)
+            | _ -> Run (String.trim content))
         in
         Folder.ret
           (Acc.change_last (fun (name, cmds) -> (name, Acc.add thing cmds)) acc)
@@ -190,7 +188,7 @@ module Convert = struct
         let name =
           Folder.fold_inline inline_text_folder Acc.empty
             (Block.Heading.inline h)
-          |> Acc.to_list |> String.concat ""
+          |> Acc.to_list |> String.concat "" |> String.trim
         in
         Folder.ret (Acc.add (name, Acc.empty) acc)
       | Block.Html_block (b, _) ->
@@ -199,7 +197,8 @@ module Convert = struct
         else
           Folder.ret
             (Acc.change_last
-               (fun (name, cmds) -> (name, Acc.add (Verbatim l) cmds))
+               (fun (name, cmds) ->
+                 (name, Acc.add (Verbatim (String.trim l)) cmds))
                acc)
       | Block.Link_reference_definition (_, _) ->
         failwith "unimplemented Link_reference_definition"
@@ -233,6 +232,7 @@ module Convert = struct
                  && String.starts_with ~prefix:"more " m ->
             `More (strip_prefix 6 g, strip_prefix 5 m)
           | [Run m], [] when String.starts_with ~prefix:"more " m ->
+            (* some js leaked in here, but this is the boolean true value in most languages... *)
             `More ("true", strip_prefix 5 m)
           | _ ->
             (* only look for special syntax in the first paragraph *)
