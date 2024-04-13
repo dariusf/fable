@@ -59,6 +59,7 @@ function main() {
 function surfaceError(...args) {
   console.error(args);
   let elt = document.createElement("div");
+  elt.classList.add("error");
   elt.style.color = "red";
   elt.textContent = args.join(" ");
   content.append(elt);

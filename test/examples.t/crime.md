@@ -301,7 +301,7 @@ My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you fin
 
 # joe_in_hall1
 
-- `?found == 1` 'Nothing.'
+- `?seen('joe_in_hall1') == 1` 'Nothing.'
     He shrugged. 'Shame.'
     `->done`
 
@@ -344,11 +344,11 @@ My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you fin
     - 'Perhaps the murderer hoped to clean up the scene.'
         'But they were disturbed? It's possible.'
 
-  - `?found > 1` 'That's it.' `1`
+  - `?seen('joe_in_hall1') > 1` 'That's it.' `1`
       'All right. It's a start,' Joe replied.
       `->done`
 
-`->found`
+`->joe_in_hall1`
 
 # done
 <!-- this is also a fallback option... -->
