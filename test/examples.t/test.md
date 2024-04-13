@@ -2,10 +2,6 @@
 # Two
 
 ```js
-var turns = 0;
-function on_interact() {
-  turns++;
-}
 var items = ['Apple', 'Banana', 'Carrot'];
 // This makes testing tough
 // var a = items[Math.floor(Math.random()*items.length)];
@@ -81,7 +77,7 @@ Right before going back to Nested
 # Copy
 
 ```js
-render(scenes['One']);
+render_scene('One');
 ```
 
 # Some choices

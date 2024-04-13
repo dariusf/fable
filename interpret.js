@@ -255,11 +255,12 @@ function interpret(instrs, parent, k) {
           ul.appendChild(li);
           let a = document.createElement("a");
           a.href = "#";
+          a.classList.add("choice");
           links.push(a);
           li.appendChild(a);
           a.onclick = (ev) => {
             ev.preventDefault();
-            on_interact.forEach((f) => f());
+            window.on_interact.forEach((f) => f());
             if (choices_disappear) {
               parent.removeChild(ul);
             } else {
@@ -303,6 +304,6 @@ function render(s) {
 }
 
 function render_scene(s) {
-  on_scene_visit.forEach((f) => f(scene));
-  render(scenes[s]);
+  on_scene_visit.forEach((f) => f(s));
+  render(_scenes[s]);
 }

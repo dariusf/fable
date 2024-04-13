@@ -20,7 +20,7 @@
   <div><span>Hello </span><span>Apple</span><span>!</span></div><div><a href="#">jump</a></div><div><a href="#">code</a></div><div><span>Make a choice:</span></div><div><span>End of first scene</span></div>
 
   $ ./test.py 'Nested lists' 'Choice 1' 'Nested choice. Did you choose choice 1?' 'Choice 2' 'Choice 3' 'Choice 4'
-  <div><span>Hello </span><span>Apple</span><span>!</span></div><div><a href="#">jump</a></div><div><a href="#">code</a></div><div><span>Make a choice:</span></div><div><span>Right before going back to Nested</span></div><div><span> after</span><br><span>break</span></div><div><span>Right before going back to Nested</span></div><div><span>A paragraph</span></div><div><span>Right before going back to Nested</span></div><div><span>Right before going back to Nested</span></div><ul></ul>
+  <div><span>Hello </span><span>Apple</span><span>!</span></div><div><a href="#">jump</a></div><div><a href="#">code</a></div><div><span>Make a choice:</span></div><div><span>Right before going back to Nested</span></div><div><span> after</span><span> </span><span>break</span></div><div><span>Right before going back to Nested</span></div><div><span>A paragraph</span></div><div><span>Right before going back to Nested</span></div><div><span>Right before going back to Nested</span></div><ul></ul>
 
   $ ./test.py 'Copy' 'Apple'
   <div><span>Hello </span><span>Apple</span><span>!</span></div><div><a href="#">jump</a></div><div><a href="#">code</a></div><div><span>Make a choice:</span></div><div><span>text from Scene 1</span></div><div><details>

@@ -6,7 +6,7 @@
       "cmds": [
         [
           "Run",
-          "var turns = 0;\nfunction on_interact() {\n  turns++;\n}\nvar items = ['Apple', 'Banana', 'Carrot'];\n// This makes testing tough\n// var a = items[Math.floor(Math.random()*items.length)];\nvar a = items[2-3+1];"
+          "var items = ['Apple', 'Banana', 'Carrot'];\n// This makes testing tough\n// var a = items[Math.floor(Math.random()*items.length)];\nvar a = items[2-3+1];"
         ],
         [
           "Para",
@@ -467,7 +467,7 @@
       "cmds": [
         [
           "Run",
-          "render(scenes['One']);"
+          "render_scene('One');"
         ]
       ]
     },
@@ -512,7 +512,10 @@
         [
           "Choices",
           [
-            "Some choices"
+            [
+              "true",
+              "Some choices"
+            ]
           ],
           [
             {
