@@ -249,9 +249,12 @@ function interpret(instrs, parent, k) {
               continue;
             }
           }
+          console.log("generate", item, generate);
           if (!generate) {
+            console.log("continuing", item);
             continue;
           }
+          console.log("creating element", item);
           let li = document.createElement("li");
           ul.appendChild(li);
           let a = document.createElement("a");

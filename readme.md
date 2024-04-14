@@ -27,7 +27,7 @@ make all
 Random testing of the story built via `make` randomly
 
 ```sh
-make random
+make test
 ```
 
 Check test/runtime.t/test.js to see how the last two work.

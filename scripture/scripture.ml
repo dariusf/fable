@@ -363,7 +363,7 @@ let print_json ?out program =
     let out = Option.value out ~default:stdout in
     Printf.fprintf out "const data = ";
     Yojson.Safe.to_channel ~std:true out program;
-    Printf.fprintf out ";%!")
+    Printf.fprintf out ";\n%!")
   else
     match out with
     | None -> Format.printf "%a@." (Yojson.Safe.pretty_print ~std:true) program

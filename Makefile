@@ -1,8 +1,9 @@
 
 .PHONY: default
 default:
-	# dune exec ./main.exe test/examples.t/test.md | tee data.js
-	dune exec ./main.exe test/examples.t/crime.md | tee data.js
+	# dune exec ./main.exe test/examples.t/test.md > data.js
+	dune exec ./main.exe test/examples.t/crime.md > data.js
+	grep 'data ' data.js | sed -e 's/const data =//g' -e 's/;$$//g' | jq | pbcopy
 	dune build ./web.bc.js
 	# dune build --release ./web.bc.js
 	dune build @examples
@@ -11,8 +12,8 @@ default:
 all: default
 	dune test
 
-.PHONY: random
-random: default
+.PHONY: test
+test: default
 	test/runtime.t/test.js
 
 .PHONY: watch

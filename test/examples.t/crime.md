@@ -90,7 +90,7 @@ go_back_to = 'murder_scene'
     `->prewindow`
 
 - `?seen('murder_scene')>=5` Leave the room `1`
-    I'd seen enough. I `$bedroom_light.on ? 'switched off the lamp, then ' : ''`turned and left the room.
+    I'd seen enough. I `$bedroom_light.on ? ' switched off the lamp, then ' : ''` turned and left the room.
     `->joe_in_hall`
 
 `->murder_scene`
@@ -243,7 +243,7 @@ I watched the little stream rush past for a while. The house probably had damp b
     Move the light to the bed `bedroom_light.loc = 'bed'`
 
     I moved the light over to the bloodstain and peered closely at it. It had soaked deeply into the fibres of the cotton sheet.
-    There was no doubt about it. This was where the blow had been struck. `reach(bed_knowledge, murdered_in_bed)`
+    There was no doubt about it. This was where the blow had been struck. `reach(bed_knowledge, 'murdered_in_bed')`
 
 - `?bedroom_light.loc != 'desk' && (turns-turn_moved_light_to_floor) >= 2`
     Move the light back to the desk
@@ -301,25 +301,24 @@ My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you fin
 
 # joe_in_hall1
 
-- `?seen('joe_in_hall1') == 1` 'Nothing.'
+- `?seen('joe_in_hall1') == 1` 'Nothing.' `1`
     He shrugged. 'Shame.'
     `->done`
 
-- `?inventory.has('knife')`
-    'I found the murder weapon.' `1`
+- `?inventory.has('knife')` 'I found the murder weapon.' `1`
     'Good going!' Joe replied with a grin. 'We thought the murderer had gotten rid of it. I'll bag that for you now.'
     `knife_loc = 'joe'`
 
-- `reached(knife_knowledge, 'prints_on_knife') && knife_loc == 'joe'`
+- `?reached(knife_knowledge, 'prints_on_knife') && knife_loc == 'joe'`
     'There are prints on the blade[.'],' I told him.
     He regarded them carefully.
     'Hrm. Not very complete. It'll be hard to get a match from these.'
     `reach(knife_knowledge, 'joe_seen_prints_on_knife')`
-- `reached(window_knowledge, 'fingerprints_on_glass_match_knife') && reached(knife_knowledge, 'joe_seen_prints_on_knife') `
+- `?reached(window_knowledge, 'fingerprints_on_glass_match_knife') && reached(knife_knowledge, 'joe_seen_prints_on_knife') `
     'They match a set of prints on the window, too.'
     'Anyone could have touched the window,' Joe replied thoughtfully. 'But if they're more complete, they should help us get a decent match!'
     `reach(knife_knowledge, 'joe_wants_better_prints')`
-- `reached(bed_knowledge, 'body_on_bed') && !reached(bed_knowledge, 'murdered_in_bed')`
+- `?reached(bed_knowledge, 'body_on_bed') && !reached(bed_knowledge, 'murdered_in_bed')`
     'The body was moved to the bed at some point[.'],' I told him. 'And then moved back to the floor.'
     'Why?'
     - 'I don't know.' `1`
@@ -328,7 +327,7 @@ My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you fin
         'You wouldn't move a whole body for that.'
     - 'Perhaps he was killed in bed.' `1`
         'It's just speculation at this point,' Joe remarks.
-- ` reached(murdered_in_bed) `
+- `?reached(bed_knowledge, 'murdered_in_bed')`
     'The victim was murdered in bed, and then the body was moved to the floor.'
     'Why?'
     - 'I don't know.' `1`
@@ -363,4 +362,4 @@ if (reached(knife_knowledge, 'joe_wants_better_prints') && !reached(knife_knowle
   render("'Not much to go on.'");
 }
 ```
-<!-- END -->
+THE END
