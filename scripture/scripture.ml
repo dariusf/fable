@@ -335,8 +335,8 @@ let rec recursively_add_choices f ss =
       | [Choices (m, cs)] ->
         cs @ recursively_add_choices f m
         |> List.map (fun c -> { c with guard = g :: c.guard })
-      | e ->
-        Format.printf "%a@." pp_cmds e;
+      | _e ->
+        (* Format.printf "%a@." pp_cmds e; *)
         failwith (s ^ " is not a scene with a single choice in it"))
     ss
 

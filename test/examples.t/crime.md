@@ -148,7 +148,7 @@ var drawers_opened = 0;
 
 - `sticky` `?drawers_opened<3` Open a drawer `1`
 
-    I tried `$['a drawer at random', 'another drawer', 'a third drawer'][drawers_opened]`. `$['Locked', 'Also locked', 'Unsurprisingly, locked as well'][drawers_opened]`.
+    I tried `$' ' + ['a drawer at random', 'another drawer', 'a third drawer'][drawers_opened]`. `$' ' + ['Locked', 'Also locked', 'Unsurprisingly, locked as well'][drawers_opened]`.
 
     `drawers_opened++`
 
@@ -173,11 +173,11 @@ go_back_to = 'window';
 - `more compare_prints`
 - Look down at the brook `1` `>->downy`
 - Look at the glass `see('greasy')`
-    ```js
+    ```js ~
     if (window_state === 'steamed') {
-      render('`->downy`');
+      '`->downy`'
     } else {
-      render('The glass in the window was greasy. No one had cleaned it in a while, inside or out.');
+      'The glass in the window was greasy. No one had cleaned it in a while, inside or out.'
     }
     ```
 - `?window_state == 'steamed' && !seen('see_prints_on_glass') && seen('downy') && seen('greasy')`
@@ -206,7 +206,6 @@ go_back_to = 'window';
       //render('`->murder_scene`');
       acc += '`->murder_scene`';
     }
-    console.log(acc);
     acc
     ```
     I leant back from the glass. My breath had steamed up the pane a little.
@@ -216,10 +215,10 @@ go_back_to = 'window';
 
 # downy
 
-```js
+```js ~
 if (window_state == 'steamed') {
   // TODO higher-level helper
-  render("Through the steamed glass I couldn't see the brook. `>->see_prints_on_glass` `->window`");
+  "Through the steamed glass I couldn't see the brook. `>->see_prints_on_glass` `->window`"
 }
 ```
 I watched the little stream rush past for a while. The house probably had damp but otherwise, it told me nothing.
@@ -311,16 +310,19 @@ My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you fin
     `knife_loc = 'joe'`
 
 - `?reached(knife_knowledge, 'prints_on_knife') && knife_loc == 'joe'`
-    'There are prints on the blade[.'],' I told him.
+    'There are prints on the blade.' `1`
     He regarded them carefully.
     'Hrm. Not very complete. It'll be hard to get a match from these.'
     `reach(knife_knowledge, 'joe_seen_prints_on_knife')`
+
 - `?reached(window_knowledge, 'fingerprints_on_glass_match_knife') && reached(knife_knowledge, 'joe_seen_prints_on_knife') `
-    'They match a set of prints on the window, too.'
+    'They match a set of prints on the window, too.' `1`
     'Anyone could have touched the window,' Joe replied thoughtfully. 'But if they're more complete, they should help us get a decent match!'
     `reach(knife_knowledge, 'joe_wants_better_prints')`
+
 - `?reached(bed_knowledge, 'body_on_bed') && !reached(bed_knowledge, 'murdered_in_bed')`
-    'The body was moved to the bed at some point[.'],' I told him. 'And then moved back to the floor.'
+    'The body was moved to the bed at some point.' `1`
+    'And then moved back to the floor.'
     'Why?'
     - 'I don't know.' `1`
         Joe nods. 'All right.'
@@ -328,20 +330,21 @@ My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you fin
         'You wouldn't move a whole body for that.'
     - 'Perhaps he was killed in bed.' `1`
         'It's just speculation at this point,' Joe remarks.
+
 - `?reached(bed_knowledge, 'murdered_in_bed')`
-    'The victim was murdered in bed, and then the body was moved to the floor.'
+    'The victim was murdered in bed, and then the body was moved to the floor.' `1`
     'Why?'
     - 'I don't know.' `1`
         Joe nods. 'All right, then.'
-    - 'Perhaps the murderer wanted to mislead us.'
+    - 'Perhaps the murderer wanted to mislead us.' `1`
         'How so?'
 
-        - 'They wanted us to think the victim was awake[.'], I replied thoughtfully. 'That they were meeting their attacker, rather than being stabbed in their sleep.'
-        - 'They wanted us to think there was some kind of struggle[.'],' I replied. 'That the victim wasn't simply stabbed in their sleep.'
+        - 'They wanted us to think the victim was awake.' `1` 'That they were meeting their attacker, rather than being stabbed in their sleep.'
+        - 'They wanted us to think there was some kind of struggle.' `1` 'That the victim wasn't simply stabbed in their sleep.'
 
         'But if they were killed in bed, that's most likely what happened. Stabbed, while sleeping.'
         `reach(bed_knowledge, 'murdered_while_asleep')`
-    - 'Perhaps the murderer hoped to clean up the scene.'
+    - 'Perhaps the murderer hoped to clean up the scene.' `1`
         'But they were disturbed? It's possible.'
 
   - `?seen('joe_in_hall1') > 1` 'That's it.' `1`

@@ -185,10 +185,15 @@ function interpret(instrs, parent, k) {
       return interpret(_scenes[scene], content, () => {});
     }
     case "Meta":
+      let s;
+      let instrs;
       try {
-        let s = eval?.(current[1]);
+        s = eval?.(current[1]);
+        if (s === undefined) {
+          s = "";
+        }
         // console.log("meta result", s);
-        let instrs = Scripture.parse(s);
+        instrs = Scripture.parse(s);
         if (instrs.length) {
           instrs = instrs[0].cmds;
           // console.log("meta produced", instrs);
@@ -199,7 +204,7 @@ function interpret(instrs, parent, k) {
           interpret(rest, parent, k);
         }
       } catch (e) {
-        surfaceError("meta", current[1], eval?.(current[1]), e);
+        surfaceError("meta", current[1], s, instrs, e);
       }
       break;
     case "Para":
@@ -260,6 +265,7 @@ function interpret(instrs, parent, k) {
           if (!generate) {
             continue;
           }
+          console.log("choice generated from", item);
           let li = document.createElement("li");
           ul.appendChild(li);
           let a = document.createElement("a");
