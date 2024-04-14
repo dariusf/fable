@@ -1,5 +1,5 @@
 
-  $ main test.md | sed -e 's/const data = //g' -e 's/;$//g' | jq .
+  $ main ../test.md | sed -e 's/const data = //g' -e 's/;$//g' | jq .
   [
     {
       "name": "Two",

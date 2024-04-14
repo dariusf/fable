@@ -11,8 +11,8 @@ default:
 all: default
 	dune test
 
-.PHONY: exhaustive
-exhaustive: default
+.PHONY: random
+random: default
 	test/runtime.t/test.js
 
 .PHONY: watch

@@ -1,14 +1,30 @@
-(executable
- (name main)
- (public_name main)
- (modules main)
- (libraries scripture)
- (preprocess (pps ppx_deriving_yojson ppx_deriving.std)))
 
 (executable
  (name web)
  (modules web)
  (libraries brr scripture)
  (modes js))
+
+(rule
+  (with-stdout-to embedded.ml
+    (progn
+      (echo "let index = {|")
+      ; (cat index.html)
+      (run sed s@_build/default/web.bc.js@runtime.js@ index.html)
+      (echo "|}")
+      (echo "let runtime = {|")
+      (cat web.bc.js)
+      (echo "|}")
+      (echo "let interpret = {|")
+      (cat interpret.js)
+      (echo "|}")
+      )))
+
+(executable
+ (name main)
+ (public_name main)
+ (modules main embedded)
+ (libraries scripture)
+ (preprocess (pps ppx_deriving_yojson ppx_deriving.std)))
 
 (env (dev (flags (:standard -warn-error -A))))

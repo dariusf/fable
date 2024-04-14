@@ -356,14 +356,18 @@ let contains_control_change s =
   in
   List.exists aux s
 
-let print_json program =
+let print_json ?out program =
   let compact = true in
   let program = program_to_yojson program in
   if compact then (
-    print_string "const data = ";
-    Yojson.Safe.to_channel ~std:true stdout program;
-    print_endline ";")
-  else Format.printf "%a@." (Yojson.Safe.pretty_print ~std:true) program
+    let out = Option.value out ~default:stdout in
+    Printf.fprintf out "const data = ";
+    Yojson.Safe.to_channel ~std:true out program;
+    Printf.fprintf out ";%!")
+  else
+    match out with
+    | None -> Format.printf "%a@." (Yojson.Safe.pretty_print ~std:true) program
+    | Some out -> Yojson.Safe.to_channel out ~std:true program
 
 let md_file_to_json file =
   let doc =
@@ -371,7 +375,7 @@ let md_file_to_json file =
     Cmarkit.Doc.of_string (Common.read_file file)
   in
   (* Format.printf "html: %s@." (Cmarkit_html.of_doc ~safe:true doc); *)
-  doc |> Convert.to_program |> print_json
+  doc |> Convert.to_program
 
 let md_to_instrs str =
   (* ~resolver:Convert.resolver  *)
