@@ -2,6 +2,7 @@
 
 window.on_interact = [];
 window.on_scene_visit = [];
+window.on_choice = [];
 
 var turns = 0;
 on_interact.push(() => {
@@ -28,16 +29,48 @@ function seen(scene) {
   return seen_scenes[scene];
 }
 
+var choice_history = [];
+
 on_scene_visit.push((s) => {
   see(s);
   last_visited_turn[s] = turns;
 });
+
+function make_choices(cs) {
+  if (cs.length) {
+    let c = cs[0].trim();
+    let [elt] = xpath(`//*[contains(child::text(), "${c}")]/..`);
+    elt.click();
+    setTimeout(() => make_choices(cs.slice(1)), 30);
+  }
+}
 
 // CONFIG
 
 let choices_disappear = true;
 
 // INTERNALS
+
+function xpath(xpath) {
+  let nodes = document.evaluate(
+    xpath,
+    document,
+    null,
+    XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+    null
+  );
+  let res = [];
+  try {
+    let node = nodes.iterateNext();
+    while (node) {
+      res.push(node);
+      node = nodes.iterateNext();
+    }
+  } catch (e) {
+    console.error(`Document tree modified during iteration: ${e}`);
+  }
+  return res;
+}
 
 // this shouldn't be accessed directly as on_scene_visit won't fire
 let _scenes = {};
@@ -265,7 +298,7 @@ function interpret(instrs, parent, k) {
           if (!generate) {
             continue;
           }
-          console.log("choice generated from", item);
+          // console.log("choice generated from", item);
           let li = document.createElement("li");
           ul.appendChild(li);
           let a = document.createElement("a");
@@ -275,6 +308,7 @@ function interpret(instrs, parent, k) {
           li.appendChild(a);
           a.onclick = (ev) => {
             ev.preventDefault();
+            choice_history.push(a.textContent);
             window.on_interact.forEach((f) => f());
             if (choices_disappear) {
               parent.removeChild(ul);
@@ -294,7 +328,7 @@ function interpret(instrs, parent, k) {
             //   });
             // }
           };
-          interpret(item.initial, a, (x) => x);
+          interpret(item.initial, a, () => {});
         }
       }
       break;

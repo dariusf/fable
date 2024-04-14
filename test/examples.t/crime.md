@@ -60,7 +60,7 @@ go_back_to = 'murder_scene'
     - `?inventory.has('cane')` Knock it with the cane `->knock_with_cane`
     - `?(turns-turn_reaching)>1` Stand up `1` I stood up once more, and brushed my coat down. `->murder_scene`
 
-- `more knock_with_cane`
+- `?turn_reaching && (turns-turn_reaching) >= 4 && inventory.has('cane')` `more knock_with_cane`
 
 - `?knife_loc == 'floor'`
     Pick up the knife `1`
@@ -70,7 +70,7 @@ go_back_to = 'murder_scene'
 - `?inventory.has('knife')`
     Look at the knife `1`
     The blood was dry enough. Dry enough to show up partial prints on the hilt!
-    `reach(knife_knowledge, prints_on_knife)`
+    `reach(knife_knowledge, 'prints_on_knife')`
 
 - The desk... `1`
 
@@ -225,7 +225,7 @@ I watched the little stream rush past for a while. The house probably had damp b
 
 # knock_with_cane
 
-- `?turn_reaching && (turns-turn_reaching) >= 4 &&  inventory.has('cane')` Use the cane to reach under the bed `1`
+- Use the cane to reach under the bed `1`
 
     Positioning the cane above the carpet, I gave the glinting thing a sharp tap. It slid out from the under the foot of the bed.
     `knife_loc = 'floor'`
@@ -311,6 +311,7 @@ My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you fin
 
 - `?reached(knife_knowledge, 'prints_on_knife') && knife_loc == 'joe'`
     'There are prints on the blade.' `1`
+    'There are prints on the blade,' I told him.
     He regarded them carefully.
     'Hrm. Not very complete. It'll be hard to get a match from these.'
     `reach(knife_knowledge, 'joe_seen_prints_on_knife')`
@@ -322,7 +323,7 @@ My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you fin
 
 - `?reached(bed_knowledge, 'body_on_bed') && !reached(bed_knowledge, 'murdered_in_bed')`
     'The body was moved to the bed at some point.' `1`
-    'And then moved back to the floor.'
+    'The body was moved to the bed at some point,' I told him. 'And then moved back to the floor.'
     'Why?'
     - 'I don't know.' `1`
         Joe nods. 'All right.'
@@ -339,8 +340,13 @@ My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you fin
     - 'Perhaps the murderer wanted to mislead us.' `1`
         'How so?'
 
-        - 'They wanted us to think the victim was awake.' `1` 'That they were meeting their attacker, rather than being stabbed in their sleep.'
-        - 'They wanted us to think there was some kind of struggle.' `1` 'That the victim wasn't simply stabbed in their sleep.'
+        - 'They wanted us to think the victim was awake.' `1`
+            'They wanted us to think the victim was awake[.'], I replied thoughtfully.
+            'That they were meeting their attacker, rather than being stabbed in their sleep.'
+
+        - 'They wanted us to think there was some kind of struggle.' `1`
+            'They wanted us to think there was some kind of struggle,' I replied.
+            'That the victim wasn't simply stabbed in their sleep.'
 
         'But if they were killed in bed, that's most likely what happened. Stabbed, while sleeping.'
         `reach(bed_knowledge, 'murdered_while_asleep')`
@@ -367,3 +373,46 @@ if (reached(knife_knowledge, 'joe_wants_better_prints') && !reached(knife_knowle
 }
 ```
 THE END
+
+
+<!--
+
+make_choices([
+    "The bed...",
+    "Lift the bedcover",
+    "Remove the cover",
+    "Pull back the duvet",
+    "Remake the bed",
+    "Test the bed",
+    "Look under the bed",
+    "Something else?",
+    "The desk...",
+    "Pick up the cane",
+    "Turn on the lamp",
+    "Look at the in-tray",
+    "Open a drawer",
+    "Open a drawer",
+    "Open a drawer",
+    "Something else?",
+    "Swoosh the cane",
+    "The window...",
+    "Look down at the brook",
+    "Look at the glass",
+    "Something else?",
+    " Look at the steam",
+    "Breathe on the glass",
+    "Something else?",
+    " Move the light to the floor ",
+    " Look under the bed",
+    "Knock it with the cane",
+    "Use the cane to reach under the bed",
+    "Look under the bed once more",
+    " Pick up the knife",
+    " Look at the knife",
+    " Compare the prints on the knife and the window",
+    " Move the light back to the desk ",
+    " Move the light to the floor ",
+    "Leave the room"
+])
+
+-->
