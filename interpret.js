@@ -187,16 +187,24 @@ function interpret(instrs, parent, k) {
     case "Meta":
       try {
         let s = eval?.(current[1]);
-        let instrs = Scripture.parse(s)[0].cmds;
-        // console.log("meta produced", instrs);
-        interpret(instrs, parent, k);
+        // console.log("meta result", s);
+        let instrs = Scripture.parse(s);
+        if (instrs.length) {
+          instrs = instrs[0].cmds;
+          // console.log("meta produced", instrs);
+          interpret(instrs, parent, () => {
+            interpret(rest, parent, k);
+          });
+        } else {
+          interpret(rest, parent, k);
+        }
       } catch (e) {
-        surfaceError("meta", instr[1], e);
+        surfaceError("meta", current[1], eval?.(current[1]), e);
       }
       break;
     case "Para":
       {
-        if (current[0].length > 0) {
+        if (current[0].length) {
           let d;
           if (Scripture.mayHaveText(current)) {
             // removes unneccessary divs
@@ -249,12 +257,9 @@ function interpret(instrs, parent, k) {
               continue;
             }
           }
-          console.log("generate", item, generate);
           if (!generate) {
-            console.log("continuing", item);
             continue;
           }
-          console.log("creating element", item);
           let li = document.createElement("li");
           ul.appendChild(li);
           let a = document.createElement("a");
@@ -295,7 +300,11 @@ function interpret(instrs, parent, k) {
 function render(s) {
   let cmds;
   if (typeof s === "string") {
-    cmds = Scripture.parse(s)[0].cmds;
+    cmds = Scripture.parse(s);
+    if (!cmds.length) {
+      return;
+    }
+    cmds = cmds[0].cmds;
   } else {
     // take it as a scene (a list of commands)
     cmds = s;

@@ -203,9 +203,10 @@ go_back_to = 'window';
         //render('The steam from my breath faded.');
         acc += 'The steam from my breath faded.\n\n';
       }
-      //render('`->window`');
-      acc += '`->window`';
+      //render('`->murder_scene`');
+      acc += '`->murder_scene`';
     }
+    console.log(acc);
     acc
     ```
     I leant back from the glass. My breath had steamed up the pane a little.
