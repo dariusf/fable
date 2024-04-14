@@ -57,6 +57,7 @@ const options = new Chrome.Options();
           .findElement(By.id("content"))
           .getAttribute("innerHTML");
         console.log(res);
+        await driver.sleep(3600_000);
       } else {
         console.log("ALL OK!");
       }
