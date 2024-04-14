@@ -2,46 +2,55 @@
 
 ## Concepts
 
-A Scripture story consists of named _sections_, which contain prose interleaved with code.
-There is always a _current section_ which the player is reading.
+### Sections
 
-Sections are _shown_ until they end or up until player input is needed (e.g. with choices).
+A Scripture story consists of named _sections_, which contain prose interleaved with _instructions_.
 
-When there is player input (e.g. clicking to make choice), the section _continues_, which will show more prose or execute more code.
+Sections are shown until they end or up until player input is required (e.g. choices), which may either continue the section or move to another. A section may thus never be shown in its entirety.
 
-The internal state of the game is completely user-defined, and is modified by code execution in a user-defined way.
+### Control
 
 _Jumps_ connect sections.
-Think of jumps essentially as a kind of code, so they may occur anywhere code can:
-as part of the flow of a section (in which case the section seamlessly ends and another begins), or in response to player input.
+They may occur anywhere in prose:
+as part of the flow of a section (in which case the section seamlessly ends and another begins), or in response to player input (via choices).
 
-<!-- TODO example -->
+<!-- TODO examples -->
 
-## Basics
+### State
+
+The internal state of the game can be completely user-defined, and is modified by code execution in a user-defined way. Some state is maintained by the runtime.
+
+### Syntax
 
 Scripture is a Markdown dialect.
 
 Like with other narrative scripting languages, unadorned text is prose to be shown to the player.
 Narrative-related constructs are represented using Markdown elements.
 
+## Elements
+
 ### Sections
 
-Sections are named using H1s and ended by thematic breaks.
+Sections are named using headings.
 
 ### Inline code
 
 Inline code `` `CODE` `` is run when shown. Its output is hidden.
 
-With a `$` prefix `` `$CODE` ``, the output is _interpolated_ as _text_ into the story at that point.
+With a `$` prefix (`` `$CODE` ``), the output is _interpolated_ as _text_ into the story at that point.
 
-With a `~` prefix  `` `~CODE` ``, the output is interpolated as _Scripture_ into the story at that point.
+With a `~` prefix  (`` `~CODE` ``), the output is interpolated as _Scripture_ into the story at that point.
 This allows _unquoting_: generating some fragment of story dynamically using JavaScript.
 
-A `jump` prefix `` `jump SECTION` `` denotes a jump to SECTION.
+A `jump` or `->` prefix (`` `jump SECTION` `` or `` `-> SECTION` ``) denotes a _jump_ to SECTION.
+
+A _dynamic jump_ `->$` prefix (`` `->$ E` ``) jumps to the name of the section that E evaluates to.
+
+A `tunnel` or `>->` prefix (`` `tunnel SECTION` `` or `` `>-> SECTION` ``) denotes a _tunnel_ to SECTION, which returns to the origin of the jump after the jumped-to section completes.
 
 ### Code blocks
 
-Code block output is not shown, like inline code without a prefix.
+A plain code block (with optional language declaration) is just like inline code without a prefix: its output is not shown.
 
 <pre><code>```js
 CODE
@@ -55,11 +64,17 @@ CODE
 
 ### Choices
 
-Lists denote choices. Each list item is of the format ``TEXT `CODE`  MORE``.
+Lists denote choices. Each list item is of the format ``TEXT `CODE`  BODY``.
 
 - TEXT is the text of the choice.
 - CODE is some fragment of code that will be run on the choice being selected. Its result will not be shown.
-- MORE is some unrestricted Scripture fragment that will be shown/run.
+- BODY is some unrestricted Scripture fragment that will be shown.
+
+guard ?
+more
+sticky
+fallback
+guarded mores
 
 Once a choice is selected, the other options will be disabled.
 The story continues after a choice, like [weave](https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md#the-weave-philosophy) in Ink terms. This is the default, unlike in Ink.
@@ -72,16 +87,44 @@ A `[TEXT](#SECTION)` link jumps to SECTION.
 
 A `[TEXT](!FN)` link causes the function FN to be run.
 
-### Runtime
-
-There is a lot of freedom in how the runtime can behave, but it should minimally implement the following:
-
-- the `on_interact` function is called whenever a user interaction takes place
-
 ## Semantics
 
-A Scripture story is essentially a procedural program.
+A Scripture story can be given a (denotational) semantics by (rough) analogy to procedural programs.
 
-A section is essentially a labelled block of JavaScript, where unadorned text can be thought of as print statements (though with provisions for differentiating block and inline elements), and quoted JavaScript is inlined (between statements, for normal code blocks, or into print statements, for interpolation).
+| Scripture           | Program          |
+| ------------------- | ---------------- |
+| section             | labelled block   |
+| prose               | print statements |
+| inline code, blocks | statements       |
+| meta                | unquote          |
+| jump                | goto             |
+| tunnel              | procedure call   |
+| choices             | conditional      |
 
-Jumps are GOTOs and connect sections, ending control flow when they occur.
+The abstraction provided by a Scripture story is intentionally very leaky.
+This has several benefits.
+The story can be reasoned about like a program.
+It's clear when a particular bit of prose "executes", allowing things like widgets appearing in the flow of a story using raw HTML.
+The browser console is fully available, and the state of the story can be queried at any point without doing anything special.
+Necessary data structures and libraries and language features can simply be used.
+
+# TODO
+
+nested lists
+
+finish ink feature by feature comparison
+
+Built-in seen and turns
+
+content before first heading
+
+guard
+interpolated choices + guards
+meta can jump, run cannot
+
+browser tests
+save and load
+standalone
+space behavior
+
+readme
