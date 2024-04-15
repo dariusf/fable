@@ -1,6 +1,0 @@
-[book]
-authors = ["Darius Foo"]
-language = "en"
-multilingual = false
-src = "src"
-title = "Scripture Docs"
