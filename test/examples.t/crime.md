@@ -2,6 +2,12 @@
 # beginning
 
 ```js
+bug_detectors.push(() => {
+  let not_ended = !findContainingText("THE END").length;
+  let no_options = !document.querySelectorAll('.choice').length
+  return not_ended && no_options;
+});
+
 var turn_reaching = 0;
 
 var inventory = new Set();
@@ -54,11 +60,7 @@ go_back_to = 'murder_scene'
 - `?dark_under && bedroom_light.loc === 'floor' && bedroom_light.on`
     Look under the bed `1`
     I peered under the bed. Something glinted back at me.
-    `turn_reaching = turns`
-
-    - Reach for it `1` I fished with one arm under the bed, but whatever it was, it had been kicked far enough back that I couldn't get my fingers on it.  `->reaching`
-    - `?inventory.has('cane')` Knock it with the cane `->knock_with_cane`
-    - `?(turns-turn_reaching)>1` Stand up `1` I stood up once more, and brushed my coat down. `->murder_scene`
+    `->reaching`
 
 - `?turn_reaching && (turns-turn_reaching) >= 4 && inventory.has('cane')` `more knock_with_cane`
 
@@ -211,6 +213,8 @@ go_back_to = 'window';
     I leant back from the glass. My breath had steamed up the pane a little.
     `window_state = 'steamed'`
 
+TODO fallback
+
 `->window`
 
 # downy
@@ -357,7 +361,17 @@ My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you fin
       'All right. It's a start,' Joe replied.
       `->done`
 
+TODO fallback
+
 `->joe_in_hall1`
+
+# reaching
+
+- Reach for it `1` I fished with one arm under the bed, but whatever it was, it had been kicked far enough back that I couldn't get my fingers on it. `->reaching`
+- `?inventory.has('cane')` Knock it with the cane `->knock_with_cane`
+- `?turns_since('reaching')>1` Stand up `1` I stood up once more, and brushed my coat down. `->murder_scene`
+
+TODO fallback
 
 # done
 <!-- this is also a fallback option... -->

@@ -3,6 +3,7 @@
 window.on_interact = [];
 window.on_scene_visit = [];
 window.on_choice = [];
+window.bug_detectors = [];
 
 var turns = 0;
 on_interact.push(() => {
@@ -50,27 +51,6 @@ function make_choices(cs) {
 let choices_disappear = true;
 
 // INTERNALS
-
-function xpath(xpath) {
-  let nodes = document.evaluate(
-    xpath,
-    document,
-    null,
-    XPathResult.ORDERED_NODE_ITERATOR_TYPE,
-    null
-  );
-  let res = [];
-  try {
-    let node = nodes.iterateNext();
-    while (node) {
-      res.push(node);
-      node = nodes.iterateNext();
-    }
-  } catch (e) {
-    console.error(`Document tree modified during iteration: ${e}`);
-  }
-  return res;
-}
 
 // this shouldn't be accessed directly as on_scene_visit won't fire
 let _scenes = {};
@@ -359,4 +339,85 @@ function render(s) {
 function render_scene(s) {
   on_scene_visit.forEach((f) => f(s));
   render(_scenes[s]);
+}
+
+// TESTING
+
+function randomly_test() {
+  window.location.hash = "testing";
+  click_links();
+}
+
+function stop_testing() {
+  // const p = new URLSearchParams(window.location.search);
+  // p.set("testing", "1");
+  // window.location.search = p;
+  // this doesn't cause a redirect
+  window.location.hash = "";
+}
+
+function bug_found() {
+  let runtime_error = !!document.querySelectorAll(".error").length;
+  let user_defined_error = bug_detectors.some((b) => b());
+  if (user_defined_error) {
+    console.error("a user-defined error occurred");
+  }
+  return runtime_error || user_defined_error;
+}
+
+window.onerror = () => {
+  stop_testing();
+};
+
+document.onkeydown = (e) => {
+  if (e.key === "Escape") {
+    stop_testing();
+  }
+};
+
+const testing_freq = 30;
+function click_links() {
+  let bug = bug_found();
+  if (window.location.hash !== "#testing" || bug) {
+    if (bug) {
+      console.log(choice_history);
+    }
+    return;
+  }
+  let elts = document.querySelectorAll(".choice");
+  if (!elts.length) {
+    return location.reload();
+  }
+  let elt = elts[Math.floor(Math.random() * elts.length)];
+  // console.log(elt.textContent);
+  elt.click();
+  setTimeout(click_links, testing_freq);
+}
+setTimeout(click_links, testing_freq);
+
+// UTILITY
+
+function xpath(xpath) {
+  let nodes = document.evaluate(
+    xpath,
+    document,
+    null,
+    XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+    null
+  );
+  let res = [];
+  try {
+    let node = nodes.iterateNext();
+    while (node) {
+      res.push(node);
+      node = nodes.iterateNext();
+    }
+  } catch (e) {
+    console.error(`Document tree modified during iteration: ${e}`);
+  }
+  return res;
+}
+
+function findContainingText(c) {
+  return xpath(`//*[contains(child::text(), "${c}")]`);
 }
