@@ -1,53 +1,49 @@
 
 # Writing Scripture
 
-## Concepts
+## Elements
 
-### Sections
-
-A Scripture story consists of named _sections_, which contain prose interleaved with _instructions_.
-
-Sections are shown until they end or up until player input is required (e.g. choices), which may either continue the section or move to another. A section may thus never be shown in its entirety.
-
-### Control
-
-_Jumps_ connect sections.
-They may occur anywhere in prose:
-as part of the flow of a section (in which case the section seamlessly ends and another begins), or in response to player input (via choices).
-
-<!-- TODO examples -->
-
-### State
-
-The internal state of the game can be completely user-defined, and is modified by code execution in a user-defined way. Some state is maintained by the runtime.
-
-### Syntax
+### Prose
 
 Scripture is a Markdown dialect.
 
 Like with other narrative scripting languages, unadorned text is prose to be shown to the player.
 Narrative-related constructs are represented using Markdown elements.
 
-## Elements
-
 ### Sections
 
 Sections are named using headings.
 
+Content before first heading goes into an implicit heading named `default`.  The story starts there or at the first heading.
+
+A section is just a named sequence of instructions and does not have to execute to completion, though it will if no control flow changes occur before it ends.
+
+A Scripture story consists of named _sections_, which contain prose interleaved with _instructions_.
+
+Sections are shown until they end or up until player input is required (e.g. choices), which may either continue the section or move to another. A section may thus never be shown in its entirety.
+
 ### Inline code
 
-Inline code `` `CODE` `` is run when shown. Its output is hidden.
+The internal state of the game can be completely user-defined, and is modified by code execution in a user-defined way. Some state is maintained by the runtime.
 
-With a `$` prefix (`` `$CODE` ``), the output is _interpolated_ as _text_ into the story at that point.
+Inline code `` `CODE` `` is run when shown[^2]. Its output is hidden.
 
-With a `~` prefix  (`` `~CODE` ``), the output is interpolated as _Scripture_ into the story at that point.
+A _prefix_ can be used to access variations of this.
+
+With a `$` prefix (e.g. `` `$CODE` ``), the output is _interpolated_ as _text_ into the story at that point[^2].
+
+With a `~` prefix, the output is interpolated as _Scripture_ into the story at that point.
 This allows _unquoting_: generating some fragment of story dynamically using JavaScript.
 
-A `jump` or `->` prefix (`` `jump SECTION` `` or `` `-> SECTION` ``) denotes a _jump_ to SECTION.
+_Jumps_ connect sections.
+They may occur anywhere in prose:
+as part of the flow of a section (in which case the section seamlessly ends and another begins), or in response to player input (via choices).
 
-A _dynamic jump_ `->$` prefix (`` `->$ E` ``) jumps to the name of the section that E evaluates to.
+A `jump` or `->` prefix denotes a _jump_ to a named section.
 
-A `tunnel` or `>->` prefix (`` `tunnel SECTION` `` or `` `>-> SECTION` ``) denotes a _tunnel_ to SECTION, which returns to the origin of the jump after the jumped-to section completes.
+A _dynamic jump_ `->$` prefix jumps to the name of the section that content evaluates to.
+
+A `tunnel` or `>->` prefix denotes a _tunnel_ to a named section, which returns to the origin of the jump after the jumped-to section completes.
 
 ### Code blocks
 
@@ -59,26 +55,39 @@ CODE
 
 Adding the `meta` or `~` info-string after the language type unquotes the code block, like inline code with the `~` prefix.
 
-<pre><code>```js meta
+<pre><code>```js ~
 CODE
 ```</code></pre>
 
 ### Choices
 
-Lists denote choices. Each list item is of the format ``TEXT `CODE`  BODY``.
+Lists denote choices. Each choice item is of the form ``TEXT `CODE`  BODY``.
 
-- TEXT is the text of the choice.
-- CODE is some fragment of code that will be run on the choice being selected. Its result will not be shown.
-- BODY is some unrestricted Scripture fragment that will be shown.
+- TEXT will be shown to the player, for them to choose.
+- CODE is some fragment of code that will be run when the choice is selected. Its result is not shown.
+- BODY is some unrestricted Scripture fragment that will be shown. Indenting the body with 4 spaces Markdown-style allows it to contain other elements, allowing nested choices.
 
-guard ?
-more
-sticky
-fallback
-guarded mores
-
-Once a choice is selected, the other options will be disabled.
 The story continues after a choice, like [weave](https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md#the-weave-philosophy) in Ink terms. This is the default, unlike in Ink.
+
+A choice may have a _precondition_ `` `guard CODE` `` or `` `?CODE` ``. It will only be shown if CODE evaluates to a truthy value.
+
+By default, each item in the choice can only be selected once: after selecting an item, if control later returns to the section the choice was in, the item cannot be selected again.
+This can be overriden by including `` `sticky` `` somewhere in the body, making the choice _persistent_.
+Whether a choice is persistent is orthogonal to whether it has a precondition.
+
+<!-- interpolated/inlined choices -->
+
+A choice may have items consisting only of `` `more SECTION` ``, where SECTION is expected to have a single choice in it; the options of that choice will then be inlined transparently into the current choice.
+This may happen recursively.
+Such items may have preconditions, in which case they apply to every item inlined.
+
+TODO fallback
+
+### Breaks and spaces
+
+Linebreaks are turned into spaces.
+
+Spaces between prose and other instructions are stripped, so they have to be readded if interpolation is used.
 
 ### Links
 
@@ -109,26 +118,20 @@ It's clear when a particular bit of prose "executes", allowing things like raw H
 The browser console is fully available, and the state of the story can be queried at any point without doing anything special.
 Necessary data structures and libraries and language features can be used without any fanfare.
 
-# TODO
+# The runtime
 
-nested lists
+The runtime system contains code for supporting the execution of Scripture stories.
+User APIs are at the top of the file.
+These include things like turn and seen counters, callbacks, and other utilities for automated testing and saving and loading stories, which can be used directly via the console.
 
-finish ink feature by feature comparison
+# The CLI tools
 
-Built-in seen and turns
+Export a standalone story
 
-content before first heading
-
-guard
-interpolated choices + guards
-meta can jump, run cannot
-
-browser tests
-save and load
-standalone
-space behavior
-
-readme
+```sh
+dune exec ./main.exe --display=short -- -s test/examples.t/crime.md -o detective
+open detective/index.html
+```
 
 # Development
 
@@ -138,7 +141,7 @@ Scripture Markdown is compiled into a set of named sequences of instructions. In
 
 The runtime is a CPS interpreter. Its state is a list of instructions (to be executed), a current element to mutate (e.g. with new prose), and a continuation. The last one is how the control primitives like jumps and choices are implemented.
 
-To execute efficiently, the interpreter executes instructions in a loop until it reaches one that may change control. The remaining instructions would have to be acted on via a continuation.
+To execute efficiently, the interpreter executes instructions in a loop until it reaches one that may change control. The remaining instructions are acted on via a continuation.
 
 ## Tasks
 
@@ -168,24 +171,20 @@ Deploy (`--release` ensures that the runtime, which is embedded in main, is smal
 dune build --release ./main.exe --display=short
 ```
 
-# The CLI tools
-
-Export a standalone story
-
-```sh
-dune exec ./main.exe --display=short -- -s test/examples.t/crime.md -o detective
-open detective/index.html
-```
-
-
-<!-- # Other systems -->
-
-<!-- Interactive fiction languages.
-
-- Both have a compiler that translates the source language into data which is interpreted at runtime.
-- Both have a similar conceptual model, of labelled sections which are primarily connected using GOTOs. -->
-
 # Comparison to [Ink](https://github.com/inkle/ink)
+
+<!-- Just a very short intro. -->
+
+Scripture generalizes and extends Ink. Embeds everything in markdown. Allows use of js. This allows for a much smaller implementation[^1] and proper data structures, a sane programming language. Conceptual model is very similar. First class and transparent interop with browsers. Automated testing built in.
+
+
+
+The goal is to clean up onk concetually, extend its capabilities. The target kind of game is one with a primarily text based ui with some kind of. The story is the game, rather than driving a larger engine. The latter is more general but for people without the time or resources to maintain
+
+The tradeoff is that it is less appropriate for use in a game engine. It can be made to work by reimplementing the runtime and using an alternative scripting language. This is a non-goal.
+
+Evaluate and compile code at runtime so probably not usable in a game engine
+
 
 Ink is designed for writing interactive fiction scripts which are embedded into a larger game engine and drive its UI.
 Scripture is designed for deep interactive stories with a primarily text-based UI.
@@ -193,8 +192,7 @@ There is some overlap between these goals, but they favour different design trad
 
 - Ink contains an [ad hoc programming language](https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md#part-5-advanced-state-tracking). This is generally fine as it is meant to FFI into the host game engine, where a more complete world model might be found. Scripture has access to full JavaScript and expects that the modeling of the game world is done alongside the story.
 - Scripture's language is much simpler. It is a Markdown dialect (benefitting from all the [effort](https://spec.commonmark.org/current/) that has been put into writing intuitive yet extremely expressive markup) and supports scripting using quoted JavaScript. Effort was put into boiling down language features into a small number of fundamental concepts.
-- Scripture's compiler is smaller (250 LoC of OCaml; the heavy lifting is done by [Cmarkit](https://erratique.ch/software/cmarkit)). [Ink's compiler](https://github.com/inkle/ink) is 17K LoC of C#.
-- Scripture's runtime is smaller (150 LoC of JS). [InkJS](https://github.com/y-lohse/inkjs) is 18K LoC of TypeScript.
+- Scripture's compiler and runtime are much smaller (< 800 LoC of OCaml and JS, with the heavy lifting being done by [Cmarkit](https://erratique.ch/software/cmarkit)). [Ink's compiler](https://github.com/inkle/ink) is 17K LoC of C#, and [InkJS](https://github.com/y-lohse/inkjs) is 18K LoC of TypeScript.
 - Ink is mature, has [a significant ecosystem](https://github.com/inkle/ink-library), and is appropriate for production games. Scripture is appropriate for small games, experiments, and prototypes.
 
 ## Feature-by-feature comparison
@@ -205,6 +203,7 @@ There is some overlap between these goals, but they favour different design trad
 | -             | stitch           |
 | -             | labels           |
 | jump          | divert           |
+| tunnel        | tunnel           |
 | -             | tags             |
 | -             | glue             |
 | - (default)   | weave/gather     |
@@ -220,28 +219,57 @@ Many features are subsumed by simply using JS.
 - functions, conditionals, constants
 - builtins like SINCE
 
+### Things removed or not (yet) needed
+
+- Glue
+- Weave/gather (default)
+- Tags
+- END (implicit)
+
+### Sections
+
+Ink knots correspond to Scripture sections.
+There is no scoping.
+Stitches are simply.
+
 ### Choices
 
 Largely similar, but simplified.
 
-| Scripture | Ink         |
-| --------- | ----------- |
-| guarded   | conditional |
-
-- Ink choices support mixing choice and output text, can be jumped to, fallback choices
-- Scripture choices allow interpolated options, and are weaved by default
+- Scripture choices cannot be labelled and jumped to, and do not support mixing choice and output text. Both of these may be added in future, but they do not seem worth the extra implementation complexity. Also, labelling choice items and jumping into them seems odd, as only the body of the item is being used, not the choice-making aspect; factoring it out into a new section seems more appropriate.
+- Scripture choices are weaved by default. If Ink choices are thought of as auxiliary sections which are jumped to by selecting choices, Scripture choices are tunneled to.
+- Markdown provides a well-defined way to nest blocks, which doesn't require repeating bullets
+- Threads in lists are supported directly, and via a distinct mechanism from threads in sections
 
 ### Threads
 
-Threads in Ink are like story mixins. They can have parameters to say, e.g. where to divert back to.
+Threads in Ink are like story mixins. They can have parameters to say, e.g. where to divert back to. They can mix prose and choices, are "collected" and merged into the source section/choice.
 
-Templates and interpolated options
+In Scripture, threads are separated into interpolated choices and direct `render` calls to include bits of scenes in sections, so they have a well-defined meaning: it is clear what is being included from where they appear.
+
+Scripture `more` annotations in choices do not have parametes. This may be changed in future, but is not often used and may be supported using global variables.
 
 ### Lists
 
-Ink list is an enum map
+Ink has a single data structure, the _list_, aka an ordered enum set.
+
+`LIST` declares an enumerated type, as well as a set containing those elements marked with parentheses.
+
+`VAR` declares a set of any type.
+
+Lists can be used to model a variety of things.
+
+- Enums, by ensuring that the set contains only one element.
+- Knowledge lattices, by ensuring that the set grows monotonically, and predecessors of a particular fact are added automatically
+- Sequences, by making use of the ordering
+
+While this is creative, it's awkward for simple things.
 
 <!--
 # [YarnSpinner](https://github.com/YarnSpinnerTool)
 https://www.gamedeveloper.com/programming/deep-dive-yarn-spinner
 -->
+
+[^1]: Scripture's compiler and runtime weigh in at < 800 LoC of OCaml and JS, with the heavy lifting being done by [Cmarkit](https://erratique.ch/software/cmarkit). [Ink's compiler](https://github.com/inkle/ink) is 17K LoC of C#, and [InkJS](https://github.com/y-lohse/inkjs) is 18K LoC of TypeScript.
+
+[^2]: Note that only `~` and the jump or tunnel instructions can cause control flow changes. In particular, calling runtime functions like `render` within regular inline code will not work (as the jumps have to go through the CPS interpreter).
