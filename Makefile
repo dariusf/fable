@@ -8,12 +8,12 @@ default:
 	# dune build --release ./web.bc.js
 	dune build @examples
 
-.PHONY: all
-all: default
-	dune test
-
 .PHONY: test
 test: default
+	dune test
+
+.PHONY: random
+random: default
 	test/runtime.t/test.js
 
 .PHONY: watch
