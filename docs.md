@@ -12,7 +12,8 @@
   - [The runtime](#the-runtime)
   - [The CLI tools](#the-cli-tools)
 - [Development](#development)
-  - [Implementation](#implementation)
+  - [Compiler](#compiler)
+  - [Editor](#editor)
   - [Tasks](#tasks)
 
 # Fable User Guide
@@ -149,13 +150,29 @@ open detective/index.html
 
 # Development
 
-## Implementation
+## Compiler
 
 Fable Markdown is compiled into a set of named sequences of instructions. Instructions may contain others nested in them.
 
 The runtime is a CPS interpreter whose state is a list of instructions (to be executed), a current element to mutate (e.g. with new prose), and a continuation, which enables the control primitives like jumps and choices.
 
-To execute efficiently, the interpreter executes instructions in a loop until it reaches one that may change control. That instruction is then given access to the ones after as a continuation.
+For efficiency, the interpreter executes instructions in a loop until it reaches one that may change control. That instruction is then given access to the ones after as a continuation.
+
+## Editor
+
+The editor can be used to share Fable stories, so it [sandboxes JS evaluation using an iframe](https://web.dev/articles/sandboxed-iframes#safely_sandboxing_eval).
+
+Since stories may have arbitrary state, the editor reloads the iframe on every edit, relying on the browser's cache for efficiency. This depends on the headers GitHub Pages sends.
+
+The setup is hence rather complex:
+
+1. On page load, nothing happens in the editor, as the iframe loads asynchronously
+2. The iframe loads and posts a message to the editor saying it has loaded
+3. The editor replies with Fable instructions parsed from the contents of the field
+4. The iframe receives this and interprets it, which may result in sandboxed JS evaluation
+5. On edit, the iframe is reloaded, causing the process to start again from 2
+
+This may all be simplified/made more efficient in future if we require that users maintain state in a well-defined way, e.g. on a single global object, and provide a reset function, e.g. in the first section.
 
 ## Tasks
 
@@ -176,6 +193,13 @@ Build CLI:
 
 ```sh
 dune build --release ./main.exe --display=short
+```
+
+Test the editor:
+
+```sh
+python -m http.server 8005
+open http://localhost:8005/editor.html
 ```
 
 [^2]: Note that only `~` and the jump or tunnel instructions can cause control flow changes. In particular, calling runtime functions like `render` within regular inline code will not work (as the jumps have to go through the interpreter).

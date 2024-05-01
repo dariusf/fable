@@ -60,8 +60,7 @@ let content = document.querySelector("#content");
 let fresh = 0;
 window.choice_state = {};
 
-// default entry point: the content of the global `story` (expected to be the JSON output of the CLI) is interpreted into the div #content
-function main() {
+function start(story) {
   for (const scene of story) {
     _scenes[scene.name] = scene.cmds;
   }
@@ -69,6 +68,24 @@ function main() {
   on_scene_visit.forEach((f) => f(scene));
   interpret(_scenes[scene], content, () => {});
 }
+
+// default standalone entry point: the content of the global `story` (expected to be the JSON output of the CLI) is interpreted into the div #content
+function main() {
+  if (isStandalone()) {
+    start(story);
+  }
+}
+
+window.onload = function () {
+  window.parent.postMessage("page loaded", "*");
+};
+
+window.addEventListener("message", function (e) {
+  if (Array.isArray(e.data)) {
+    content.textContent = "";
+    start(e.data);
+  }
+});
 
 function surfaceError(...args) {
   console.error(args);
@@ -421,4 +438,16 @@ function xpath(xpath) {
 
 function findContainingText(c) {
   return xpath(`//*[contains(child::text(), "${c}")]`);
+}
+
+function isStandalone() {
+  return !inIFrame();
+}
+
+function inIFrame() {
+  try {
+    return window.self !== window.top;
+  } catch (e) {
+    return true;
+  }
 }

@@ -54,19 +54,29 @@ function vim() {
   editor.setKeyboardHandler("ace/keyboard/vim");
 }
 
+let iframe = document.querySelector("iframe");
 function refreshEditor() {
-  let txt = editorGet();
   try {
-    story.length = 0;
-    Fable.parse(txt).forEach((e) => story.push(e));
-    window.content.textContent = "";
-    main();
-  } catch (e) {}
+    iframe.src += ""; // reload
+    return true;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
 }
 
 let onEdit = debounce((_eventData) => {
   // eventData.command.name
   refreshEditor();
 }, 250);
+
+window.addEventListener("message", function (e) {
+  if (e.data === "page loaded") {
+    let txt = editorGet();
+    try {
+      iframe.contentWindow.postMessage(Fable.parse(txt), "*");
+    } catch (e) {}
+  }
+});
 
 setupEditor();
