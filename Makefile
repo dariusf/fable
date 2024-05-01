@@ -1,9 +1,9 @@
 
 .PHONY: default
 default:
-	# dune exec ./main.exe test/examples.t/test.md > data.js
-	dune exec ./main.exe test/examples.t/crime.md > data.js
-	grep 'data ' data.js | sed -e 's/const data =//g' -e 's/;$$//g' | jq | pbcopy
+	# dune exec ./main.exe test/examples.t/test.md > story.js
+	dune exec ./main.exe test/examples.t/crime.md > story.js
+	grep 'story ' story.js | sed -e 's/var story =//g' -e 's/;$$//g' | jq | pbcopy
 	dune build ./web.bc.js
 	# dune build --release ./web.bc.js
 	dune build @examples

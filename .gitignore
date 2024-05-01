@@ -1,5 +1,5 @@
 _build
-data.js
+story.js
 node_modules
 package-lock.json
 package.json

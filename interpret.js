@@ -60,11 +60,12 @@ let content = document.querySelector("#content");
 let fresh = 0;
 window.choice_state = {};
 
+// default entry point: the content of the global `story` (expected to be the JSON output of the CLI) is interpreted into the div #content
 function main() {
-  for (const scene of data) {
+  for (const scene of story) {
     _scenes[scene.name] = scene.cmds;
   }
-  let scene = data[0].name;
+  let scene = story[0].name;
   on_scene_visit.forEach((f) => f(scene));
   interpret(_scenes[scene], content, () => {});
 }

@@ -1,0 +1,57 @@
+:root {
+  --main-bg-color: #202124;
+  --main-bg-color-lighter: #4e5159;
+  --main-fg-color: #e8eaed;
+}
+body {
+  font-family: "Noto Serif", serif;
+  background-color: var(--main-bg-color);
+  color: var(--main-fg-color);
+  margin: 2rem auto;
+  max-width: 640px;
+  line-height: 1.4;
+  /* font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu; */
+  /* font-size: 3.5vmin; */
+  font-size: 2.5vmin;
+}
+
+/* for minimum margin */
+html {
+  padding: 20pt;
+}
+
+/* fix relayout on scrollbars appearing */
+html {
+  overflow-y: scroll;
+}
+
+a,
+a:visited {
+  color: var(--main-fg-color);
+}
+
+/* for paragraphs, maybe make more specific later */
+div {
+  padding-bottom: 1em;
+  animation: fadein 0.5s;
+}
+
+ul {
+  margin-top: 0px;
+  margin-bottom: 1em;
+  animation: fadein 0.5s;
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+* {
+  scrollbar-color: var(--main-bg-color-lighter) var(--main-bg-color);
+  scrollbar-width: thin;
+}

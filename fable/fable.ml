@@ -361,7 +361,7 @@ let print_json ?out program =
   let program = program_to_yojson program in
   if compact then (
     let out = Option.value out ~default:stdout in
-    Printf.fprintf out "const data = ";
+    Printf.fprintf out "var story = ";
     Yojson.Safe.to_channel ~std:true out program;
     Printf.fprintf out ";\n%!")
   else
