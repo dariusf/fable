@@ -206,7 +206,7 @@ function interpret(instrs, parent, k) {
           s = "";
         }
         // console.log("meta result", s);
-        instrs = Scripture.parse(s);
+        instrs = Fable.parse(s);
         if (instrs.length) {
           instrs = instrs[0].cmds;
           // console.log("meta produced", instrs);
@@ -224,7 +224,7 @@ function interpret(instrs, parent, k) {
       {
         if (current[0].length) {
           let d;
-          if (Scripture.mayHaveText(current)) {
+          if (Fable.mayHaveText(current)) {
             // removes unneccessary divs
             d = document.createElement("div");
             parent.appendChild(d);
@@ -257,7 +257,7 @@ function interpret(instrs, parent, k) {
           });
         };
         // add more alternatives
-        let extra = Scripture.recursivelyAddChoices((s) => _scenes[s], more);
+        let extra = Fable.recursivelyAddChoices((s) => _scenes[s], more);
 
         for (const item of alts.concat(extra)) {
           if (!item.sticky) {
@@ -320,7 +320,7 @@ function interpret(instrs, parent, k) {
 function render(s) {
   let cmds;
   if (typeof s === "string") {
-    cmds = Scripture.parse(s);
+    cmds = Fable.parse(s);
     if (!cmds.length) {
       return;
     }
@@ -329,7 +329,7 @@ function render(s) {
     // take it as a scene (a list of commands)
     cmds = s;
   }
-  if (Scripture.containsControlChange(cmds)) {
+  if (Fable.containsControlChange(cmds)) {
     surfaceError("render cannot be used to jump", cmds);
   } else {
     interpret(cmds, content, () => {});

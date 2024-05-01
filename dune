@@ -2,7 +2,7 @@
 (executable
  (name web)
  (modules web)
- (libraries brr scripture)
+ (libraries brr fable)
  (modes js))
 
 (rule
@@ -24,7 +24,7 @@
  (name main)
  (public_name main)
  (modules main embedded)
- (libraries scripture)
+ (libraries fable)
  (preprocess (pps ppx_deriving_yojson ppx_deriving.std)))
 
 (env (dev (flags (:standard -warn-error -A))))

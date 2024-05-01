@@ -15,33 +15,33 @@ let ocaml_to_jv f v =
   |> Jstr.of_string |> Brr.Json.decode |> Result.get_ok
 
 let () =
-  Jv.set Jv.global "Scripture"
+  Jv.set Jv.global "Fable"
     (Jv.obj
        [|
          ( "parse",
            Jv.callback ~arity:1 (fun s ->
-               Scripture.md_to_instrs (Jv.to_string s)
-               |> ocaml_to_jv Scripture.program_to_yojson) );
+               Fable.md_to_instrs (Jv.to_string s)
+               |> ocaml_to_jv Fable.program_to_yojson) );
          ( "mayHaveText",
            Jv.callback ~arity:1 (fun s ->
-               Scripture.may_have_text (jv_to_ocaml Scripture.cmd_of_yojson s)
+               Fable.may_have_text (jv_to_ocaml Fable.cmd_of_yojson s)
                |> Jv.of_bool) );
          (* ( "instantiate",
             Jv.callback ~arity:2 (fun s bs ->
-                Scripture.instantiate (obj_to_assoc bs)
-                  (jv_to_ocaml Scripture.cmd_of_yojson s)
-                |> ocaml_to_jv Scripture.cmd_to_yojson) ); *)
+                Fable.instantiate (obj_to_assoc bs)
+                  (jv_to_ocaml Fable.cmd_of_yojson s)
+                |> ocaml_to_jv Fable.cmd_to_yojson) ); *)
          ( "containsControlChange",
            Jv.callback ~arity:1 (fun ss ->
-               Scripture.contains_control_change
-                 (jv_to_ocaml Scripture.cmds_of_yojson ss)
+               Fable.contains_control_change
+                 (jv_to_ocaml Fable.cmds_of_yojson ss)
                |> Jv.of_bool) );
          ( "recursivelyAddChoices",
            Jv.callback ~arity:2 (fun f ss ->
-               Scripture.recursively_add_choices
+               Fable.recursively_add_choices
                  (fun s ->
                    Jv.apply f [| Jv.of_string s |]
-                   |> jv_to_ocaml Scripture.cmds_of_yojson)
-                 (jv_to_ocaml Scripture.more_of_yojson ss)
-               |> ocaml_to_jv Scripture.choices_to_yojson) );
+                   |> jv_to_ocaml Fable.cmds_of_yojson)
+                 (jv_to_ocaml Fable.more_of_yojson ss)
+               |> ocaml_to_jv Fable.choices_to_yojson) );
        |])
