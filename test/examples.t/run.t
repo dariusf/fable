@@ -1,5 +1,5 @@
 
-  $ main ../test.md | sed -e 's/var story = //g' -e 's/;$//g' | jq .
+  $ main ../../examples/test.md | sed -e 's/var story = //g' -e 's/;$//g' | jq .
   [
     {
       "name": "Two",

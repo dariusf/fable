@@ -144,7 +144,7 @@ These include things like turn and seen counters, callbacks, and other utilities
 Export a standalone story
 
 ```sh
-dune exec ./main.exe --display=short -- -s test/examples.t/crime.md -o detective
+dune exec ./main.exe --display=short -- -s examples/crime.md -o detective
 open detective/index.html
 ```
 

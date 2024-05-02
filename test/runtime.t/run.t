@@ -1,5 +1,5 @@
 
-  $ main -s ../test.md -o test
+  $ main -s ../../examples/test.md -o test
 
   $ export INPUT=test/index.html
 
