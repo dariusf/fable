@@ -6,7 +6,7 @@ default:
 	grep 'story ' story.js | sed -e 's/var story =//g' -e 's/;$$//g' | jq | pbcopy
 	dune build ./web.bc.js
 	# dune build --release ./web.bc.js
-	dune build @examples
+	dune build @compiler
 
 .PHONY: test
 test: default
@@ -19,3 +19,7 @@ random: default
 .PHONY: watch
 watch: default
 	git ls | entr -ccr make
+
+.PHONY: editor
+editor: default
+	python -m http.server 8005 --directory _build/default/
