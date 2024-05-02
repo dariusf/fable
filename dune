@@ -6,19 +6,23 @@
  (modes js))
 
 (rule
-  (with-stdout-to embedded.ml
-    (progn
-      (echo "let index = {|")
-      ; (cat index.html)
-      (run sed s@_build/default/web.bc.js@runtime.js@ index.html)
-      (echo "|}")
-      (echo "let runtime = {|")
-      (cat web.bc.js)
-      (echo "|}")
-      (echo "let interpret = {|")
-      (cat interpret.js)
-      (echo "|}")
-      )))
+ (deps (glob_files story.html))
+ (action
+   (with-stdout-to embedded.ml
+     (progn
+       (echo "let index = {|")
+       ; (cat story.html)
+       (run sed s@_build/default/web.bc.js@runtime.js@ story.html)
+       (echo "|}")
+       (echo "let default_css = {|")
+       (cat default.css)
+       (echo "|}")
+       (echo "let runtime = {|")
+       (cat web.bc.js)
+       (echo "|}")
+       (echo "let interpret = {|")
+       (cat interpret.js)
+       (echo "|}")))))
 
 (executable
  (name fable)

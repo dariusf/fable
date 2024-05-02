@@ -21,9 +21,10 @@ let write_standalone dir json =
     Sys.mkdir dir 0o777;
     let s = Format.asprintf in
     write_file (s "%s/index.html" dir) Embedded.index;
+    write_file (s "%s/default.css" dir) Embedded.default_css;
     write_file (s "%s/interpret.js" dir) Embedded.interpret;
     write_file (s "%s/runtime.js" dir) Embedded.runtime;
-    Out_channel.with_open_text (s "%s/data.js" dir) (fun out ->
+    Out_channel.with_open_text (s "%s/story.js" dir) (fun out ->
         Fabula.print_json ~out json)
 
 let () =

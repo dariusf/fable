@@ -17,7 +17,7 @@ const options = new Chrome.Options();
     await driver.findElement(By.linkText(l)).click();
   }
 
-  let inp = process.env.INPUT || "index.html";
+  let inp = process.env.INPUT || "story.html";
   await driver.get(`file://${process.cwd()}/${inp}`);
 
   async function testOne() {
