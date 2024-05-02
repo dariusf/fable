@@ -33,7 +33,7 @@ A Fable story consists of named _sections_, which contain prose interleaved with
 
 Sections are named using headings, and are shown until they end or are interrupted (e.g., by a jump or choice), which may later either continue the section or move to another. A section may thus never be shown in its entirety.
 
-Content before first section goes into an implicit section named `default`.  The story starts there or at the first section.
+Content before first section goes into an implicit section named `prelude`.  The story starts there or at the first section.
 
 ### Code
 

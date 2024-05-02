@@ -285,7 +285,7 @@ module Convert = struct
     Folder.make ~block ()
 
   let to_program doc =
-    let acc = Acc.add ("default", Acc.empty) Acc.empty in
+    let acc = Acc.add ("prelude", Acc.empty) Acc.empty in
     let prog = Folder.fold_doc block_cmd_folder acc doc in
     Acc.to_list prog
     |> List.filter_map (fun (name, cmds) ->
