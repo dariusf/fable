@@ -144,7 +144,7 @@ These include things like turn and seen counters, callbacks, and other utilities
 Export a standalone story
 
 ```sh
-dune exec ./main.exe --display=short -- -s examples/crime.md -o detective
+dune exec ./fable.exe --display=short -- -s examples/crime.md -o detective
 open detective/index.html
 ```
 
@@ -192,7 +192,7 @@ make test
 Build CLI:
 
 ```sh
-dune build --release ./main.exe --display=short
+dune build --release ./fable.exe --display=short
 ```
 
 Test the editor:

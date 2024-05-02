@@ -1,5 +1,5 @@
 
-  $ main -s ../../examples/test.md -o test
+  $ fable -s ../../examples/test.md -o test
 
   $ export INPUT=test/index.html
 

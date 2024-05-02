@@ -1,8 +1,8 @@
 
 .PHONY: default
 default:
-#	dune exec ./main.exe examples/test.md > story.js
-	dune exec ./main.exe examples/crime.md > story.js
+#	dune exec ./fable.exe examples/test.md > story.js
+	dune exec ./fable.exe examples/crime.md > story.js
 	grep 'story ' story.js | sed -e 's/var story =//g' -e 's/;$$//g' | jq | pbcopy
 	dune build ./web.bc.js
 	# dune build --release ./web.bc.js

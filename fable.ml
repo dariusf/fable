@@ -24,15 +24,15 @@ let write_standalone dir json =
     write_file (s "%s/interpret.js" dir) Embedded.interpret;
     write_file (s "%s/runtime.js" dir) Embedded.runtime;
     Out_channel.with_open_text (s "%s/data.js" dir) (fun out ->
-        Fable.print_json ~out json)
+        Fabula.print_json ~out json)
 
 let () =
   Arg.parse arg_specs
     (fun filename -> input_files := filename :: !input_files)
-    "main [-s] <file1> [<file2>] ... -o <output>";
+    "fable [-s] <file1> [<file2>] ... -o <output>";
   match !input_files with
   | [f] ->
-    let json = Fable.md_file_to_json f in
+    let json = Fabula.md_file_to_json f in
     (match !standalone with
     | true ->
       (match !output_file with
@@ -40,7 +40,7 @@ let () =
       | Some dir -> write_standalone dir json)
     | false ->
       (match !output_file with
-      | None -> Fable.print_json json
+      | None -> Fabula.print_json json
       | Some o ->
-        Out_channel.with_open_text o (fun out -> Fable.print_json ~out json)))
+        Out_channel.with_open_text o (fun out -> Fabula.print_json ~out json)))
   | _ -> Format.printf "expected one input file@."
