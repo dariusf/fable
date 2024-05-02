@@ -85,7 +85,7 @@
           id="examples"
           onchange="load_selected_example()"
         >
-          <option
+          <!-- <option
             value="hello"
             data-text="Welcome!
             
@@ -99,7 +99,7 @@ C
 Hi"
           >
             Hello world
-          </option>
+          </option> -->
           $MORE
         </select>
         <!-- <button id="share-btn" disabled onclick="share()">Share</button> -->
@@ -122,19 +122,11 @@ Hi"
     <!-- bundle.js/main.js requires ocaml_ready (hipjs) and enable_buttons (page) to be defined -->
     <!-- <script type="text/javascript" src="bundle.js"></script> -->
     <script type="text/javascript" src="editor.js"></script>
-    <script type="text/javascript" src="story.js"></script>
+    <!-- <script type="text/javascript" src="story.js"></script> -->
     <!-- <script type="text/javascript" src="interpret.js"></script> -->
     <script>
-      editorSet(`Welcome!
-            
-- A \`1\` \`->A\`
-- B
-
-C
-
-# A
-
-Hi`);
+      editorSet(current_example_text());
+      onPageLoad({ data: "page loaded" });
     </script>
   </body>
 </html>

@@ -70,13 +70,28 @@ let onEdit = debounce((_eventData) => {
   refreshEditor();
 }, 250);
 
-window.addEventListener("message", function (e) {
+window.addEventListener("message", onPageLoad);
+
+function onPageLoad(e) {
   if (e.data === "page loaded") {
     let txt = editorGet();
     try {
       iframe.contentWindow.postMessage(Fable.parse(txt), "*");
     } catch (e) {}
   }
-});
+}
+
+const examples = document.querySelector("#examples");
+function current_example_name() {
+  return examples[examples.selectedIndex].value;
+}
+function current_example_text() {
+  return examples[examples.selectedIndex].dataset.text.trim();
+}
+
+function load_selected_example() {
+  editorSet(current_example_text());
+  refreshEditor();
+}
 
 setupEditor();

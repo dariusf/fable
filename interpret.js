@@ -61,6 +61,9 @@ let fresh = 0;
 window.choice_state = {};
 
 function start(story) {
+  if (!story.length) {
+    return;
+  }
   for (const scene of story) {
     _scenes[scene.name] = scene.cmds;
   }

@@ -36,11 +36,14 @@
 (subdir deploy
  (rule
   (alias editor)
-  (deps ../story.html)
+  (deps ../story.html (glob_files ../examples/*.md)
+   ../editor/examples.sh ../editor/editor.html)
   (action (progn
    (copy ../fablejs.bc.js fablejs.bc.js)
    (copy ../editor/editor.js editor.js)
-   (copy ../editor/editor.html index.html)
+   ; (copy ../editor/editor.html index.html)
+   (with-stdout-to index.html
+    (run ../editor/examples.sh ../editor/editor.html))
    ; (copy ../story.html story.html)
    (with-stdout-to story.html
     (run sed s@_build/default/fablejs.bc.js@fablejs.bc.js@ ../story.html))

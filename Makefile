@@ -22,5 +22,5 @@ watch: default
 
 .PHONY: editor
 editor:
-	dune build @editor
+	dune build @editor --display=short
 	python -m http.server 8005 --directory _build/default/deploy
