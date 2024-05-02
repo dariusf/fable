@@ -1,0 +1,47 @@
+name: Main workflow
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  schedule:
+    # Prime the caches every Monday
+    - cron: 0 1 * * MON
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          # - macos-latest
+          - ubuntu-latest
+        ocaml-compiler:
+          - 5.1.0
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Use OCaml ${{ matrix.ocaml-compiler }}
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          opam-pin: false
+          opam-depext: false
+      - run: opam install . --deps-only
+
+      - run: eval $(opam env); dune build @editor --profile release
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/StagedSL'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: _build/default/deploy
