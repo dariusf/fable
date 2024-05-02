@@ -94,4 +94,43 @@ function load_selected_example() {
   refreshEditor();
 }
 
+// https://www.stefanjudis.com/snippets/how-trigger-file-downloads-with-javascript/
+function downloadFile(file) {
+  // Create a link and set the URL using `createObjectURL`
+  const link = document.createElement("a");
+  link.style.display = "none";
+  link.href = URL.createObjectURL(file);
+  link.download = file.name;
+
+  // It needs to be added to the DOM so it can be clicked
+  document.body.appendChild(link);
+  link.click();
+
+  // To make this work on Firefox we need to wait
+  // a little while before removing it.
+  setTimeout(() => {
+    URL.revokeObjectURL(link.href);
+    link.parentNode.removeChild(link);
+  }, 0);
+}
+
+function saveFile() {
+  downloadFile(new File([editorGet()], "story.md"));
+}
+
+// function loadFile(e) {
+//   const selectedFile = e.target.files[0];
+//   const reader = new FileReader();
+//   new Promise((resolve, reject) => {
+//     reader.onload = (event) => resolve(event.target.result);
+//     reader.onerror = (error) => reject(error);
+//     reader.readAsText(selectedFile);
+//   })
+//     .then((content) => {
+//       editorSet(content);
+//       refreshEditor();
+//     })
+//     .catch((error) => console.log(error));
+// }
+
 setupEditor();

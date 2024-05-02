@@ -77,31 +77,24 @@
     <!-- <div id="editor">
       <textarea id="input" spellcheck="false"></textarea>
     </div> -->
+    <!-- Built: $BUILD_DATE -->
     <div id="panel">
       <div id="toolbar">
-        <button id="run-btn" disabled onclick="run()">Run</button>
         <select
           name="examples"
           id="examples"
           onchange="load_selected_example()"
         >
-          <!-- <option
-            value="hello"
-            data-text="Welcome!
-            
-- A `1` `->A`
-- B
-
-C
-
-# A
-
-Hi"
-          >
-            Hello world
-          </option> -->
           $MORE
         </select>
+        <button onclick="saveFile()">Save</button>
+        <!-- <label for="upload">Load</label>
+        <input
+          name="upload"
+          type="file"
+          accept=".md"
+          onchange="loadFile(this)"
+        /> -->
         <!-- <button id="share-btn" disabled onclick="share()">Share</button> -->
         <!-- prevent the checkbox and label from wrapping separately -->
         <!-- <span style="display: inline-block">
