@@ -4,8 +4,8 @@ default:
 #	dune exec ./fable.exe examples/test.md > story.js
 	dune exec ./fable.exe examples/crime.md > story.js
 	grep 'story ' story.js | sed -e 's/var story =//g' -e 's/;$$//g' | jq | pbcopy
-	dune build ./web.bc.js
-	# dune build --release ./web.bc.js
+	dune build ./fablejs.bc.js
+	# dune build --release ./fablejs.bc.js
 	dune build @compiler
 
 .PHONY: test
@@ -21,5 +21,6 @@ watch: default
 	git ls | entr -ccr make
 
 .PHONY: editor
-editor: default
-	python -m http.server 8005 --directory _build/default/
+editor:
+	dune build @editor
+	python -m http.server 8005 --directory _build/default/deploy

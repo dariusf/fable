@@ -1,24 +1,24 @@
 
 (executable
- (name web)
- (modules web)
+ (name fablejs)
+ (modules fablejs)
  (libraries brr fabula)
  (modes js))
 
 (rule
- (deps (glob_files story.html))
+ (deps story.html)
  (action
    (with-stdout-to embedded.ml
      (progn
        (echo "let index = {|")
        ; (cat story.html)
-       (run sed s@_build/default/web.bc.js@runtime.js@ story.html)
+       (run sed s@_build/default/fablejs.bc.js@runtime.js@ story.html)
        (echo "|}")
        (echo "let default_css = {|")
        (cat default.css)
        (echo "|}")
        (echo "let runtime = {|")
-       (cat web.bc.js)
+       (cat fablejs.bc.js)
        (echo "|}")
        (echo "let interpret = {|")
        (cat interpret.js)
@@ -32,3 +32,18 @@
  (preprocess (pps ppx_deriving_yojson ppx_deriving.std)))
 
 (env (dev (flags (:standard -warn-error -A))))
+
+(subdir deploy
+ (rule
+  (alias editor)
+  (deps ../story.html)
+  (action (progn
+   (copy ../fablejs.bc.js fablejs.bc.js)
+   (copy ../editor/editor.js editor.js)
+   (copy ../editor/editor.html index.html)
+   ; (copy ../story.html story.html)
+   (with-stdout-to story.html
+    (run sed s@_build/default/fablejs.bc.js@fablejs.bc.js@ ../story.html))
+   (write-file story.js "var story = [];")
+   (copy ../interpret.js interpret.js)
+   (copy ../default.css default.css)))))
