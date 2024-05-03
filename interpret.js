@@ -30,8 +30,6 @@ function seen(scene) {
   return seen_scenes[scene];
 }
 
-var choice_history = [];
-
 on_scene_visit.push((s) => {
   see(s);
   last_visited_turn[s] = turns;
@@ -60,10 +58,19 @@ let content = document.querySelector("#content");
 let fresh = 0;
 window.choice_state = {};
 
+const internal = {
+  choice_history: [],
+  // choices to immediately take when hot reloading
+  immediately_take: [],
+  // whether or not to send parent events. for internal use
+  silent_choice: false,
+};
+
 function start(story) {
   if (!story.length) {
     return;
   }
+  internal.choice_history = [];
   for (const scene of story) {
     _scenes[scene.name] = scene.cmds;
   }
@@ -80,15 +87,43 @@ function main() {
 }
 
 window.onload = function () {
-  window.parent.postMessage("page loaded", "*");
+  window.parent.postMessage({ type: "PAGE_LOADED" }, "*");
 };
 
 window.addEventListener("message", function (e) {
-  if (Array.isArray(e.data)) {
+  if (e.data.type === "EDITED") {
     content.textContent = "";
-    start(e.data);
+    let ast = Fable.parse(e.data.md);
+    internal.immediately_take = e.data.history;
+    start(ast);
   }
 });
+
+function informParentChoice(choice) {
+  if (!internal.silent_choice) {
+    window.parent.postMessage({ type: "CHOICE_MADE", choice }, "*");
+  }
+}
+
+function informParentDiverged(which) {
+  window.parent.postMessage({ type: "DIVERGED", which }, "*");
+}
+
+function maybeTakeChoice(a) {
+  if (!internal.immediately_take.length) {
+    return;
+  }
+  let next = internal.immediately_take.shift();
+  if (a.textContent === next) {
+    internal.silent_choice = true;
+    a.click();
+    internal.silent_choice = false;
+  } else {
+    // we've diverged
+    internal.immediately_take = [];
+    informParentDiverged(a.textContent);
+  }
+}
 
 function surfaceError(...args) {
   console.error(args);
@@ -309,7 +344,8 @@ function interpret(instrs, parent, k) {
           li.appendChild(a);
           a.onclick = (ev) => {
             ev.preventDefault();
-            choice_history.push(a.textContent);
+            internal.choice_history.push(a.textContent);
+            informParentChoice(a.textContent);
             window.on_interact.forEach((f) => f());
             if (choices_disappear) {
               parent.removeChild(ul);
@@ -330,6 +366,7 @@ function interpret(instrs, parent, k) {
             // }
           };
           interpret(item.initial, a, () => {});
+          maybeTakeChoice(a);
         }
       }
       break;
@@ -401,7 +438,7 @@ function click_links() {
   let bug = bug_found();
   if (window.location.hash !== "#testing" || bug) {
     if (bug) {
-      console.log(choice_history);
+      console.log(internal.choice_history);
     }
     return;
   }

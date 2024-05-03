@@ -9,7 +9,7 @@
       href="https://fonts.googleapis.com/css2?family=Noto+Serif&display=swap"
       rel="stylesheet"
     />
-    <script src="fablejs.bc.js"></script>
+    <!-- <script src="fablejs.bc.js"></script> -->
     <!-- <link href="default.css" rel="stylesheet" /> -->
 
     <!-- stop google thinking this page is in spanish -->
@@ -28,7 +28,7 @@
       }
 
       #editor {
-        width: 60%;
+        width: 50%;
         resize: horizontal;
         margin: 10px;
       }
@@ -87,7 +87,8 @@
         >
           $MORE
         </select>
-        <button onclick="saveFile()">Save</button>
+        <a href="https://github.com/dariusf/fable/blob/master/docs.md">Docs</a>
+        <!-- <button onclick="saveFile()">Save</button> -->
         <!-- <label for="upload">Load</label>
         <input
           name="upload"
@@ -119,7 +120,7 @@
     <!-- <script type="text/javascript" src="interpret.js"></script> -->
     <script>
       editorSet(current_example_text());
-      onPageLoad({ data: "page loaded" });
+      onPageLoad();
     </script>
   </body>
 </html>

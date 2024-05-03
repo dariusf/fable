@@ -1,3 +1,7 @@
+let editor;
+let iframe = document.querySelector("iframe");
+let choice_history = [];
+
 // https://www.joshwcomeau.com/snippets/javascript/debounce/
 const debounce = (callback, wait) => {
   let timeoutId = null;
@@ -9,7 +13,6 @@ const debounce = (callback, wait) => {
   };
 };
 
-let editor;
 function setupEditor() {
   // https://ace.c9.io/tool/mode_creator.html
 
@@ -54,7 +57,6 @@ function vim() {
   editor.setKeyboardHandler("ace/keyboard/vim");
 }
 
-let iframe = document.querySelector("iframe");
 function refreshEditor() {
   try {
     iframe.src += ""; // reload
@@ -65,20 +67,45 @@ function refreshEditor() {
   }
 }
 
-let onEdit = debounce((_eventData) => {
-  // eventData.command.name
-  refreshEditor();
+const whitelistedActions = Object.fromEntries(
+  ["insertstring", "backspace", "undo", "redo", "paste"].map((e) => [e, true])
+);
+let onEdit = debounce((eventData) => {
+  // console.log(eventData.command.name);
+  if (whitelistedActions[eventData.command.name]) {
+    refreshEditor();
+  }
 }, 250);
 
-window.addEventListener("message", onPageLoad);
-
-function onPageLoad(e) {
-  if (e.data === "page loaded") {
-    let txt = editorGet();
-    try {
-      iframe.contentWindow.postMessage(Fable.parse(txt), "*");
-    } catch (e) {}
+window.addEventListener("message", (e) => {
+  if (e.data.type === "PAGE_LOADED") {
+    onPageLoad();
+  } else if (e.data.type === "CHOICE_MADE") {
+    choice_history.push(e.data.choice);
+  } else if (e.data.type === "DIVERGED") {
+    console.log(e.data);
+    let at = e.data.which;
+    let idx = choice_history.indexOf(at);
+    if (idx === -1) {
+      // what's going on
+      console.error("story reported divergence at", at, idx, choice_history);
+      choice_history = [];
+    } else {
+      choice_history = choice_history.slice(idx);
+    }
+  } else {
+    throw `unknown message ${e.data.type}`;
   }
+});
+
+function onPageLoad() {
+  let txt = editorGet();
+  try {
+    iframe.contentWindow.postMessage(
+      { type: "EDITED", md: txt, history: choice_history },
+      "*"
+    );
+  } catch (e) {}
 }
 
 const examples = document.querySelector("#examples");
@@ -91,6 +118,7 @@ function current_example_text() {
 
 function load_selected_example() {
   editorSet(current_example_text());
+  choice_history = [];
   refreshEditor();
 }
 
