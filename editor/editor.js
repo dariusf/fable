@@ -87,10 +87,6 @@ function refreshEditor() {
   }
 }
 
-window.onbeforeunload = function () {
-  return "prevent closing without saving";
-};
-
 let onEdit = debounce(() => {
   refreshEditor();
 }, 250);
@@ -139,6 +135,15 @@ function load_selected_example() {
   choice_history = [];
   refreshEditor();
 }
+
+function reset() {
+  choice_history = [];
+  refreshEditor();
+}
+
+window.onbeforeunload = function () {
+  return "prevent closing without saving";
+};
 
 // https://www.stefanjudis.com/snippets/how-trigger-file-downloads-with-javascript/
 function downloadFile(file) {
