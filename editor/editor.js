@@ -17,7 +17,10 @@ function setupEditor() {
   // https://ace.c9.io/tool/mode_creator.html
 
   editor = ace.edit("editor");
-  editor.setTheme("ace/theme/xcode");
+  // see https://ace.c9.io/build/kitchen-sink.html for theme list,
+  // https://cdnjs.com/libraries/ace for theme name
+  // editor.setTheme("ace/theme/xcode");
+  editor.setTheme("ace/theme/one_dark");
   editor.setShowPrintMargin(false);
   editor.renderer.setShowGutter(false);
   editor.setHighlightActiveLine(false);

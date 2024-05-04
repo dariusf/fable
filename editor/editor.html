@@ -19,6 +19,33 @@
     <title>Fable Editor</title>
     <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.20.0/src-min-noconflict/ace.min.js"></script>
     <style>
+      :root {
+        --main-bg-color: #202124;
+        --main-bg-color-lighter: #4e5159;
+        --main-fg-color: #e8eaed;
+      }
+      body {
+        background-color: var(--main-bg-color);
+        /* font-family: "Noto Serif", serif; */
+        font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI",
+          Roboto, Ubuntu;
+      }
+      * {
+        scrollbar-color: var(--main-bg-color-lighter) var(--main-bg-color);
+        scrollbar-width: thin;
+      }
+      a,
+      a:visited {
+        color: var(--main-fg-color);
+      }
+      iframe {
+        border: 0px;
+      }
+      select {
+        background: var(--main-bg-color);
+        color: var(--main-fg-color);
+      }
+
       /* layout taken from https://github.com/mwillsey/egg-smol */
       body {
         margin: 0;
