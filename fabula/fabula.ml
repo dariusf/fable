@@ -242,11 +242,11 @@ module Convert = struct
                    (fun (b, gs, st, i, c, r) e ->
                      match (e, b) with
                      (* special things encoded as Runs *)
-                     | Run "sticky", _ -> (b, gs, true, i, Some e, r)
+                     | Run "sticky", _ -> (b, gs, true, i, c, r)
                      | Run s, _ when String.starts_with ~prefix:"guard " s ->
-                       (b, Acc.add (strip_prefix 6 s) gs, st, i, Some e, r)
+                       (b, Acc.add (strip_prefix 6 s) gs, st, i, c, r)
                      | Run s, _ when String.starts_with ~prefix:"?" s ->
-                       (b, Acc.add (strip_prefix 1 s) gs, st, i, Some e, r)
+                       (b, Acc.add (strip_prefix 1 s) gs, st, i, c, r)
                        (* things to stop at *)
                      | (Run _ | Jump _ | JumpDynamic _ | Tunnel _), false ->
                        (true, gs, st, i, Some e, r)
