@@ -44,6 +44,18 @@ function setupEditor() {
   //   // scrollIntoView: "cursor",
   // });
   editor.on("change", onEdit);
+
+  // vim mode has to be enabled to configure some things,
+  // so enable it temporarily to do that.
+  // we also want to support configuration via cmd+,
+  vim();
+  // https://github.com/ajaxorg/ace/blob/master/src/keyboard/vim.js
+  ace.config.loadModule("ace/keyboard/vim", function (module) {
+    module.Vim.map("j", "gj", "normal");
+    module.Vim.map("k", "gk", "normal");
+  });
+  disableVim();
+
   editor.focus();
 }
 
@@ -57,7 +69,10 @@ function editorGet() {
   return editor.getValue();
 }
 
-// alternatively, type cmd+,
+function disableVim() {
+  editor.setKeyboardHandler("");
+}
+
 function vim() {
   editor.setKeyboardHandler("ace/keyboard/vim");
 }
