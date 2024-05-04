@@ -50,7 +50,7 @@ let choices_disappear = true;
 
 // INTERNALS
 
-// this shouldn't be accessed directly as on_scene_visit won't fire
+// this shouldn't be accessed directly by users as on_scene_visit won't fire
 let _scenes = {};
 let content = document.querySelector("#content");
 

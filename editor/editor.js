@@ -28,21 +28,22 @@ function setupEditor() {
   editor.commands.bindKey("Cmd-L", null);
   editor.session.setUseWorker(false);
   editor.session.setUseWrapMode(true);
-  editor.session.setOptions({
+  editor.setOptions({
     mode: "ace/mode/markdown",
     tabSize: 4,
     useSoftTabs: true,
+    scrollPastEnd: 0.8,
   });
   editor.setFontSize("12px");
-  editor.commands.addCommand({
-    name: "Run",
-    bindKey: { win: "Ctrl-Enter", mac: "Command-Enter" },
-    exec: function (_editor) {
-      run();
-    },
-    // scrollIntoView: "cursor",
-  });
-  editor.commands.on("afterExec", onEdit);
+  // editor.commands.addCommand({
+  //   name: "Run",
+  //   bindKey: { win: "Ctrl-Enter", mac: "Command-Enter" },
+  //   exec: function (_editor) {
+  //     run();
+  //   },
+  //   // scrollIntoView: "cursor",
+  // });
+  editor.on("change", onEdit);
   editor.focus();
 }
 
@@ -56,6 +57,7 @@ function editorGet() {
   return editor.getValue();
 }
 
+// alternatively, type cmd+,
 function vim() {
   editor.setKeyboardHandler("ace/keyboard/vim");
 }
@@ -70,14 +72,12 @@ function refreshEditor() {
   }
 }
 
-const whitelistedActions = Object.fromEntries(
-  ["insertstring", "backspace", "undo", "redo", "paste"].map((e) => [e, true])
-);
-let onEdit = debounce((eventData) => {
-  // console.log(eventData.command.name);
-  if (whitelistedActions[eventData.command.name]) {
-    refreshEditor();
-  }
+window.onbeforeunload = function () {
+  return "prevent closing without saving";
+};
+
+let onEdit = debounce(() => {
+  refreshEditor();
 }, 250);
 
 window.addEventListener("message", (e) => {
