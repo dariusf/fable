@@ -52,7 +52,7 @@ items.map(i => `- ${i}`).join('\n') + `
 
 text from Scene 3
 
-Turns: `$turns`
+Turns: `$internal.turns`
 
 # Nested
 

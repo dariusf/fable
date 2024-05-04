@@ -1,5 +1,6 @@
 let editor;
-let iframe = document.querySelector("iframe");
+const iframe = document.querySelector("iframe");
+const fastReload = document.querySelector("#fastreload");
 let choice_history = [];
 
 // https://www.joshwcomeau.com/snippets/javascript/debounce/
@@ -77,13 +78,15 @@ function vim() {
   editor.setKeyboardHandler("ace/keyboard/vim");
 }
 
+function usingFastReload() {
+  return fastReload.checked;
+}
+
 function refreshEditor() {
-  try {
+  if (usingFastReload()) {
+    iframe.contentWindow.postMessage({ type: "RESET", md: editorGet() }, "*");
+  } else {
     iframe.src += ""; // reload
-    return true;
-  } catch (e) {
-    console.error(e);
-    return false;
   }
 }
 
@@ -113,10 +116,9 @@ window.addEventListener("message", (e) => {
 });
 
 function onPageLoad() {
-  let txt = editorGet();
   try {
     iframe.contentWindow.postMessage(
-      { type: "EDITED", md: txt, history: choice_history },
+      { type: "EDITED", md: editorGet(), history: choice_history },
       "*"
     );
   } catch (e) {}

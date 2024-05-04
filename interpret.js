@@ -1,39 +1,21 @@
 // API
 
-window.on_interact = [];
-window.on_scene_visit = [];
-window.on_choice = [];
-window.bug_detectors = [];
-
-var turns = 0;
-on_interact.push(() => {
-  turns++;
-});
-
-var last_visited_turn = {};
 function turns_since(scene) {
-  return turns - (last_visited_turn[scene] || 0);
+  return internal.turns - (internal.last_visited_turn[scene] || 0);
 }
 
-var seen_scenes = {};
-
 function see(scene) {
-  if (seen_scenes.hasOwnProperty(scene)) {
-    seen_scenes[scene]++;
+  if (internal.seen_scenes.hasOwnProperty(scene)) {
+    internal.seen_scenes[scene]++;
   } else {
-    seen_scenes[scene] = 1;
+    internal.seen_scenes[scene] = 1;
   }
 }
 
 function seen(scene) {
   // truthiness supported for this, 0 is false, nonzero is true
-  return seen_scenes[scene];
+  return internal.seen_scenes[scene];
 }
-
-on_scene_visit.push((s) => {
-  see(s);
-  last_visited_turn[s] = turns;
-});
 
 function make_choices(cs) {
   if (cs.length) {
@@ -46,25 +28,51 @@ function make_choices(cs) {
 
 // CONFIG
 
-let choices_disappear = true;
+const choices_disappear = true;
 
 // INTERNALS
 
-// this shouldn't be accessed directly by users as on_scene_visit won't fire
-let _scenes = {};
-let content = document.querySelector("#content");
+const content = document.querySelector("#content");
 
-// sticky choices
-let fresh = 0;
-window.choice_state = {};
+let internal = defaultInternal();
 
-const internal = {
-  choice_history: [],
-  // choices to immediately take when hot reloading
-  immediately_take: [],
-  // whether or not to send parent events. for internal use
-  silent_choice: false,
-};
+function defaultInternal() {
+  return {
+    // callbacks
+    bug_detectors: [],
+    // on_choice: [], // TODO unused?
+    on_scene_visit: [
+      (s) => {
+        see(s);
+        internal.last_visited_turn[s] = internal.turns;
+      },
+    ],
+    on_interact: [
+      () => {
+        internal.turns++;
+      },
+    ],
+    // story state
+    turns: 0,
+    seen_scenes: {},
+    last_visited_turn: {},
+    // this shouldn't be accessed directly by users as on_scene_visit won't fire
+    scenes: {},
+    // sticky choices
+    fresh: 0,
+    choice_state: {},
+    // choices taken by the user
+    choice_history: [],
+    // choices to immediately take when hot reloading
+    immediately_take: [],
+    // whether or not to send parent events. for internal use
+    silent_choice: false,
+  };
+}
+
+function resetInternals() {
+  internal = defaultInternal();
+}
 
 function start(story) {
   if (!story.length) {
@@ -72,11 +80,11 @@ function start(story) {
   }
   internal.choice_history = [];
   for (const scene of story) {
-    _scenes[scene.name] = scene.cmds;
+    internal.scenes[scene.name] = scene.cmds;
   }
   let scene = story[0].name;
-  on_scene_visit.forEach((f) => f(scene));
-  interpret(_scenes[scene], content, () => {});
+  internal.on_scene_visit.forEach((f) => f(scene));
+  interpret(internal.scenes[scene], content, () => {});
 }
 
 // default standalone entry point: the content of the global `story` (expected to be the JSON output of the CLI) is interpreted into the div #content
@@ -93,9 +101,13 @@ window.onload = function () {
 window.addEventListener("message", function (e) {
   if (e.data.type === "EDITED") {
     content.textContent = "";
-    let ast = Fable.parse(e.data.md);
     internal.immediately_take = e.data.history;
-    start(ast);
+    start(Fable.parse(e.data.md));
+  } else if (e.data.type === "RESET") {
+    resetInternals();
+    // go into the edited path
+    content.textContent = "";
+    start(Fable.parse(e.data.md));
   }
 });
 
@@ -165,7 +177,7 @@ function interpret(instrs, parent, k) {
           let target = instr[0] === "LinkCode" ? instr[2] + "()" : instr[2];
           e.onclick = (ev) => {
             ev.preventDefault();
-            window.on_interact.forEach((f) => f());
+            internal.on_interact.forEach((f) => f());
             if (kind === "Jump") {
               // ensure that it is not used
               interpret([[kind, target]], parent, null);
@@ -218,14 +230,14 @@ function interpret(instrs, parent, k) {
     case "Tunnel": {
       // keep current k
       let scene = current[1];
-      on_scene_visit.forEach((f) => f(scene));
-      return interpret(_scenes[scene], content, k);
+      internal.on_scene_visit.forEach((f) => f(scene));
+      return interpret(internal.scenes[scene], content, k);
     }
     case "Jump": {
       // abandon current k and instructions, go back to top element
       let scene = current[1];
-      on_scene_visit.forEach((f) => f(scene));
-      return interpret(_scenes[scene], content, () => {});
+      internal.on_scene_visit.forEach((f) => f(scene));
+      return interpret(internal.scenes[scene], content, () => {});
     }
     case "JumpDynamic": {
       let scene;
@@ -234,8 +246,8 @@ function interpret(instrs, parent, k) {
       } catch (e) {
         surfaceError("JumpDynamic", current[1], e);
       }
-      on_scene_visit.forEach((f) => f(scene));
-      return interpret(_scenes[scene], content, () => {});
+      internal.on_scene_visit.forEach((f) => f(scene));
+      return interpret(internal.scenes[scene], content, () => {});
     }
     case "Meta":
       let s;
@@ -297,15 +309,18 @@ function interpret(instrs, parent, k) {
           });
         };
         // add more alternatives
-        let extra = Fable.recursivelyAddChoices((s) => _scenes[s], more);
+        let extra = Fable.recursivelyAddChoices(
+          (s) => internal.scenes[s],
+          more
+        );
 
         // generate choices
         for (const item of alts.concat(extra)) {
           if (!item.sticky) {
-            let id = `c${fresh++}`;
-            window.choice_state[id] = false;
-            item.code.push(["Run", `window.choice_state.${id} = true;`]);
-            item.guard.unshift(`!window.choice_state.${id}`);
+            let id = `c${internal.fresh++}`;
+            internal.choice_state[id] = false;
+            item.code.push(["Run", `internal.choice_state.${id} = true;`]);
+            item.guard.unshift(`!internal.choice_state.${id}`);
           }
           let generate = true;
           for (const g of item.guard) {
@@ -330,7 +345,7 @@ function interpret(instrs, parent, k) {
             ev.preventDefault();
             internal.choice_history.push(a.textContent);
             informParentChoice(a.textContent);
-            window.on_interact.forEach((f) => f());
+            internal.on_interact.forEach((f) => f());
             if (choices_disappear) {
               parent.removeChild(ul);
             } else {
@@ -398,8 +413,8 @@ function render(s) {
 }
 
 function render_scene(s) {
-  on_scene_visit.forEach((f) => f(s));
-  render(_scenes[s]);
+  internal.on_scene_visit.forEach((f) => f(s));
+  render(internal.scenes[s]);
 }
 
 // TESTING
@@ -419,7 +434,7 @@ function stop_testing() {
 
 function bug_found() {
   let runtime_error = !!document.querySelectorAll(".error").length;
-  let user_defined_error = bug_detectors.some((b) => b());
+  let user_defined_error = internal.bug_detectors.some((b) => b());
   if (user_defined_error) {
     console.error("a user-defined error occurred");
   }
