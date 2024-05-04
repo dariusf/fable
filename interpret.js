@@ -109,22 +109,6 @@ function informParentDiverged(which) {
   window.parent.postMessage({ type: "DIVERGED", which }, "*");
 }
 
-function maybeTakeChoice(a) {
-  if (!internal.immediately_take.length) {
-    return;
-  }
-  let next = internal.immediately_take.shift();
-  if (a.textContent === next) {
-    internal.silent_choice = true;
-    a.click();
-    internal.silent_choice = false;
-  } else {
-    // we've diverged
-    internal.immediately_take = [];
-    informParentDiverged(a.textContent);
-  }
-}
-
 function surfaceError(...args) {
   console.error(args);
   let elt = document.createElement("div");
@@ -315,6 +299,7 @@ function interpret(instrs, parent, k) {
         // add more alternatives
         let extra = Fable.recursivelyAddChoices((s) => _scenes[s], more);
 
+        // generate choices
         for (const item of alts.concat(extra)) {
           if (!item.sticky) {
             let id = `c${fresh++}`;
@@ -334,7 +319,6 @@ function interpret(instrs, parent, k) {
           if (!generate) {
             continue;
           }
-          // console.log("choice generated from", item);
           let li = document.createElement("li");
           ul.appendChild(li);
           let a = document.createElement("a");
@@ -366,7 +350,26 @@ function interpret(instrs, parent, k) {
             // }
           };
           interpret(item.initial, a, () => {});
-          maybeTakeChoice(a);
+        }
+
+        // possibly take choices for hot reloading
+        if (internal.immediately_take.length) {
+          let something_taken = false;
+          for (const a of links) {
+            if (a.textContent === internal.immediately_take[0]) {
+              let elt = internal.immediately_take.shift();
+              internal.silent_choice = true;
+              a.click();
+              internal.silent_choice = false;
+              something_taken = a;
+              break;
+            }
+          }
+          if (!something_taken) {
+            // there were choices we could have immediately taken, but nothing was chosen - we've diverged
+            informParentDiverged(internal.immediately_take[0]);
+            internal.immediately_take = [];
+          }
         }
       }
       break;

@@ -97,7 +97,6 @@ window.addEventListener("message", (e) => {
   } else if (e.data.type === "CHOICE_MADE") {
     choice_history.push(e.data.choice);
   } else if (e.data.type === "DIVERGED") {
-    console.log(e.data);
     let at = e.data.which;
     let idx = choice_history.indexOf(at);
     if (idx === -1) {
@@ -105,8 +104,9 @@ window.addEventListener("message", (e) => {
       console.error("story reported divergence at", at, idx, choice_history);
       choice_history = [];
     } else {
-      choice_history = choice_history.slice(idx);
+      choice_history = choice_history.slice(0, idx);
     }
+    onPageLoad();
   } else {
     throw `unknown message ${e.data.type}`;
   }
