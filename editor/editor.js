@@ -83,7 +83,7 @@ function usingFastReload() {
 }
 
 function refreshEditor() {
-  if (usingFastReload()) {
+  if (true || usingFastReload()) {
     iframe.contentWindow.postMessage({ type: "RESET", md: editorGet() }, "*");
   } else {
     iframe.src += ""; // reload
