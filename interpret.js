@@ -516,3 +516,25 @@ function inIFrame() {
     return true;
   }
 }
+
+// https://stackoverflow.com/a/52693392
+function user_globals() {
+  return Object.keys(window)
+    .filter((x) => typeof window[x] !== "function")
+    .filter(
+      (x) => Object.getOwnPropertyDescriptor(window, x).value !== undefined
+    )
+    .filter(
+      (a) =>
+        ![
+          // builtin
+          "chrome",
+          // jsoo
+          "jsoo_runtime",
+          "caml_fs_tmp",
+          // ours
+          "story",
+          "Fable",
+        ].includes(a)
+    );
+}
