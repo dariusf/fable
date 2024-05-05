@@ -1,4 +1,3 @@
-
 # Two
 
 ```js
@@ -8,7 +7,7 @@ var items = ['Apple', 'Banana', 'Carrot'];
 var a = items[2-3+1];
 ```
 
-Hello `$a`!
+Hello `$' '+a`!
 
 ```js
 function runMe() {
@@ -52,7 +51,7 @@ items.map(i => `- ${i}`).join('\n') + `
 
 text from Scene 3
 
-Turns: `$internal.turns`
+Turns: `$' '` `$internal.turns`
 
 # Nested
 
