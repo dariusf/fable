@@ -6,13 +6,13 @@
     - [Code](#code)
     - [Jumps and Tunnels](#jumps-and-tunnels)
     - [Choices](#choices)
-    - [Breaks and spaces](#breaks-and-spaces)
+    - [Breaks and Spaces](#breaks-and-spaces)
     - [Links](#links)
   - [Semantics](#semantics)
-  - [The runtime](#the-runtime)
-  - [The CLI tools](#the-cli-tools)
+  - [The Runtime](#the-runtime)
+  - [The CLI](#the-cli)
 - [Development](#development)
-  - [Compiler](#compiler)
+  - [Compiler and Runtime](#compiler-and-runtime)
   - [Editor](#editor)
     - [Restarting](#restarting)
     - [Reloading](#reloading)
@@ -27,11 +27,11 @@
 Fable is a Markdown dialect.
 
 Like with other narrative scripting languages, unadorned text is prose to be shown to the player.
-Narrative-related constructs are represented using Markdown elements.
+Interactivity may be expressed using _instructions_, and are represented using Markdown elements.
 
 ### Sections
 
-A Fable story consists of named _sections_, which contain prose interleaved with _instructions_.
+A Fable _story_ consists of named _sections_, which contain paragraphs of prose and instructions.
 
 Sections are named using headings, and are shown until they end or are interrupted (e.g., by a jump or choice), which may later either continue the section or move to another. A section may thus never be shown in its entirety.
 
@@ -41,7 +41,7 @@ Content before first section goes into an implicit section named "prelude".  The
 
 Code can be freely interleaved with prose in Fable.
 
-Inline code `` `CODE` `` is executed when encountered[^2]. Its output is hidden. Code blocks (with an optional language declaration) can be used for longer snippets.
+Inline code `` `CODE` `` is executed when encountered. Its output is hidden. Code blocks (with an optional language declaration) can be used for longer snippets.
 
     ```js
     CODE
@@ -51,7 +51,7 @@ A _prefix_ can be used to access variations of this.
 With a `$` prefix (e.g. `` `$CODE` ``), the output is _interpolated_ as _text_ into the story at that point.
 
 With a `~` prefix, the output is interpolated as _Fable_ into the story at that point.
-This allows _unquoting_: generating some fragment of story dynamically using JavaScript[^2].
+This allows _unquoting_: generating some fragment of story dynamically using JavaScript.
 
 The block form of this uses the `meta` or `~` info-string after the language type.
 
@@ -98,7 +98,7 @@ Such items may have preconditions, in which case they apply to every item inline
 
 <!-- TODO fallback -->
 
-### Breaks and spaces
+### Breaks and Spaces
 
 Like in Markdown, double linebreaks delimit paragraphs, and single linebreaks are turned into spaces.
 
@@ -135,13 +135,13 @@ It's clear when a particular bit of prose "executes", allowing things like raw H
 The browser console is fully available, and the state of the story can be queried at any point without doing anything special.
 Necessary data structures, libraries, and language features can be used without any fanfare.
 
-## The runtime
+## The Runtime
 
 The [runtime system](interpret.js) contains code supporting the execution of Fable stories.
 User APIs are at the top of the file.
 These include things like turn and seen counters, callbacks, and other utilities for automated testing and saving and loading stories, which can be used directly via the console.
 
-## The CLI tools
+## The CLI
 
 Export a standalone story
 
@@ -152,13 +152,15 @@ open detective/index.html
 
 # Development
 
-## Compiler
+## Compiler and Runtime
 
 Fable Markdown is compiled into a set of named sequences of instructions. Instructions may contain others nested in them.
 
 The runtime is a CPS interpreter whose state is a list of instructions (to be executed), a current element to mutate (e.g. with new prose), and a continuation, which enables the control primitives like jumps and choices.
 
 For efficiency, the interpreter executes instructions in a loop until it reaches one that may change control. That instruction is then given access to the ones after as a continuation.
+
+Note that only `~` and the jump or tunnel instructions can cause control flow changes. In particular, calling runtime functions like `render` within regular inline code will not work (as the jumps have to go through the interpreter).
 
 ## Editor
 
@@ -248,7 +250,5 @@ open http://localhost:8005/editor.html
 ```
 
 [^1]: We can't actually hot-reload by saving and restoring all interpreter state, as some of it is maintained by the JS runtime due to the use of CPS.
-
-[^2]: Note that only `~` and the jump or tunnel instructions can cause control flow changes. In particular, calling runtime functions like `render` within regular inline code will not work (as the jumps have to go through the interpreter).
 
 [^3]: A helpful analogy is the execution model of a REPL. If the same closed block of code is pasted every time, it should always execute the same way, as it only relies on definitions given in the block itself. Idempotency of definitions can be ensured by using `var`.
