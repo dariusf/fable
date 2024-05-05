@@ -26,6 +26,10 @@ function make_choices(cs) {
   }
 }
 
+function last_choice() {
+  return internal.choice_history[internal.choice_history.length - 1];
+}
+
 // CONFIG
 
 const choices_disappear = true;

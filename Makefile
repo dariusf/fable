@@ -2,7 +2,8 @@
 .PHONY: default
 default:
 #	dune exec ./fable.exe examples/test.md > story.js
-	dune exec ./fable.exe examples/crime.md > story.js
+#	dune exec ./fable.exe examples/crime.md > story.js
+	dune exec ./fable.exe examples/wash.md > story.js
 	grep 'story ' story.js | sed -e 's/var story =//g' -e 's/;$$//g' | jq | pbcopy
 	dune build ./fablejs.bc.js
 	# dune build --release ./fablejs.bc.js

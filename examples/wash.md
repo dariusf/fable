@@ -16,7 +16,7 @@ The outlet is `$' ' + (outlet_closed ? 'closed' : 'open')`.
 
 ```js
 function done_everything() {
-  return ['dial', 'temp', 'spin', 'time', 'detergent'].map(i => !!seen(i)).reduce((a, b) => a && b, true);
+  return ['dial', 'temp', 'spin', 'time'].map(i => !!seen(i)).reduce((a, b) => a && b, true);
 }
 ```
 
@@ -26,8 +26,10 @@ function done_everything() {
 - `sticky` Adjust the time `->time`
 - Add detergent `1` You added some detergent. `see('detergent')`
 - `?!outlet_closed` Close the outlet `outlet_closed = true` You closed the outlet.
-- `?done_everything() && outlet_closed` Start the machine `->wait`
-- `?done_everything() && !outlet_closed` Start the machine `->water`
+- `?done_everything()` Start the machine `1`
+    ```js ~
+    !outlet_closed ? '`->water`' : !seen('detergent') ? '`->unwashed`' : '`->wait`'
+    ```
 
 `->hub`
 
@@ -45,6 +47,8 @@ function done_everything() {
 - `sticky` Jeans
 - `sticky` Sensitive Plus
 
+You turned the dial to `$' ' + last_choice()`.
+
 `->hub`
 
 # temp
@@ -56,6 +60,8 @@ function done_everything() {
 - `sticky` 30
 - `$'*'` `sticky`
 
+You set the temperature to `$' ' + last_choice()`.
+
 `->hub`
 
 # spin
@@ -66,6 +72,8 @@ function done_everything() {
 - `sticky` Swirl
 - `sticky` Box
 
+You set the spin to `$' ' + last_choice()`.
+
 `->hub`
 
 # time
@@ -73,11 +81,19 @@ function done_everything() {
 - `sticky` 115
 - `sticky` 55
 
+You set the time to `$' ' + last_choice()`.
+
 `->hub`
 
 # water
 
 You left the machine and came back to find the clothes unwashed and the floor covered with water.
+
+THE END
+
+# unwashed
+
+You came back to find the clothes wet but unwashed, because you had forgotten to add detergent.
 
 THE END
 
