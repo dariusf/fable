@@ -2,7 +2,7 @@
 # beginning
 
 ```js
-bug_detectors.push(() => {
+internal.bug_detectors.push(() => {
   let not_ended = !findContainingText("THE END").length;
   let no_options = !document.querySelectorAll('.choice').length
   return not_ended && no_options;

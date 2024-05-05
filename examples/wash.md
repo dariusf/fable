@@ -6,20 +6,28 @@ var outlet_closed = false;
 
 # start
 
+You stand before the washing machine.
+
 The outlet is `$' ' + (outlet_closed ? 'closed' : 'open')`.
 
 `->hub`
 
 # hub
 
+```js
+function done_everything() {
+  return ['dial', 'temp', 'spin', 'time', 'detergent'].map(i => !!seen(i)).reduce((a, b) => a && b, true);
+}
+```
+
 - `sticky` Turn the dial `->dial`
 - `sticky` Set the temperature `->temp`
 - `sticky` Set the spin `->spin`
 - `sticky` Adjust the time `->time`
-- Add detergent `1` You added some detergent.
+- Add detergent `1` You added some detergent. `see('detergent')`
 - `?!outlet_closed` Close the outlet `outlet_closed = true` You closed the outlet.
-- `?outlet_closed` Start the machine `->wait`
-- `?!outlet_closed` Start the machine `->water`
+- `?done_everything() && outlet_closed` Start the machine `->wait`
+- `?done_everything() && !outlet_closed` Start the machine `->water`
 
 `->hub`
 
