@@ -42,6 +42,7 @@ let internal = defaultInternal();
 
 function defaultInternal() {
   return {
+    debug: false,
     // callbacks
     bug_detectors: [],
     // on_choice: [], // TODO unused?
@@ -138,7 +139,9 @@ function surfaceError(...args) {
 function interpret(instrs, parent, k) {
   loop: for (var i = 0; i < instrs.length; i++) {
     const instr = instrs[i];
-    // console.log("interpret", instr, parent);
+    if (internal.debug) {
+      console.log("interpret", instr, parent);
+    }
     switch (instr[0]) {
       case "Run":
         try {
