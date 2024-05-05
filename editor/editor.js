@@ -78,16 +78,20 @@ function vim() {
   editor.setKeyboardHandler("ace/keyboard/vim");
 }
 
-function usingFastReload() {
-  return fastReload.checked;
-}
+// function usingFastReload() {
+//   return fastReload.checked;
+// }
 
 function refreshEditor() {
-  if (true || usingFastReload()) {
-    iframe.contentWindow.postMessage({ type: "RESET", md: editorGet() }, "*");
-  } else {
-    iframe.src += ""; // reload
-  }
+  // if (true || usingFastReload()) {
+  iframe.contentWindow.postMessage({ type: "RESET", md: editorGet() }, "*");
+  // } else {
+  // fullReload();
+  // }
+}
+
+function fullReload() {
+  iframe.src += ""; // reload
 }
 
 let onEdit = debounce(() => {
@@ -138,9 +142,14 @@ function load_selected_example() {
   refreshEditor();
 }
 
-function reset() {
+function restart() {
   choice_history = [];
   refreshEditor();
+}
+
+function reload() {
+  choice_history = [];
+  fullReload();
 }
 
 window.onbeforeunload = function () {
