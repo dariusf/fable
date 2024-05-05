@@ -14,6 +14,8 @@
 - [Development](#development)
   - [Compiler](#compiler)
   - [Editor](#editor)
+    - [Restarting](#restarting)
+    - [Reloading](#reloading)
   - [Tasks](#tasks)
 
 # Fable User Guide
@@ -33,7 +35,7 @@ A Fable story consists of named _sections_, which contain prose interleaved with
 
 Sections are named using headings, and are shown until they end or are interrupted (e.g., by a jump or choice), which may later either continue the section or move to another. A section may thus never be shown in its entirety.
 
-Content before first section goes into an implicit section named `prelude`.  The story starts there or at the first section.
+Content before first section goes into an implicit section named "prelude".  The story starts there or at the first section.
 
 ### Code
 
@@ -162,17 +164,60 @@ For efficiency, the interpreter executes instructions in a loop until it reaches
 
 The editor can be used to share Fable stories, so it [sandboxes JS evaluation using an iframe](https://web.dev/articles/sandboxed-iframes#safely_sandboxing_eval).
 
-Since stories may have arbitrary state, the editor reloads the iframe on every edit, relying on the browser's cache for efficiency. This depends on the headers GitHub Pages sends.
+It simulates[^1] hot reloading on edit by _restarting_ and replaying choices made since the last restart, stopping short if a choice can no longer be taken in a new version.
 
-The setup is hence rather complex:
+### Restarting 
+
+How does a restart work, given that stories may have arbitrary, user-defined global state in the `window`?
+
+A restart effectively (and apparently, naively) jumps back to the prelude. This is safe if stories are semantically _closed_, meaning that everything in them is defined before it is used, and definitions are idempotent[^3].
+
+Stories which are not closed will contain undesirable executions which lead to use-before-definition crashes.
+
+For example, this story isn't closed:
+
+```md
+- A `->A`
+- B `->B`
+
+# A
+
+`var x = 1;` `->B`
+
+# B
+
+`$x`
+```
+
+There is the unsafe execution `[B]`, which results in a `ReferenceError: x is not defined`.
+Restarting may produce the execution `[A, restart, B]`, which does not crash, even though it should.
+
+<!--
+Testing a story with restarting may be thought of testing a modified story where every section has an implicit choice which jumps back to the prelude.
+Executions are now of infinite length and there will be some which don't correspond to any that the original story has.
+The modified story is an abstraction of the original with strictly more executions.
+Since a restart is a transition, the user loses the ability to truly restart in the sense of getting a new execution, so some executions become "hidden".
+-->
+
+Having crashes hidden like this may seem nasty, but...
+
+1. The alternative of reloading the iframe on every edit is expensive
+2. An easy way to ensure closure is to initialize all user-defined state with `var` in the prelude
+3. Random testing (which reloads) can be used to check this closure property
+
+Hence, we assume stories are closed and default to restarting. 
+
+### Reloading
+
+A safe but slow alternative is to reload the iframe on every edit, relying on the browser's cache for efficiency.
 
 1. On page load, nothing happens in the editor, as the iframe loads asynchronously
 2. The iframe loads and posts a message to the editor saying it has loaded
-3. The editor replies with Fable instructions parsed from the contents of the field
-4. The iframe receives this and interprets it, which may result in sandboxed JS evaluation
+3. The editor replies with the contents of the field
+4. The iframe receives Markdown text, parses it, then interprets it, which may result in sandboxed JS evaluation
 5. On edit, the iframe is reloaded, causing the process to start again from 2
 
-This may all be simplified/made more efficient in future if we require that users maintain state in a well-defined way, e.g. on a single global object, and provide a reset function, e.g. in the first section.
+This guarantees that hot reloading will not result in "spooky" executions (`[A, reload, B]` would crash), but transfers quite a bit of data. See the previous section for other reasons why this isn't the default.
 
 ## Tasks
 
@@ -202,4 +247,8 @@ python -m http.server 8005
 open http://localhost:8005/editor.html
 ```
 
+[^1]: We can't actually hot-reload by saving and restoring all interpreter state, as some of it is maintained by the JS runtime due to the use of CPS.
+
 [^2]: Note that only `~` and the jump or tunnel instructions can cause control flow changes. In particular, calling runtime functions like `render` within regular inline code will not work (as the jumps have to go through the interpreter).
+
+[^3]: A helpful analogy is the execution model of a REPL. If the same closed block of code is pasted every time, it should always execute the same way, as it only relies on definitions given in the block itself. Idempotency of definitions can be ensured by using `var`.
