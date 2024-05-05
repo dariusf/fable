@@ -137,9 +137,8 @@ function current_example_text() {
 }
 
 function load_selected_example() {
-  editorSet(current_example_text());
   choice_history = [];
-  refreshEditor();
+  editorSet(current_example_text());
 }
 
 function restart() {
