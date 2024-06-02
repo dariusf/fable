@@ -1,4 +1,6 @@
 
+export OCAMLRUNPARAM=b
+
 .PHONY: default
 default:
 #	dune exec ./fable.exe examples/test.md > story.js

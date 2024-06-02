@@ -14,13 +14,16 @@ let arg_specs =
        instruction data in JSON" );
   ]
 
-let write_standalone dir json =
+let write_standalone dir frontmatter json =
   match Sys.file_exists dir with
   | true -> Format.printf "%s already exists@." dir
   | false ->
     Sys.mkdir dir 0o777;
     let s = Format.asprintf in
-    write_file (s "%s/index.html" dir) Embedded.index;
+    let extra =
+      List.assoc_opt "extra" frontmatter |> Option.value ~default:""
+    in
+    write_file (s "%s/index.html" dir) (Embedded.index extra);
     write_file (s "%s/default.css" dir) Embedded.default_css;
     write_file (s "%s/interpret.js" dir) Embedded.interpret;
     write_file (s "%s/runtime.js" dir) Embedded.runtime;
@@ -33,12 +36,12 @@ let () =
     "fable [-s] <file1> [<file2>] ... -o <output>";
   match !input_files with
   | [f] ->
-    let json = Fabula.md_file_to_json f in
+    let frontmatter, json = Fabula.md_file_to_json f in
     (match !standalone with
     | true ->
       (match !output_file with
       | None -> Format.printf "expected an output directory name@."
-      | Some dir -> write_standalone dir json)
+      | Some dir -> write_standalone dir frontmatter json)
     | false ->
       (match !output_file with
       | None -> Fabula.print_json json

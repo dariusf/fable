@@ -369,13 +369,58 @@ let print_json ?out program =
     | None -> Format.printf "%a@." (Yojson.Safe.pretty_print ~std:true) program
     | Some out -> Yojson.Safe.to_channel out ~std:true program
 
+let match_all groups regex str =
+  let rec loop p =
+    match Str.search_forward regex str p with
+    | _ ->
+      let r = List.map (fun g -> Str.matched_group g str) groups in
+      r :: loop (Str.match_end () + 0)
+    | exception Not_found -> []
+  in
+  loop 0
+
+let extract_frontmatter =
+  let fm_regex = Str.regexp "\\([ -~\n]+\\)---\n\\([ -~\n]*\\)\n*" in
+  let simple_kvp = Str.regexp "\\([a-z]+\\): \\([ -~]+\\)" in
+  let multiline_kvp = Str.regexp "\\([a-z]+\\): |\n\\(\\( +[ -~]+\n\\)+\\)" in
+  fun str ->
+    let exception Fail in
+    try
+      let@ _ = if_exn_then Fail in
+      let front, rest =
+        let[@warning "-8"] [[front; rest]] = match_all [1; 2] fm_regex str in
+        (front, rest)
+      in
+      let multi =
+        let multi = match_all [1; 2] multiline_kvp front in
+        multi
+        |> List.map (fun [@warning "-8"] [k; v] ->
+               let v1 =
+                 String.split_on_char '\n' v
+                 |> List.map String.trim |> String.concat "\n"
+               in
+               (k, v1))
+      in
+      let simple =
+        let simple = match_all [1; 2] simple_kvp front in
+        (* this matches multi too so remove those *)
+        simple
+        |> List.filter_map (fun [@warning "-8"] [k; v] ->
+               if List.exists (fun (mk, _) -> mk = k) multi then None
+               else Some (k, v))
+      in
+      (simple @ multi, rest)
+    with Fail -> ([], str)
+
 let md_file_to_json file =
+  let str = Common.read_file file in
+  let front, str = extract_frontmatter str in
   let doc =
     (* ~resolver:Convert.resolver  *)
-    Cmarkit.Doc.of_string (Common.read_file file)
+    Cmarkit.Doc.of_string str
   in
   (* Format.printf "html: %s@." (Cmarkit_html.of_doc ~safe:true doc); *)
-  doc |> Convert.to_program
+  (front, doc |> Convert.to_program)
 
 let md_to_instrs str =
   (* ~resolver:Convert.resolver  *)

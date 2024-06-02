@@ -49,3 +49,5 @@ end
 
 let strip_prefix n s = String.trim (String.sub s n (String.length s - n))
 let is_whitespace s = String.equal (String.trim s) ""
+let if_exn_then ex f = try f () with _ -> raise ex
+let ( let@ ) f x = f x
