@@ -194,4 +194,12 @@ function saveFile() {
 //     .catch((error) => console.log(error));
 // }
 
+function share() {
+  const url = new URL(window.location);
+  url.search = new URLSearchParams({ story: window.btoa(editorGet()) });
+  // this navigates away
+  // window.location = url.toString();
+  history.pushState({}, "Shared Code URL", url.toString());
+}
+
 setupEditor();

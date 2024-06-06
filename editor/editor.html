@@ -147,7 +147,7 @@
           accept=".md"
           onchange="loadFile(this)"
         /> -->
-        <!-- <button id="share-btn" disabled onclick="share()">Share</button> -->
+        <button class="btn" onclick="share()">Share</button>
         <!-- prevent the checkbox and label from wrapping separately -->
         <!-- <span style="display: inline-block">
           <input
@@ -176,7 +176,12 @@
     <!-- <script type="text/javascript" src="story.js"></script> -->
     <!-- <script type="text/javascript" src="interpret.js"></script> -->
     <script>
-      editorSet(current_example_text());
+      const queryParams = new URLSearchParams(window.location.search);
+      if (queryParams.get("story") !== null) {
+        editorSet(window.atob(queryParams.get("story")));
+      } else {
+        editorSet(current_example_text());
+      }
       onPageLoad();
     </script>
   </body>
