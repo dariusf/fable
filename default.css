@@ -33,13 +33,13 @@ a:visited {
 /* for paragraphs, maybe make more specific later */
 div {
   padding-bottom: 1em;
-  animation: fadein 0.5s;
+  animation: fadein 0.75s;
 }
 
 ul {
   margin-top: 0px;
   margin-bottom: 1em;
-  animation: fadein 0.5s;
+  animation: fadein 0.75s;
 }
 
 @keyframes fadein {
