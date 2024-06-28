@@ -238,13 +238,15 @@ function interpret(instrs, parent, k) {
       // keep current k
       let scene = current[1];
       internal.on_scene_visit.forEach((f) => f(scene));
-      return interpret(internal.scenes[scene], content, k);
+      interpret(internal.scenes[scene], content, k);
+      return;
     }
     case "Jump": {
       // abandon current k and instructions, go back to top element
       let scene = current[1];
       internal.on_scene_visit.forEach((f) => f(scene));
-      return interpret(internal.scenes[scene], content, () => {});
+      interpret(internal.scenes[scene], content, () => {});
+      return;
     }
     case "JumpDynamic": {
       let scene;
@@ -254,7 +256,8 @@ function interpret(instrs, parent, k) {
         surfaceError("JumpDynamic", current[1], e);
       }
       internal.on_scene_visit.forEach((f) => f(scene));
-      return interpret(internal.scenes[scene], content, () => {});
+      interpret(internal.scenes[scene], content, () => {});
+      return;
     }
     case "Meta":
       let s;
