@@ -510,7 +510,7 @@ function findContainingText(c) {
 }
 
 function isStandalone() {
-  return !inIFrame();
+  return !inIFrame() || location.host.indexOf("itch") > -1;
 }
 
 function inIFrame() {
