@@ -239,6 +239,7 @@ function interpret(instrs, parent, k) {
       let scene = current[1];
       internal.on_scene_visit.forEach((f) => f(scene));
       interpret(internal.scenes[scene], content, k);
+      // handling the rest is not needed because a tunnel is usually inside a para
       return;
     }
     case "Jump": {

@@ -39,6 +39,7 @@ Make a choice:
 - More `->More`
 - Jump dynamic `->$items[0]`
 - Tunnel `>->Tunnel`
+- Tunnels followed by jumps `->tunnel_test`
 
 End of first scene
 
@@ -108,3 +109,21 @@ Tunnel
 # Spaces
 
 - `?a` choice text `1` code after
+
+# tunnel_test
+
+before
+
+`>->tunnel_test_a`
+
+after
+
+# tunnel_test_a
+
+a
+
+`->tunnel_test_b`
+
+# tunnel_test_b
+
+- b

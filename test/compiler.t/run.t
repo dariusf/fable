@@ -233,6 +233,23 @@
               ],
               "rest": [],
               "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Tunnels followed by jumps"
+                ]
+              ],
+              "code": [
+                [
+                  "Jump",
+                  "tunnel_test"
+                ]
+              ],
+              "rest": [],
+              "sticky": false
             }
           ]
         ],
@@ -600,6 +617,84 @@
                   ]
                 ]
               ],
+              "sticky": false
+            }
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "tunnel_test",
+      "cmds": [
+        [
+          "Para",
+          [
+            [
+              "Text",
+              "before"
+            ]
+          ]
+        ],
+        [
+          "Para",
+          [
+            [
+              "Tunnel",
+              "tunnel_test_a"
+            ]
+          ]
+        ],
+        [
+          "Para",
+          [
+            [
+              "Text",
+              "after"
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "tunnel_test_a",
+      "cmds": [
+        [
+          "Para",
+          [
+            [
+              "Text",
+              "a"
+            ]
+          ]
+        ],
+        [
+          "Para",
+          [
+            [
+              "Jump",
+              "tunnel_test_b"
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "tunnel_test_b",
+      "cmds": [
+        [
+          "Choices",
+          [],
+          [
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "b"
+                ]
+              ],
+              "code": [],
+              "rest": [],
               "sticky": false
             }
           ]
