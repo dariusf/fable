@@ -103,16 +103,21 @@ window.onload = function () {
   window.parent.postMessage({ type: "PAGE_LOADED" }, "*");
 };
 
+function resetStory(s) {
+  resetInternals();
+  content.textContent = "";
+  let s1 = s ? Fable.parse(s) : story;
+  start(s1);
+}
+
 window.addEventListener("message", function (e) {
   if (e.data.type === "EDITED") {
     content.textContent = "";
     internal.immediately_take = e.data.history;
-    start(Fable.parse(e.data.md));
+    story = Fable.parse(e.data.md);
+    start(story);
   } else if (e.data.type === "RESET") {
-    resetInternals();
-    // go into the edited path
-    content.textContent = "";
-    start(Fable.parse(e.data.md));
+    resetStory(e.data.md);
   }
 });
 
