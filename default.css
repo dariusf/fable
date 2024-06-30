@@ -11,8 +11,9 @@ body {
   max-width: 640px;
   line-height: 1.4;
   /* font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu; */
+  /* font-size: 2.5vmin; */
   /* font-size: 3.5vmin; */
-  font-size: 2.5vmin;
+  font-size: calc(15px + 0.390625vw);
 }
 
 /* for minimum margin */
