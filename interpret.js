@@ -355,6 +355,11 @@ function interpret(instrs, parent, k) {
           li.appendChild(a);
           a.onclick = (ev) => {
             ev.preventDefault();
+            for (const old of document.querySelectorAll(
+              "#content > div:not(.old)"
+            )) {
+              old.classList.add("old");
+            }
             internal.choice_history.push(a.textContent);
             informParentChoice(a.textContent);
             internal.on_interact.forEach((f) => f());

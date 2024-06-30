@@ -33,13 +33,17 @@ a:visited {
 /* for paragraphs, maybe make more specific later */
 div {
   padding-bottom: 1em;
-  animation: fadein 0.75s;
+  animation: fadein 0.5s;
 }
 
 ul {
   margin-top: 0px;
   margin-bottom: 1em;
-  animation: fadein 0.75s;
+  animation: fadein 0.5s;
+}
+
+.old {
+  filter: brightness(0.75);
 }
 
 @keyframes fadein {
@@ -50,6 +54,20 @@ ul {
     opacity: 1;
   }
 }
+
+.old {
+  filter: brightness(0.65);
+  /* animation: darken 0.3s; */
+}
+
+/* @keyframes darken {
+  from {
+    filter: brightness(1);
+  }
+  to {
+    filter: brightness(0.65);
+  }
+} */
 
 * {
   scrollbar-color: var(--main-bg-color-lighter) var(--main-bg-color);
