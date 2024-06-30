@@ -42,8 +42,17 @@ ul {
   animation: fadein 0.5s;
 }
 
-.old {
-  filter: brightness(0.75);
+/* this is used to have the end of the page near the middle of the screen */
+/* #content {
+  height: 75%;
+  overflow-y: scroll;
+} */
+
+#container {
+  overflow-y: scroll;
+}
+#placeholder {
+  height: 15%;
 }
 
 @keyframes fadein {
