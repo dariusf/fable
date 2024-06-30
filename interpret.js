@@ -350,6 +350,7 @@ function interpret(instrs, parent, k) {
           let a = document.createElement("a");
           a.href = "#";
           a.classList.add("choice");
+          a.draggable = false;
           links.push(a);
           li.appendChild(a);
           a.onclick = (ev) => {

@@ -40,4 +40,4 @@
   <div><span>Hello</span><span> Apple</span><span>!</span></div><div><a href="#">jump</a></div><div><a href="#">code</a></div><div><span>Make a choice:</span></div><div><span>Tunnel</span></div><div><span>End of first scene</span></div>
 
   $ ./test.js 'Tunnels followed by jumps'
-  <div><span>Hello</span><span> Apple</span><span>!</span></div><div><a href="#">jump</a></div><div><a href="#">code</a></div><div><span>Make a choice:</span></div><div><span>before</span></div><div><span>a</span></div><ul><li><a href="#" class="choice"><span>b</span></a></li></ul>
+  <div><span>Hello</span><span> Apple</span><span>!</span></div><div><a href="#">jump</a></div><div><a href="#">code</a></div><div><span>Make a choice:</span></div><div><span>before</span></div><div><span>a</span></div><ul><li><a href="#" class="choice" draggable="false"><span>b</span></a></li></ul>
