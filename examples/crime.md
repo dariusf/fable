@@ -100,7 +100,6 @@ go_back_to = 'murder_scene'
 # prebed
 
 ```js
-var turn_entered_room = turns;
 reach(bed_knowledge, 'neatly_made');
 var bed_state = 'made_up'; // made_up, covers_shifted, covers_off, bloodstain_visible
 ```
@@ -126,7 +125,7 @@ var bed_state = 'made_up'; // made_up, covers_shifted, covers_off, bloodstain_vi
 
 - Look under the bed `dark_under = true;` Lying down, I peered under the bed, but could make nothing out.
 
-- `?(turns-turn_entered_room)>1` Something else? `1` I took a step back from the bed and looked around. `->murder_scene`
+- `?turns_since('prebed')>1` Something else? `1` I took a step back from the bed and looked around. `->murder_scene`
 
 `->bed`
 
