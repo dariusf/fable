@@ -7,24 +7,58 @@ body {
   font-family: "Noto Serif", serif;
   background-color: var(--main-bg-color);
   color: var(--main-fg-color);
-  margin: 2rem auto;
-  max-width: 640px;
+  margin: 0;
+  /* margin: 2rem auto; */
+  /* max-width: 640px; */
   line-height: 1.4;
   /* font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu; */
   /* font-size: 2.5vmin; */
   /* font-size: 3.5vmin; */
   font-size: calc(15px + 0.390625vw);
+  /* overflow-y: hidden; */
+
+  /* prevent body from scrolling */
+  /* margin: 0; */
+  overflow: hidden;
+  /* height: 100vh; */
+
+  /* display: flex;
+  justify-content: center;
+  align-items: center; */
 }
+
+/* this is so we don't rely on the page's scrollbars, which are buggy on ios/itch */
+#scroll-container {
+  /* overflow-y: scroll; */
+  /* padding: 20pt; */
+  /* width: 100%; */
+  /* width: 640px; */
+  height: 100%;
+  /* padding: 20px; */
+  /* margin: 10px; */
+  overflow-y: auto;
+}
+
+#scroll-placeholder {
+  height: 15%;
+}
+
+#content-container {
+  max-width: 640px;
+  margin-inline: auto;
+  padding: 20px;
+}
+
 
 /* for minimum margin */
-html {
+/* html {
   padding: 20pt;
-}
+} */
 
 /* fix relayout on scrollbars appearing */
-html {
-  overflow-y: scroll;
-}
+/* html {
+  overflow-y: hidden;
+} */
 
 a,
 a:visited {
@@ -48,13 +82,6 @@ ul {
   height: 75%;
   overflow-y: scroll;
 } */
-
-#container {
-  overflow-y: scroll;
-}
-#placeholder {
-  height: 15%;
-}
 
 @keyframes fadein {
   from {

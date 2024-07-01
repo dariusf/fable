@@ -37,6 +37,7 @@ const choices_disappear = true;
 // INTERNALS
 
 const content = document.querySelector("#content");
+const container = document.querySelector("#scroll-container");
 
 let internal = defaultInternal();
 
@@ -223,10 +224,10 @@ function interpret(instrs, parent, k) {
   // i is the index of a recursive instr, or the end of the instr list
   if (i >= instrs.length) {
     k();
-    // content.scrollTo({
-    // top: content.scrollHeight,
-    window.scrollTo({
-      top: document.body.scrollHeight,
+    container.scrollTo({
+      top: container.scrollHeight,
+      // window.scrollTo({
+      // top: document.body.scrollHeight,
       behavior: "smooth",
     });
     return;
