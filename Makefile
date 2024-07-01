@@ -8,12 +8,15 @@ default:
 #	dune exec ./fable.exe examples/wash.md > story.js
 	grep 'story ' story.js | sed -e 's/var story =//g' -e 's/;$$//g' | jq | pbcopy
 	dune build ./fablejs.bc.js
-#	dune build --release ./fablejs.bc.js
 	dune build @compiler # fast cram tests
 
 .PHONY: test
 test: default
 	dune test
+
+.PHONY: release
+release: test
+	dune build --release ./fablejs.bc.js
 
 .PHONY: random
 random: default
