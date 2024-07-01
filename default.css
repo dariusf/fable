@@ -40,13 +40,14 @@ body {
 }
 
 #scroll-placeholder {
-  height: 15%;
+  height: 10%;
 }
 
 #content-container {
   max-width: 640px;
   margin-inline: auto;
-  padding: 20px;
+  padding: 30px;
+  padding-top: 50px;
 }
 
 
