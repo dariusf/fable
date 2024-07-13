@@ -11,12 +11,13 @@
   - [Semantics](#semantics)
   - [The Runtime](#the-runtime)
   - [The CLI](#the-cli)
+    - [Exporting a standalone story](#exporting-a-standalone-story)
+    - [Testing](#testing)
 - [Development](#development)
   - [Compiler and Runtime](#compiler-and-runtime)
   - [Editor](#editor)
     - [Restarting](#restarting)
     - [Reloading](#reloading)
-  - [Tasks](#tasks)
 
 # Fable User Guide
 
@@ -143,12 +144,46 @@ These include things like turn and seen counters, callbacks, and other utilities
 
 ## The CLI
 
-Export a standalone story
+### Exporting a standalone story
 
 ```sh
-dune exec ./fable.exe -- -s examples/crime.md -o detective
-open detective/index.html
+# if fable is not on the $PATH
+dune exec ./fable.exe -- -s examples/crime.md -o _build
+open _build/index.html
+
+# add other files to _build before deploying, e.g. to itch
+cd _build
+zip -r game.zip *
+butler push game.zip $USER/$GAME:html5
 ```
+
+### Testing
+
+```sh
+fable -s examples/crime.md -o _build -t
+cp tests.t _build # make tests available
+
+# building blocks for your build script
+cd _build
+npm install selenium-webdriver
+dune test
+dune promote && cp tests.t ..
+```
+
+This will produce a minimal dune project in the build directory with cram tests set up.
+tests.t should be a cram test file which invokes the test.js script, passing it a sequence of actions to execute against the page.
+
+```
+$ node test.js 'Go to Scene 1' 'Apple'
+```
+
+test.js will run those actions using a headless browser and output the raw HTML of the resulting page.
+
+Some system dependencies and development tools are required:
+dune,
+node and npm,
+chromedriver/geckodriver on the `$PATH`,
+Firefox/Chrome.
 
 # Development
 
@@ -172,7 +207,7 @@ It simulates[^1] hot reloading on edit by _restarting_ and replaying choices mad
 
 How does a restart work, given that stories may have arbitrary, user-defined global state in the `window`?
 
-A restart effectively (and apparently, naively) jumps back to the prelude. This is safe if stories are semantically _closed_, meaning that everything in them is defined before it is used, and definitions are idempotent[^3].
+A restart effectively (and apparently, naively) jumps back to the prelude. This is safe if stories are semantically _closed_, meaning that everything in them is defined before it is used, and definitions are idempotent[^2].
 
 Stories which are not closed will contain undesirable executions which lead to use-before-definition crashes.
 
@@ -221,34 +256,6 @@ A safe but slow alternative is to reload the iframe on every edit, relying on th
 
 This guarantees that hot reloading will not result in "spooky" executions (`[A, reload, B]` would crash), but transfers quite a bit of data. See the previous section for other reasons why this isn't the default.
 
-## Tasks
+[^1]: We can't hot-reload in the traditional sense (by saving and restoring all interpreter state), as some state is maintained by the JS runtime due to the use of CPS.
 
-Build a simple story (see Makefile for which) and run fast tests, which is useful for development:
-
-```sh
-make
-```
-
-Run all tests, including [Selenium](test/runtime.t/test.js):
-
-```sh
-npm install selenium-webdriver
-make test
-```
-
-Build CLI:
-
-```sh
-dune build --release ./fable.exe --display=short
-```
-
-Test the editor:
-
-```sh
-python -m http.server 8005
-open http://localhost:8005/editor.html
-```
-
-[^1]: We can't actually hot-reload by saving and restoring all interpreter state, as some of it is maintained by the JS runtime due to the use of CPS.
-
-[^3]: A helpful analogy is the execution model of a REPL. If the same closed block of code is pasted every time, it should always execute the same way, as it only relies on definitions given in the block itself. Idempotency of definitions can be ensured by using `var`.
+[^2]: A helpful analogy is the execution model of a REPL. If the same closed block of code is pasted every time, it should always execute the same way, as it only relies on definitions given in the block itself. Idempotency of definitions can be ensured by using `var`.
