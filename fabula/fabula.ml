@@ -123,7 +123,13 @@ module Convert = struct
           (* LinkCode (t, Label.key l) *)
         in
         Folder.ret (Acc.add r acc)
-      | Inline.Raw_html (_, _) -> failwith "unimplemented Raw_html"
+      | Inline.Raw_html (ls, _) ->
+        let l =
+          List.map (fun (a, (b, _)) -> a ^ b) ls
+          |> String.concat "\n" |> String.trim
+        in
+        if String.starts_with ~prefix:"<!--" l then Folder.default
+        else Folder.ret (Acc.add (Verbatim (String.trim l)) acc)
       | Inline.Strong_emphasis (_, _) ->
         failwith "unimplemented Strong_emphasis"
       | _ -> Folder.default

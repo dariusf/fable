@@ -24,6 +24,10 @@ function runMe() {
 }
 ```
 
+<!-- block comments don't appear -->
+
+inline comments don't appear <!-- comment -->
+
 [jump](#One)
 
 [code](!runMe)

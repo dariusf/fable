@@ -33,6 +33,15 @@
           "Para",
           [
             [
+              "Text",
+              "inline comments don't appear"
+            ]
+          ]
+        ],
+        [
+          "Para",
+          [
+            [
               "LinkJump",
               "jump",
               "One"
