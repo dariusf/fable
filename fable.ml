@@ -16,6 +16,8 @@ let arg_specs =
        instruction data in JSON" );
   ]
 
+let get_fm fm name default = List.assoc_opt name fm |> Option.value ~default
+
 let write_standalone dir frontmatter json =
   match Sys.file_exists dir with
   | true -> Format.printf "%s already exists@." dir
@@ -23,10 +25,11 @@ let write_standalone dir frontmatter json =
     Sys.mkdir dir 0o777;
     let s = Format.asprintf in
     write_file (s "%s/index.html" dir)
-      (let extra =
-         List.assoc_opt "extra" frontmatter |> Option.value ~default:""
-       in
-       Embedded.index extra);
+      begin
+        let title = get_fm frontmatter "title" "Fable" in
+        let extra = get_fm frontmatter "extra" "" in
+        Embedded.index title extra
+      end;
     write_file (s "%s/default.css" dir) Embedded.default_css;
     write_file (s "%s/interpret.js" dir) Embedded.interpret;
     write_file (s "%s/runtime.js" dir) Embedded.runtime;
