@@ -17,7 +17,7 @@
             ],
             [
               "Interpolate",
-              "' '+a"
+              "a"
             ],
             [
               "Text",
@@ -267,6 +267,23 @@
               ],
               "rest": [],
               "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Spaces"
+                ]
+              ],
+              "code": [
+                [
+                  "Jump",
+                  "Spaces"
+                ]
+              ],
+              "rest": [],
+              "sticky": false
             }
           ]
         ],
@@ -317,10 +334,6 @@
             [
               "Text",
               "Turns:"
-            ],
-            [
-              "Interpolate",
-              "' '"
             ],
             [
               "Interpolate",
@@ -604,6 +617,10 @@
       "name": "Spaces",
       "cmds": [
         [
+          "Run",
+          "clear()"
+        ],
+        [
           "Choices",
           [],
           [
@@ -636,6 +653,53 @@
               ],
               "sticky": false
             }
+          ]
+        ],
+        [
+          "Para",
+          [
+            [
+              "Text",
+              "\"Hi,"
+            ],
+            [
+              "Interpolate",
+              "'A'"
+            ],
+            [
+              "Text",
+              ",\" he said."
+            ]
+          ]
+        ],
+        [
+          "Para",
+          [
+            [
+              "Text",
+              "\""
+            ],
+            [
+              "Interpolate",
+              "'Edge case'"
+            ],
+            [
+              "Text",
+              "\" here"
+            ]
+          ]
+        ],
+        [
+          "Para",
+          [
+            [
+              "Interpolate",
+              "'A'"
+            ],
+            [
+              "Text",
+              "'s thing"
+            ]
           ]
         ]
       ]

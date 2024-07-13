@@ -15,7 +15,7 @@ var items = ['Apple', 'Banana', 'Carrot'];
 var a = items[2-3+1];
 ```
 
-Hello `$' '+a`!
+Hello `$a`!
 
 ```js
 function runMe() {
@@ -44,6 +44,7 @@ Make a choice:
 - Jump dynamic `->$items[0]`
 - Tunnel `>->Tunnel`
 - Tunnels followed by jumps `->tunnel_test`
+- Spaces `->Spaces`
 
 End of first scene
 
@@ -64,7 +65,7 @@ items.map(i => `- ${i}`).join('\n') + `
 
 text from Scene 3
 
-Turns: `$' '` `$internal.turns`
+Turns: `$internal.turns`
 
 # Nested
 
@@ -112,7 +113,17 @@ Tunnel
 
 # Spaces
 
+```js
+clear()
+```
+
 - `?a` choice text `1` code after
+
+"Hi, `$'A'`," he said.
+
+"`$'Edge case'`" here
+
+`$'A'`'s thing
 
 # tunnel_test
 

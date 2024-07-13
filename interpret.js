@@ -1,5 +1,9 @@
 // API
 
+function clear() {
+  content.innerHTML = "";
+}
+
 function turns_since(scene) {
   return internal.turns - (internal.last_visited_turn[scene] || 0);
 }
@@ -142,6 +146,55 @@ function surfaceError(...args) {
   throw "failure";
 }
 
+function spacer() {
+  let e = document.createElement("span");
+  e.textContent = " ";
+  return e;
+}
+
+// Decides whether or not to insert a space between the inline elements already
+// in this span and the current element to be inserted.
+function addInline(parent, elt) {
+  // Initially (when parent is empty), there is no need for a space.
+  // This is local state of the parent element.
+  let needsSpace = parent.needsSpace || false;
+  // A space is needed after an element with any text is added...
+  let eltHasNoText = elt.innerText.length === 0;
+  // ... except if we're inserting certain kinds of punctuation.
+  let noSpacePrecedingPunctuation = elt.innerText.match(/^[.,!:'"]/);
+  // let leadingAlpha = !!elt.innerText.match(/^[a-zA-Z0-9]/);
+
+  // quotes are rather intricate.
+  // currently we will add a space before an opening quote, which is correct,
+  // but also before a closing quote.
+  // fortunately, closing quotes are typically preceded by spaceless punctuation,
+  // so this should do the right thing.
+  // another workaround is to keeps quotes inside interpolations / metas.
+  let addSpace = !noSpacePrecedingPunctuation && needsSpace && !eltHasNoText;
+  // !noSpaceSucceedingPunctuation &&
+
+  if (addSpace) {
+    parent.appendChild(spacer());
+  }
+  parent.appendChild(elt);
+
+  // If we added any text at all, default to needing space before the next element.
+  if (!eltHasNoText) {
+    let noSpaceSucceedingPunctuation = elt.innerText.match(/["]$/);
+    if (noSpaceSucceedingPunctuation) {
+      parent.needsSpace = false;
+    } else {
+      parent.needsSpace = true;
+    }
+  } else {
+    // Otherwise, keep the state unchanged.
+  }
+}
+
+function addBlock(parent, elt) {
+  parent.appendChild(elt);
+}
+
 function interpret(instrs, parent, k) {
   loop: for (var i = 0; i < instrs.length; i++) {
     const instr = instrs[i];
@@ -158,33 +211,34 @@ function interpret(instrs, parent, k) {
         break;
       case "Verbatim":
         {
-          // this is a span that must be wrapped in a Para
-          // let s = document.createElement("span");
+          // this is a span that must appear inside a Para
+          let s = document.createElement("span");
+          s.innerHTML = instr[1];
           // parent.appendChild(instr[1]);
-          parent.insertAdjacentHTML("beforeend", instr[1]);
+          // parent.insertAdjacentHTML("beforeend", instr[1]);
+          addInline(parent, s);
         }
         break;
       case "VerbatimBlock":
         {
           let d = document.createElement("div");
           d.innerHTML = instr[1];
-          parent.appendChild(d);
+          addBlock(parent, d);
         }
         break;
       case "Text":
         {
           // this is inline
-          let d = document.createElement("span");
-          d.textContent = instr[1];
-          parent.appendChild(d);
+          let s = document.createElement("span");
+          s.textContent = instr[1];
+          addInline(parent, s);
         }
         break;
       case "Break":
         {
           // parent.appendChild(document.createElement("br"));
-          let e = document.createElement("span");
-          e.textContent = " ";
-          parent.appendChild(e);
+          // addInline(parent, spacer());
+          // do nothing, as space insertion will take care of this?
         }
         break;
       case "LinkCode":
@@ -205,20 +259,23 @@ function interpret(instrs, parent, k) {
             }
           };
           e.textContent = instr[1];
-          parent.appendChild(e);
+          // parent.appendChild(e);
+          addInline(parent, e);
         }
         break;
       case "Interpolate":
         {
-          let d = document.createElement("span");
+          let s = document.createElement("span");
           let v;
           try {
             v = eval?.(instr[1]);
           } catch (e) {
             surfaceError("interpolate", instr[1], e);
           }
-          d.textContent = v + "";
-          parent.appendChild(d);
+          s.textContent = v + "";
+          // parent.appendChild(d);
+          addInline(parent, s);
+          // parent.appendChild(d);
         }
         break;
 
@@ -304,7 +361,7 @@ function interpret(instrs, parent, k) {
           if (Fable.mayHaveText(current)) {
             // removes unneccessary divs
             d = document.createElement("div");
-            parent.appendChild(d);
+            addBlock(parent, d);
           } else {
             d = parent;
           }
@@ -321,7 +378,7 @@ function interpret(instrs, parent, k) {
       {
         let [_, more, alts] = current;
         let ul = document.createElement("ul");
-        parent.appendChild(ul);
+        addBlock(parent, ul);
         let links = [];
         let indicate_clicked = (clicked) => {
           links.forEach((a) => {
