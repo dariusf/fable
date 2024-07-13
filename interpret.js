@@ -158,8 +158,14 @@ function interpret(instrs, parent, k) {
         break;
       case "Verbatim":
         {
-          // comments go in here too
-          // this is on the same level as Para, i.e. block
+          // this is a span that must be wrapped in a Para
+          // let s = document.createElement("span");
+          // parent.appendChild(instr[1]);
+          parent.insertAdjacentHTML("beforeend", instr[1]);
+        }
+        break;
+      case "VerbatimBlock":
+        {
           let d = document.createElement("div");
           d.innerHTML = instr[1];
           parent.appendChild(d);

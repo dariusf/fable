@@ -34,7 +34,15 @@
           [
             [
               "Text",
-              "inline comments don't appear"
+              "inline comments"
+            ],
+            [
+              "Verbatim",
+              "<i>don't</i>"
+            ],
+            [
+              "Text",
+              "appear"
             ]
           ]
         ],

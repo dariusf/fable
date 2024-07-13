@@ -26,7 +26,7 @@ function runMe() {
 
 <!-- block comments don't appear -->
 
-inline comments don't appear <!-- comment -->
+inline comments <i>don't</i> appear <!-- comment -->
 
 [jump](#One)
 

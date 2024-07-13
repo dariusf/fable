@@ -21,5 +21,6 @@
   (js_of_ocaml (>= 5.5.2))
   (brr (>= 0.0.6))
   (cmarkit (>= 0.3.0))
+  ;(ppx_expect (>= 0.17.0))
   (ppx_deriving (>= 5.2.1))
   (ppx_deriving_yojson (>= 3.7.0))))

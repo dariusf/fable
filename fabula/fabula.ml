@@ -11,8 +11,9 @@ type choice = {
 and more = (string * string) list
 
 and cmd =
-  | Verbatim of string
   | Para of cmd list
+  | VerbatimBlock of string (* block *)
+  | Verbatim of string (* inline *)
   | Text of string
   | Break
   | LinkCode of string * string
@@ -38,28 +39,158 @@ type choices = choice list [@@deriving yojson]
 
 let _ = pp_program
 
-module Convert = struct
+let inline_text_folder =
+  let open Cmarkit in
+  Folder.make
+    ~inline:(fun _f acc i ->
+      match i with
+      | Inline.Text (s, _) when not (is_whitespace s) ->
+        Folder.ret (Acc.add (String.trim s) acc)
+      | Inline.Text _ -> Folder.default
+      | Inline.Autolink (_, _) -> failwith "unimplemented Autolink"
+      | Inline.Break (_, _) -> failwith "unimplemented Break"
+      | Inline.Code_span (_, _) -> failwith "code span"
+      | Inline.Emphasis (_, _) -> failwith "unimplemented Emphasis"
+      | Inline.Image (_, _) -> failwith "unimplemented Image"
+      | Inline.Inlines (_is, _) -> Folder.default
+      | Inline.Link (_, _) -> failwith "unimplemented Link"
+      | Inline.Raw_html (s, _) ->
+        let s =
+          s |> List.map snd |> List.map fst |> String.concat "" |> String.trim
+        in
+        (* Format.printf "ninline text folder. raw html |%s|@." s; *)
+        Folder.ret (Acc.add s acc)
+        (* failwith "unimplemented Raw_html" *)
+      | Inline.Strong_emphasis (_, _) ->
+        failwith "unimplemented Strong_emphasis"
+      | _ -> Folder.default)
+    ()
+
+module Preprocess = struct
   open Cmarkit
 
-  let inline_text_folder =
-    Folder.make
-      ~inline:(fun _f acc i ->
-        match i with
-        | Inline.Text (s, _) when not (is_whitespace s) ->
-          Folder.ret (Acc.add (String.trim s) acc)
-        | Inline.Text _ -> Folder.default
-        | Inline.Autolink (_, _) -> failwith "unimplemented Autolink"
-        | Inline.Break (_, _) -> failwith "unimplemented Break"
-        | Inline.Code_span (_, _) -> failwith "code span"
-        | Inline.Emphasis (_, _) -> failwith "unimplemented Emphasis"
-        | Inline.Image (_, _) -> failwith "unimplemented Image"
-        | Inline.Inlines (_is, _) -> Folder.default
-        | Inline.Link (_, _) -> failwith "unimplemented Link"
-        | Inline.Raw_html (_, _) -> failwith "unimplemented Raw_html"
-        | Inline.Strong_emphasis (_, _) ->
-          failwith "unimplemented Strong_emphasis"
-        | _ -> Folder.default)
-      ()
+  (* the partial contents of a paragraph, as a list of potential raw html blocks (lists),
+     and a stack of currently open tags *)
+  type t = Inline.t Acc.t Acc.t * string list
+
+  (* true for opening, false for closing *)
+  let get_tag =
+    let regexp = Str.regexp {|<\(/?\)\([a-z-]+\).*>|} in
+    fun s ->
+      if Str.string_match regexp s 0 then
+        Some (String.length (Str.matched_group 1 s) = 0, Str.matched_group 2 s)
+      else None
+
+  let inline : t Folder.t =
+    let inline _self (acc, curr_tag) inl =
+      match inl with
+      | Inline.Raw_html (tag, _m) ->
+        let tag = List.map snd tag |> List.map fst |> String.concat "" in
+        (* Format.printf "tag |%s|@." tag; *)
+        (match (get_tag tag, curr_tag) with
+        | None, [] ->
+          (* Format.printf "no element, no block open@."; *)
+          (* not an element, no block is open *)
+          Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, [])
+        | Some (true, t), [] ->
+          (* Format.printf "start new block@."; *)
+          (* start a new block *)
+          Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, [t])
+        | Some (_, t), t1 :: _ when t <> t1 ->
+          (* nest *)
+          (* Format.printf "nest@."; *)
+          Folder.ret (Acc.change_last (Acc.add inl) acc, curr_tag)
+        | Some (true, _), _ :: _ ->
+          (* nest also *)
+          (* Format.printf "nest also@."; *)
+          Folder.ret (Acc.change_last (Acc.add inl) acc, curr_tag)
+        | None, _ :: _ ->
+          (* not an element, add to current block *)
+          (* Format.printf "not an element, add to current block@."; *)
+          Folder.ret (Acc.change_last (Acc.add inl) acc, curr_tag)
+        | Some (false, t), t1 :: rest when t = t1 ->
+          (* close current block *)
+          (* Format.printf "close current block@."; *)
+          Folder.ret (Acc.change_last (Acc.add inl) acc, rest)
+        | Some (false, _), _ -> failwith "unmatched closing tag")
+      | Inline.Text _ ->
+        (match curr_tag with
+        | [] ->
+          (* Format.printf "text on its own@."; *)
+          Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, curr_tag)
+        | _ :: _ ->
+          (* Format.printf "text existing@."; *)
+          Folder.ret (Acc.change_last (Acc.add inl) acc, curr_tag))
+      (* | Inline.Autolink (_, _) ->
+           Format.printf "autolink@.";
+           Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, curr_tag)
+         | Inline.Break (_, _) ->
+           Format.printf "break@.";
+           Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, curr_tag)
+         | Inline.Code_span (_, _) ->
+           Format.printf "code span@.";
+           Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, curr_tag)
+         | Inline.Emphasis (_, _) ->
+           Format.printf "emphasis@.";
+           Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, curr_tag)
+         | Inline.Image (_, _) ->
+           Format.printf "imag@.";
+           Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, curr_tag) *)
+      | Inline.Inlines (_is, _) ->
+        (* Format.printf "inlines@."; *)
+        (* Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, None) *)
+        Folder.default
+      (* | Inline.Link (_, _) ->
+           Format.printf "link@.";
+           Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, curr_tag)
+         | Inline.Strong_emphasis (_, _) ->
+           Format.printf "strong@.";
+           Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, curr_tag) *)
+      | _ ->
+        (match curr_tag with
+        | [] ->
+          (* Format.printf "other inline on its own@."; *)
+          Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, curr_tag)
+        | _ :: _ ->
+          (* Format.printf "other inline existing@."; *)
+          Folder.ret (Acc.change_last (Acc.add inl) acc, curr_tag))
+      (* Folder.default *)
+    in
+
+    Folder.make ~inline ()
+
+  let block _ = function
+    | Block.Paragraph (p, _m) ->
+      let p, stk =
+        Folder.fold_inline inline (Acc.empty, []) (Block.Paragraph.inline p)
+      in
+      (match stk with [] -> () | _ :: _ -> failwith "unclosed tags");
+      let p =
+        Inline.Inlines
+          ( Acc.to_list p
+            |> List.map (fun a ->
+                   let l = Acc.to_list a in
+                   if List.length l > 1 then
+                     let ls =
+                       Folder.fold_inline inline_text_folder Acc.empty
+                         (Inline.Inlines (l, Meta.none))
+                       |> Acc.to_list |> String.concat "" |> String.trim
+                     in
+                     [Inline.Raw_html ([("", (ls, Meta.none))], Meta.none)]
+                   else l)
+            |> List.concat,
+            Meta.none )
+      in
+      Mapper.ret (Block.Paragraph (Block.Paragraph.make p, _m))
+    | _ -> Mapper.default
+
+  let run doc =
+    let mapper = Mapper.make ~block () in
+    Mapper.map_doc mapper doc
+end
+
+module Convert = struct
+  open Cmarkit
 
   let inline_cmd_folder =
     let inline : (Inline.t, cmd Acc.t) Folder.folder =
@@ -128,8 +259,9 @@ module Convert = struct
           List.map (fun (a, (b, _)) -> a ^ b) ls
           |> String.concat "\n" |> String.trim
         in
+        (* Format.printf "(raw html %s)@." l; *)
         if String.starts_with ~prefix:"<!--" l then Folder.default
-        else Folder.ret (Acc.add (Verbatim (String.trim l)) acc)
+        else Folder.ret (Acc.add (Verbatim l) acc)
       | Inline.Strong_emphasis (_, _) ->
         failwith "unimplemented Strong_emphasis"
       | _ -> Folder.default
@@ -199,13 +331,11 @@ module Convert = struct
         Folder.ret (Acc.add (name, Acc.empty) acc)
       | Block.Html_block (b, _) ->
         let l = List.map Block_line.to_string b |> String.concat "\n" in
+        let elt = VerbatimBlock (String.trim l) in
         if String.starts_with ~prefix:"<!--" l then Folder.default
         else
           Folder.ret
-            (Acc.change_last
-               (fun (name, cmds) ->
-                 (name, Acc.add (Verbatim (String.trim l)) cmds))
-               acc)
+            (Acc.change_last (fun (name, cmds) -> (name, Acc.add elt cmds)) acc)
       | Block.Link_reference_definition (_, _) ->
         failwith "unimplemented Link_reference_definition"
       | Block.List (l, _) ->
@@ -291,6 +421,7 @@ module Convert = struct
     Folder.make ~block ()
 
   let to_program doc =
+    let doc = Preprocess.run doc in
     let acc = Acc.add ("prelude", Acc.empty) Acc.empty in
     let prog = Folder.fold_doc block_cmd_folder acc doc in
     Acc.to_list prog
@@ -302,7 +433,7 @@ end
 let rec may_have_text s =
   match s with
   | Para p -> List.exists may_have_text p
-  | Verbatim t | Text t -> String.length (String.trim t) > 0
+  | Verbatim t | VerbatimBlock t | Text t -> String.length (String.trim t) > 0
   | Break | LinkCode _ | LinkJump _ | Interpolate _ -> true
   | Choices (ms, cs) -> (not (List.is_empty ms)) || not (List.is_empty cs)
   | Meta _ ->
@@ -351,7 +482,7 @@ let contains_control_change s =
     match s with
     | Para ps -> List.exists aux ps
     | Tunnel _ | JumpDynamic _ | Jump _ -> true
-    | Break | Verbatim _ | Text _
+    | Break | Verbatim _ | VerbatimBlock _ | Text _
     | LinkCode (_, _)
     | LinkJump (_, _)
     | Run _ | Interpolate _ | Meta _ ->

@@ -63,3 +63,10 @@ let () =
       | Some o ->
         Out_channel.with_open_text o (fun out -> Fabula.print_json ~out json)))
   | _ -> Format.printf "expected one input file@."
+
+(* let () =
+   let d = Cmarkit.Doc.of_string {|a <span>b</span> c|} in
+   let d = Fabula.Preprocess.run d in
+   Format.printf "%s@." (Cmarkit_html.of_doc ~safe:true d);
+   Format.printf "%s@." (Cmarkit_commonmark.of_doc d);
+   Format.printf "%a@." Fabula.pp_program (Fabula.Convert.to_program d) *)
