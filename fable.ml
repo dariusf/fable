@@ -20,7 +20,9 @@ let get_fm fm name default = List.assoc_opt name fm |> Option.value ~default
 
 let write_standalone dir frontmatter json =
   match Sys.file_exists dir with
-  | true -> Format.printf "%s already exists@." dir
+  | true ->
+    Format.printf "%s already exists@." dir;
+    exit 1
   | false ->
     Sys.mkdir dir 0o777;
     let s = Format.asprintf in

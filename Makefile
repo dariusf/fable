@@ -8,8 +8,9 @@ default:
 
 .PHONY: example
 example: default
-	dune exec ./fable.exe -- -s examples/crime.md -o _build/dev
-	python -m http.server 8005 --directory  _build/dev
+	@rm -rf _build/story
+	dune exec ./fable.exe -- -s examples/test.md -o _build/story
+	python -m http.server 8005 --directory  _build/story
 
 .PHONY: test
 test: default
