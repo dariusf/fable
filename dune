@@ -22,6 +22,9 @@
        (echo "|}")
        (echo "let interpret = {|")
        (cat interpret.js)
+       (echo "|}")
+       (echo "let test = {|")
+       (cat test/runtime.t/test.js)
        (echo "|}")))))
 
 (executable

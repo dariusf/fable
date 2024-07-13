@@ -15,8 +15,8 @@ test: default
 	dune test
 
 .PHONY: release
-release: test
-	dune build --release ./fablejs.bc.js
+release:
+	dune build --release ./fable.exe
 
 .PHONY: random
 random: default

@@ -1,23 +1,44 @@
 #!/usr/bin/env node
 
 // npm install selenium-webdriver
+// or
+// npm install -g selenium-webdriver
+// npm link selenium-webdriver
 const { Builder, Browser, By } = require("selenium-webdriver");
-const Chrome = require("selenium-webdriver/chrome");
-const options = new Chrome.Options();
+
+let options;
+if (process.env.BROWSER === "FIREFOX") {
+  const Firefox = require("selenium-webdriver/firefox");
+  options = new Firefox.Options();
+} else {
+  const Chrome = require("selenium-webdriver/chrome");
+  options = new Chrome.Options();
+}
 
 (async function main() {
-  let driver = await new Builder()
-    .forBrowser(Browser.CHROME)
-    .setChromeOptions(options.setPageLoadStrategy("eager"))
-    // .setChromeOptions(options.addArguments("--headless=new"))
-    .build();
+  let driver;
+  if (process.env.BROWSER === "FIREFOX") {
+    let d = new Builder().forBrowser(Browser.FIREFOX);
+    if (!process.env.DEBUG) {
+      d = d.setFirefoxOptions(options.addArguments("--headless"));
+    }
+    driver = await d.build();
+  } else {
+    let d = new Builder()
+      .forBrowser(Browser.CHROME)
+      .setChromeOptions(options.setPageLoadStrategy("eager"));
+    if (!process.env.DEBUG) {
+      d = d.setChromeOptions(options.addArguments("--headless=new"));
+    }
+    driver = await d.build();
+  }
 
   async function click(l) {
     // https://www.selenium.dev/documentation/webdriver/elements/locators/
     await driver.findElement(By.linkText(l)).click();
   }
 
-  let inp = process.env.INPUT || "story.html";
+  let inp = process.env.INPUT || "index.html";
   await driver.get(`file://${process.cwd()}/${inp}`);
 
   async function testOne() {
@@ -27,6 +48,7 @@ const options = new Chrome.Options();
     // args = ["The bed...", "Test the bed"];
     for (let a of args) {
       await click(a);
+      await driver.sleep(30);
     }
     let res = await driver
       .findElement(By.id("content"))
