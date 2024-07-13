@@ -3,12 +3,13 @@ export OCAMLRUNPARAM=b
 
 .PHONY: default
 default:
-#	dune exec ./fable.exe examples/test.md > story.js
-	dune exec ./fable.exe examples/crime.md > story.js
-#	dune exec ./fable.exe examples/wash.md > story.js
-	grep 'story ' story.js | sed -e 's/var story =//g' -e 's/;$$//g' | jq | pbcopy
-	dune build ./fablejs.bc.js
 	dune build @compiler # fast cram tests
+	dune build @editor
+
+.PHONY: example
+example: default
+	dune exec ./fable.exe -- -s examples/crime.md -o _build/dev
+	python -m http.server 8005 --directory  _build/dev
 
 .PHONY: test
 test: default
@@ -30,3 +31,7 @@ watch: default
 editor:
 	dune build @editor --display=short
 	python -m http.server 8005 --directory _build/default/deploy
+
+.PHONY: clean
+clean:
+	dune clean
