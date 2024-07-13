@@ -18,7 +18,7 @@ function seen(scene) {
 }
 
 function make_choices(cs) {
-  if (cs.length) {
+  if (cs.length > 0) {
     let c = cs[0].trim();
     let [elt] = xpath(`//*[contains(child::text(), "${c}")]/..`);
     elt.click();
@@ -81,7 +81,7 @@ function resetInternals() {
 }
 
 function start(story) {
-  if (!story.length) {
+  if (story.length === 0) {
     return;
   }
   internal.choice_history = [];
@@ -284,7 +284,7 @@ function interpret(instrs, parent, k) {
         }
         // console.log("meta result", s);
         instrs = Fable.parse(s);
-        if (instrs.length) {
+        if (instrs.length > 0) {
           instrs = instrs[0].cmds;
           // console.log("meta produced", instrs);
           interpret(instrs, parent, () => {
@@ -299,7 +299,7 @@ function interpret(instrs, parent, k) {
       break;
     case "Para":
       {
-        if (current[0].length) {
+        if (current[0].length > 0) {
           let d;
           if (Fable.mayHaveText(current)) {
             // removes unneccessary divs
@@ -399,7 +399,7 @@ function interpret(instrs, parent, k) {
         }
 
         // possibly take choices for hot reloading
-        if (internal.immediately_take.length) {
+        if (internal.immediately_take.length > 0) {
           let something_taken = false;
           for (const a of links) {
             if (a.textContent === internal.immediately_take[0]) {
@@ -428,7 +428,7 @@ function render(s) {
   let cmds;
   if (typeof s === "string") {
     cmds = Fable.parse(s);
-    if (!cmds.length) {
+    if (cmds.length === 0) {
       return;
     }
     cmds = cmds[0].cmds;
@@ -464,7 +464,7 @@ function stop_testing() {
 }
 
 function bug_found() {
-  let runtime_error = !!document.querySelectorAll(".error").length;
+  let runtime_error = document.querySelectorAll(".error").length > 0;
   let user_defined_error = internal.bug_detectors.some((b) => b());
   if (user_defined_error) {
     console.error("a user-defined error occurred");
@@ -492,7 +492,7 @@ function click_links() {
     return;
   }
   let elts = document.querySelectorAll(".choice");
-  if (!elts.length) {
+  if (elts.length === 0) {
     return location.reload();
   }
   let elt = elts[Math.floor(Math.random() * elts.length)];
