@@ -67,14 +67,16 @@ a:visited {
 }
 
 /* for paragraphs, maybe make more specific later */
-div {
+.para {
   padding-bottom: 1em;
-  animation: fadein 0.5s;
 }
 
-ul {
+.choice {
   margin-top: 0px;
   margin-bottom: 1em;
+}
+
+.fadein {
   animation: fadein 0.5s;
 }
 

@@ -138,12 +138,21 @@ function informParentDiverged(which) {
 
 function surfaceError(...args) {
   console.error(args);
-  let elt = document.createElement("div");
+  let elt = createPara();
   elt.classList.add("error");
   elt.style.color = "red";
   elt.textContent = args.join(" ");
   content.append(elt);
   throw "failure";
+}
+
+function createPara() {
+  let d = document.createElement("div");
+  d.classList.add("para");
+  if (isStandalone()) {
+    d.classList.add("fadein");
+  }
+  return d;
 }
 
 function spacer() {
@@ -221,7 +230,7 @@ function interpret(instrs, parent, k) {
         break;
       case "VerbatimBlock":
         {
-          let d = document.createElement("div");
+          let d = createPara();
           d.innerHTML = instr[1];
           addBlock(parent, d);
         }
@@ -360,7 +369,7 @@ function interpret(instrs, parent, k) {
           let d;
           if (Fable.mayHaveText(current)) {
             // removes unneccessary divs
-            d = document.createElement("div");
+            d = createPara();
             addBlock(parent, d);
           } else {
             d = parent;
@@ -378,6 +387,10 @@ function interpret(instrs, parent, k) {
       {
         let [_, more, alts] = current;
         let ul = document.createElement("ul");
+        ul.classList.add("choice");
+        if (isStandalone()) {
+          ul.classList.add("fadein");
+        }
         addBlock(parent, ul);
         let links = [];
         let indicate_clicked = (clicked) => {
@@ -441,7 +454,7 @@ function interpret(instrs, parent, k) {
             }
             // if (item.code.length > 0) {
             // we want to separate code and rest because we don't want to create an empty div for a code instr that doesn't have any output
-            interpret(item.code, document.createElement("div"), () => {
+            interpret(item.code, createPara(), () => {
               interpret(item.rest, parent, () => {
                 interpret(rest, parent, k);
               });
@@ -586,6 +599,8 @@ function findContainingText(c) {
   return xpath(`//*[contains(child::text(), "${c}")]`);
 }
 
+// true if we are running in a html page or on itch
+// false if we are running in the editor
 function isStandalone() {
   return !inIFrame() || location.host.indexOf("itch") > -1;
 }
