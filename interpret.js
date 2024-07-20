@@ -180,7 +180,7 @@ function addInline(parent, elt) {
 
   // If we added any text at all, default to needing space before the next element.
   if (!eltHasNoText) {
-    let noSpaceSucceedingPunctuation = elt.innerText.match(/["]$/);
+    let noSpaceSucceedingPunctuation = elt.innerText.match(/["']$/);
     if (noSpaceSucceedingPunctuation) {
       parent.needsSpace = false;
     } else {

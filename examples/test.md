@@ -105,9 +105,17 @@ render_scene('One');
 
 # Apple
 
+```js
+clear()
+```
+
 Apple scene
 
 # Tunnel
+
+```js
+clear()
+```
 
 Tunnel
 
@@ -126,6 +134,10 @@ clear()
 `$'A'`'s thing
 
 # tunnel_test
+
+```js
+clear()
+```
 
 before
 

@@ -589,6 +589,10 @@
       "name": "Apple",
       "cmds": [
         [
+          "Run",
+          "clear()"
+        ],
+        [
           "Para",
           [
             [
@@ -602,6 +606,10 @@
     {
       "name": "Tunnel",
       "cmds": [
+        [
+          "Run",
+          "clear()"
+        ],
         [
           "Para",
           [
@@ -707,6 +715,10 @@
     {
       "name": "tunnel_test",
       "cmds": [
+        [
+          "Run",
+          "clear()"
+        ],
         [
           "Para",
           [
