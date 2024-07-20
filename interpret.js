@@ -349,7 +349,7 @@ function interpret(instrs, parent, k) {
           s = "";
         }
         // console.log("meta result", s);
-        instrs = Fable.parse(s);
+        instrs = Fable.parse(s + "");
         if (instrs.length > 0) {
           instrs = instrs[0].cmds;
           // console.log("meta produced", instrs);
