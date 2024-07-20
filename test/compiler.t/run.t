@@ -284,6 +284,23 @@
               ],
               "rest": [],
               "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Inline and block meta"
+                ]
+              ],
+              "code": [
+                [
+                  "Jump",
+                  "InlineBlockMeta"
+                ]
+              ],
+              "rest": [],
+              "sticky": false
             }
           ]
         ],
@@ -311,7 +328,7 @@
           ]
         ],
         [
-          "Meta",
+          "MetaBlock",
           "items.map(i => `- ${i}`).join('\\n') + `\n\n<details>\n  <summary>Click me</summary>\n  This was hidden\n</details>`"
         ]
       ]
@@ -517,8 +534,8 @@
       "name": "Copy",
       "cmds": [
         [
-          "Run",
-          "render_scene('One');"
+          "MetaBlock",
+          "internal.scenes['One']"
         ]
       ]
     },
@@ -791,6 +808,45 @@
               "sticky": false
             }
           ]
+        ]
+      ]
+    },
+    {
+      "name": "InlineBlockMeta",
+      "cmds": [
+        [
+          "Run",
+          "clear()"
+        ],
+        [
+          "Para",
+          [
+            [
+              "Text",
+              "interpolation"
+            ],
+            [
+              "Interpolate",
+              "'1'"
+            ]
+          ]
+        ],
+        [
+          "Para",
+          [
+            [
+              "Text",
+              "inline meta"
+            ],
+            [
+              "Meta",
+              "'1'"
+            ]
+          ]
+        ],
+        [
+          "MetaBlock",
+          "'block meta'"
         ]
       ]
     }

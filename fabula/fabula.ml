@@ -21,6 +21,7 @@ and cmd =
   | Run of string
   | Interpolate of string
   | Meta of string
+  | MetaBlock of string
   | Jump of string
   | Tunnel of string
   | JumpDynamic of string
@@ -300,7 +301,7 @@ module Convert = struct
           | Some (s, _) ->
             let segs = String.split_on_char ' ' s in
             (match segs with
-            | [_; "meta"] | [_; "~"] -> Meta (String.trim content)
+            | [_; "meta"] | [_; "~"] -> MetaBlock (String.trim content)
             | _ -> Run (String.trim content))
         in
         Folder.ret
@@ -436,7 +437,7 @@ let rec may_have_text s =
   | Verbatim t | VerbatimBlock t | Text t -> String.length (String.trim t) > 0
   | Break | LinkCode _ | LinkJump _ | Interpolate _ -> true
   | Choices (ms, cs) -> (not (List.is_empty ms)) || not (List.is_empty cs)
-  | Meta _ ->
+  | Meta _ | MetaBlock _ ->
     (* overapproximation *)
     true
   | Run _ | Tunnel _ | Jump _ | JumpDynamic _ -> false
@@ -485,8 +486,9 @@ let contains_control_change s =
     | Break | Verbatim _ | VerbatimBlock _ | Text _
     | LinkCode (_, _)
     | LinkJump (_, _)
-    | Run _ | Interpolate _ | Meta _ ->
+    | Run _ | Interpolate _ ->
       false
+    | Meta _ | MetaBlock _
     | Choices (_, _) ->
       (* overapproximation *)
       true

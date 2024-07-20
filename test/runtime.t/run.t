@@ -44,3 +44,6 @@
 
   $ ./test.js 'Spaces' 'choice text'
   <div class="para fadein"><span>code after</span></div><div class="para fadein"><span>"Hi,</span><span> </span><span>A</span><span>," he said.</span></div><div class="para fadein"><span>"</span><span>Edge case</span><span>" here</span></div><div class="para fadein"><span>A</span><span>'s thing</span></div>
+
+  $ ./test.js 'Inline and block meta'
+  <div class="para fadein"><span>interpolation</span><span> </span><span>1</span></div><div class="para fadein"><span>inline meta</span><span> </span><span><span>1</span></span></div><div class="para fadein"><span>block meta</span></div>

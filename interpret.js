@@ -161,8 +161,7 @@ function spacer() {
   return e;
 }
 
-// Decides whether or not to insert a space between the inline elements already
-// in this span and the current element to be inserted.
+// Inserts elt into parent, deciding whether or not to put a space before elt
 function addInline(parent, elt) {
   // Initially (when parent is empty), there is no need for a space.
   // This is local state of the parent element.
@@ -341,26 +340,47 @@ function interpret(instrs, parent, k) {
       return;
     }
     case "Meta":
+    case "MetaBlock":
+      let [kind, metaText] = current;
       let s;
       let instrs;
       try {
-        s = eval?.(current[1]);
+        s = eval?.(metaText);
         if (s === undefined) {
           s = "";
         }
-        // console.log("meta result", s);
-        instrs = Fable.parse(s + "");
+        if (Array.isArray(s)) {
+          // fake a list of scenes, assuming internal.scenes[name] is used
+          instrs = [{ cmds: s }];
+        } else {
+          // console.log(kind, "result", s);
+          instrs = Fable.parse(s + "");
+        }
         if (instrs.length > 0) {
-          instrs = instrs[0].cmds;
-          // console.log("meta produced", instrs);
-          interpret(instrs, parent, () => {
+          let into;
+          if (kind === "Meta") {
+            into = document.createElement("span");
+            // assume there is a single para
+            // extract its contents as inline instrs
+            instrs = instrs[0].cmds[0][1];
+          } else {
+            into = parent;
+            instrs = instrs[0].cmds;
+          }
+          // console.log(kind, "produced", instrs);
+          interpret(instrs, into, () => {
+            if (kind === "Meta") {
+              // do after rendering so spacing kicks in
+              // is it possible that a jump interrupts this?
+              addInline(parent, into);
+            }
             interpret(rest, parent, k);
           });
         } else {
           interpret(rest, parent, k);
         }
       } catch (e) {
-        surfaceError("meta", current[1], s, instrs, e);
+        surfaceError("meta", metaText, s, instrs, e);
       }
       break;
     case "Para":
@@ -513,6 +533,7 @@ function render(s) {
   }
 }
 
+// preventing this from jumping seems unnecessarily restrictive
 function render_scene(s) {
   internal.on_scene_visit.forEach((f) => f(s));
   render(internal.scenes[s]);

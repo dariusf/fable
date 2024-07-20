@@ -45,6 +45,7 @@ Make a choice:
 - Tunnel `>->Tunnel`
 - Tunnels followed by jumps `->tunnel_test`
 - Spaces `->Spaces`
+- Inline and block meta `->InlineBlockMeta`
 
 End of first scene
 
@@ -89,8 +90,8 @@ Right before going back to Nested
 
 # Copy
 
-```js
-render_scene('One');
+```js ~
+internal.scenes['One']
 ```
 
 # Some choices
@@ -154,3 +155,17 @@ a
 # tunnel_test_b
 
 - b
+
+# InlineBlockMeta
+
+```js
+clear()
+```
+
+interpolation `$'1'`
+
+inline meta `~'1'`
+
+```js ~
+'block meta'
+```
