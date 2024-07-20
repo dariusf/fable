@@ -46,6 +46,7 @@ Make a choice:
 - Tunnels followed by jumps `->tunnel_test`
 - Spaces `->Spaces`
 - Inline and block meta `->InlineBlockMeta`
+- Inline jump `->InlineJump`
 
 End of first scene
 
@@ -169,3 +170,13 @@ inline meta `~'1'`
 ```js ~
 'block meta'
 ```
+
+# InlineJump
+
+```js
+clear()
+```
+
+hi `~ 'there' + jump('Some choices')`!
+
+<!-- edge case: instructions before the jump disappear -->

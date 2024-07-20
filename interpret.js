@@ -1,5 +1,9 @@
 // API
 
+function jump(s) {
+  return "`->" + s + "`";
+}
+
 function clear() {
   content.innerHTML = "";
 }
@@ -368,14 +372,26 @@ function interpret(instrs, parent, k) {
             instrs = instrs[0].cmds;
           }
           // console.log(kind, "produced", instrs);
+          let temp = document.createElement("div");
           interpret(instrs, into, () => {
-            if (kind === "Meta") {
-              // do after rendering so spacing kicks in
-              // is it possible that a jump interrupts this?
-              addInline(parent, into);
-            }
-            interpret(rest, parent, k);
+            interpret(rest, temp, k);
           });
+
+          /*
+            This fixes the edge case of a jump in an inline meta causing the entire meta to disappear.
+            The problem is there is no good place to put the addInline.
+            We need it to happen after some text is rendered in order to add preceding space, so we can't have it before.
+            If we put it in the continuation, a jump might interrupt it and cause it to disappear (the original problem).
+            If we put it after, the ordering of into and whatever else instrs renders is reversed in parent.
+            We also can't speculatively run it in order to determine if we should add a space because of potential side effects.
+            The solution is to do the last one, then render into a temp element to preserve the order.
+          */
+          if (kind === "Meta") {
+            addInline(parent, into);
+          }
+          for (const child of temp.children) {
+            parent.appendChild(child);
+          }
         } else {
           interpret(rest, parent, k);
         }
@@ -534,10 +550,10 @@ function render(s) {
 }
 
 // preventing this from jumping seems unnecessarily restrictive
-function render_scene(s) {
-  internal.on_scene_visit.forEach((f) => f(s));
-  render(internal.scenes[s]);
-}
+// function render_scene(s) {
+//   internal.on_scene_visit.forEach((f) => f(s));
+//   render(internal.scenes[s]);
+// }
 
 // TESTING
 

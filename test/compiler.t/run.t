@@ -301,6 +301,23 @@
               ],
               "rest": [],
               "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Inline jump"
+                ]
+              ],
+              "code": [
+                [
+                  "Jump",
+                  "InlineJump"
+                ]
+              ],
+              "rest": [],
+              "sticky": false
             }
           ]
         ],
@@ -847,6 +864,32 @@
         [
           "MetaBlock",
           "'block meta'"
+        ]
+      ]
+    },
+    {
+      "name": "InlineJump",
+      "cmds": [
+        [
+          "Run",
+          "clear()"
+        ],
+        [
+          "Para",
+          [
+            [
+              "Text",
+              "hi"
+            ],
+            [
+              "Meta",
+              "'there' + jump('Some choices')"
+            ],
+            [
+              "Text",
+              "!"
+            ]
+          ]
         ]
       ]
     }

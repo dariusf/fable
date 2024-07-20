@@ -47,3 +47,6 @@
 
   $ ./test.js 'Inline and block meta'
   <div class="para fadein"><span>interpolation</span><span> </span><span>1</span></div><div class="para fadein"><span>inline meta</span><span> </span><span><span>1</span></span></div><div class="para fadein"><span>block meta</span></div>
+
+  $ ./test.js 'Inline jump'
+  <div class="para fadein"><span>hi</span><span> </span><span><span>there</span></span></div><ul class="choice fadein"><li><a href="#" class="choice" draggable="false"><span>a</span></a></li><li><a href="#" class="choice" draggable="false"><span>b</span></a></li></ul>
