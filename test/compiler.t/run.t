@@ -307,13 +307,30 @@
               "initial": [
                 [
                   "Text",
-                  "Inline jump"
+                  "Inline meta jump"
                 ]
               ],
               "code": [
                 [
                   "Jump",
-                  "InlineJump"
+                  "InlineMetaJump"
+                ]
+              ],
+              "rest": [],
+              "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Block meta jump"
+                ]
+              ],
+              "code": [
+                [
+                  "Jump",
+                  "BlockMetaJump"
                 ]
               ],
               "rest": [],
@@ -868,7 +885,7 @@
       ]
     },
     {
-      "name": "InlineJump",
+      "name": "InlineMetaJump",
       "cmds": [
         [
           "Run",
@@ -888,6 +905,46 @@
             [
               "Text",
               "!"
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "BlockMetaJump",
+      "cmds": [
+        [
+          "Run",
+          "clear()"
+        ],
+        [
+          "MetaBlock",
+          "'1'"
+        ],
+        [
+          "MetaBlock",
+          "if (true) {\n  '2 `->BlockMetaJump1`'\n}"
+        ],
+        [
+          "Para",
+          [
+            [
+              "Text",
+              "should not show"
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "BlockMetaJump1",
+      "cmds": [
+        [
+          "Para",
+          [
+            [
+              "Text",
+              "3"
             ]
           ]
         ]

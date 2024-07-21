@@ -478,22 +478,22 @@ let rec recursively_add_choices f ss =
         failwith (s ^ " is not a scene with a single choice in it"))
     ss
 
-let contains_control_change s =
-  let rec aux s =
-    match s with
-    | Para ps -> List.exists aux ps
-    | Tunnel _ | JumpDynamic _ | Jump _ -> true
-    | Break | Verbatim _ | VerbatimBlock _ | Text _
-    | LinkCode (_, _)
-    | LinkJump (_, _)
-    | Run _ | Interpolate _ ->
-      false
-    | Meta _ | MetaBlock _
-    | Choices (_, _) ->
-      (* overapproximation *)
-      true
-  in
-  List.exists aux s
+(* let contains_control_change s =
+   let rec aux s =
+     match s with
+     | Para ps -> List.exists aux ps
+     | Tunnel _ | JumpDynamic _ | Jump _ -> true
+     | Break | Verbatim _ | VerbatimBlock _ | Text _
+     | LinkCode (_, _)
+     | LinkJump (_, _)
+     | Run _ | Interpolate _ ->
+       false
+     | Meta _ | MetaBlock _
+     | Choices (_, _) ->
+       (* overapproximation *)
+       true
+   in
+   List.exists aux s *)
 
 let print_json ?out program =
   let compact = true in

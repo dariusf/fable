@@ -31,11 +31,11 @@ let () =
                 Fabula.instantiate (obj_to_assoc bs)
                   (jv_to_ocaml Fabula.cmd_of_yojson s)
                 |> ocaml_to_jv Fabula.cmd_to_yojson) ); *)
-         ( "containsControlChange",
-           Jv.callback ~arity:1 (fun ss ->
-               Fabula.contains_control_change
-                 (jv_to_ocaml Fabula.cmds_of_yojson ss)
-               |> Jv.of_bool) );
+         (* ( "containsControlChange",
+            Jv.callback ~arity:1 (fun ss ->
+                Fabula.contains_control_change
+                  (jv_to_ocaml Fabula.cmds_of_yojson ss)
+                |> Jv.of_bool) ); *)
          ( "recursivelyAddChoices",
            Jv.callback ~arity:2 (fun f ss ->
                Fabula.recursively_add_choices

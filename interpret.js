@@ -372,29 +372,41 @@ function interpret(instrs, parent, k) {
             // extract its contents as inline instrs
             instrs = instrs[0].cmds[0][1];
           } else {
+            // the result of evaluating the MetaBlock is a Para,
+            // so add it directly
             into = parent;
             instrs = instrs[0].cmds;
           }
+
           // console.log(kind, "produced", instrs);
-          let temp = document.createElement("div");
+
+          if (kind === "Meta") {
+            // Always add the inline meta's span, but retroactively
+            // fix spaces after it's rendered.
+            addInline(parent, into);
+          }
+          // We don't have to do anything for blocks
+
           interpret(instrs, into, () => {
-            interpret(rest, temp, k);
+            interpret(rest, parent, k);
           });
 
           /*
-            This fixes the edge case of a jump in an inline meta causing the entire meta to disappear.
-            The problem is there is no good place to put the addInline.
+            This fixes the edge case of a jump in a meta causing the entire meta to disappear.
+            The problem is there is no ideal place to put the addInline.
             We need it to happen after some text is rendered in order to add preceding space, so we can't have it before.
             If we put it in the continuation, a jump might interrupt it and cause it to disappear (the original problem).
             If we put it after, the ordering of into and whatever else instrs renders is reversed in parent.
+            We can't do the last one, but render into a temp element to preserve the order, because that last part is hard - it's unpredictable when a call to interpret returns.
             We also can't speculatively run it in order to determine if we should add a space because of potential side effects.
-            The solution is to do the last one, then render into a temp element to preserve the order.
+            The solution is to retroactively fix the spaces after.
           */
           if (kind === "Meta") {
-            addInline(parent, into);
-          }
-          for (const child of temp.children) {
-            parent.appendChild(child);
+            if (into.innerText.length > 0) {
+              // TODO more granular condition, reuse the one above
+              // console.log("retroactively fixed spaces");
+              into.parentNode.insertBefore(spacer(), into);
+            }
           }
         } else {
           interpret(rest, parent, k);
