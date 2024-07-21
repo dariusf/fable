@@ -12,6 +12,10 @@ function turns_since(scene) {
   return internal.turns - (internal.last_visited_turn[scene] || 0);
 }
 
+function visit(scene) {
+  internal.last_visited_turn[scene] = internal.turns;
+}
+
 function see(scene) {
   if (internal.seen_scenes.hasOwnProperty(scene)) {
     internal.seen_scenes[scene]++;

@@ -16,10 +16,14 @@ How are you feeling today?
 - Amber
 - Red
 
-What would you like to do?
+`->do`
+
+# do
+
+What would you like to do next?
 
 - Review `1` `->review`
-- Add a story `1` `>->add` `->start`
+- `sticky` Add a story `1` `>->add` `->start`
 
 # add
 
@@ -33,6 +37,10 @@ How much creative energy do you think you'll need to finish this?
 
 - A bit
 - A lot
+
+Okay, I've added it to the backlog.
+
+`->do`
 
 # review
 

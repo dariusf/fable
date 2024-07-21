@@ -8,8 +8,6 @@ internal.bug_detectors.push(() => {
   return not_ended && no_options;
 });
 
-var turn_reaching = 0;
-
 var inventory = new Set();
 
 var dark_under = false;
@@ -62,7 +60,7 @@ go_back_to = 'murder_scene'
     I peered under the bed. Something glinted back at me.
     `->reaching`
 
-- `?turn_reaching && (turns-turn_reaching) >= 4 && inventory.has('cane')` `more knock_with_cane`
+- `?turns_since('reaching') >= 4 && inventory.has('cane')` `more knock_with_cane`
 
 - `?knife_loc == 'floor'`
     Pick up the knife `1`
@@ -149,7 +147,7 @@ var drawers_opened = 0;
 
 - `sticky` `?drawers_opened<3` Open a drawer `1`
 
-    I tried `$' ' + ['a drawer at random', 'another drawer', 'a third drawer'][drawers_opened]`. `$' ' + ['Locked', 'Also locked', 'Unsurprisingly, locked as well'][drawers_opened]`.
+    I tried `$['a drawer at random', 'another drawer', 'a third drawer'][drawers_opened]`. `$['Locked', 'Also locked', 'Unsurprisingly, locked as well'][drawers_opened]`.
 
     `drawers_opened++`
 
@@ -248,7 +246,7 @@ I watched the little stream rush past for a while. The house probably had damp b
     I moved the light over to the bloodstain and peered closely at it. It had soaked deeply into the fibres of the cotton sheet.
     There was no doubt about it. This was where the blow had been struck. `reach(bed_knowledge, 'murdered_in_bed')`
 
-- `?bedroom_light.loc != 'desk' && (turns-turn_moved_light_to_floor) >= 2`
+- `?bedroom_light.loc != 'desk' && turns_since('moved_light_to_floor') >= 2`
     Move the light back to the desk
     `bedroom_light.loc = 'desk'`
     I moved the light back to the desk, setting it down where it had originally been.
@@ -257,7 +255,7 @@ I watched the little stream rush past for a while. The house probably had damp b
     Move the light to the floor
     `bedroom_light.loc = 'floor'`
     I picked the light up and set it down on the floor.
-    `var turn_moved_light_to_floor = turns;`
+    `visit('moved_light_to_floor')`
 
 <!-- `->murder_scene` -->
 
