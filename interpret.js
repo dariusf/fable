@@ -534,24 +534,24 @@ function interpret(instrs, parent, k) {
   }
 }
 
-function render(s) {
-  let cmds;
-  if (typeof s === "string") {
-    cmds = Fable.parse(s);
-    if (cmds.length === 0) {
-      return;
-    }
-    cmds = cmds[0].cmds;
-  } else {
-    // take it as a scene (a list of commands)
-    cmds = s;
-  }
-  if (Fable.containsControlChange(cmds)) {
-    surfaceError("render cannot be used to jump", cmds);
-  } else {
-    interpret(cmds, content, () => {});
-  }
-}
+// function render(s) {
+//   let cmds;
+//   if (typeof s === "string") {
+//     cmds = Fable.parse(s);
+//     if (cmds.length === 0) {
+//       return;
+//     }
+//     cmds = cmds[0].cmds;
+//   } else {
+//     // take it as a scene (a list of commands)
+//     cmds = s;
+//   }
+//   if (Fable.containsControlChange(cmds)) {
+//     surfaceError("render cannot be used to jump", cmds);
+//   } else {
+//     interpret(cmds, content, () => {});
+//   }
+// }
 
 // preventing this from jumping seems unnecessarily restrictive
 // function render_scene(s) {

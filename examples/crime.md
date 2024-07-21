@@ -184,11 +184,9 @@ go_back_to = 'window';
     A cold day outside. Natural my breath should steam. `>->see_prints_on_glass`
 - `sticky`  `?window_state == 'steam_gone'` Breathe on the glass `1`
     I breathed gently on the glass once more.
-    ```js
-    if (reached(window_knowledge, 'fingerprints_on_glass')) {
-      render('The fingerprints reappeared.');
-    }
+    ```js ~
     window_state = 'steamed';
+    reached(window_knowledge, 'fingerprints_on_glass') ? 'The fingerprints reappeared.' : ''
     ```
 
 - `sticky` Something else? `1`
@@ -210,7 +208,7 @@ go_back_to = 'window';
     I leant back from the glass. My breath had steamed up the pane a little.
     `window_state = 'steamed'`
 
-TODO fallback
+<!-- TODO fallback -->
 
 `->window`
 
@@ -280,18 +278,20 @@ They faded as I watched.
 
 I flicked the light switch.
 
-```js
+```js ~
+let res = '';
 if (bedroom_light.on) {
-  render('The bulb fell dark');
+  res = 'The bulb fell dark';
   bedroom_light.on = false;
 } else {
   if (bedroom_light.loc === 'floor') {
-    render('A little light spilled under the bed.');
+    res = 'A little light spilled under the bed.';
   } else if (bedroom_light.loc === 'desk') {
-    render('The light gleamed on the polished tabletop.');
+    res = 'The light gleamed on the polished tabletop.';
   }
   bedroom_light.on = true;
 }
+res
 ```
 
 # joe_in_hall
@@ -358,7 +358,7 @@ My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you fin
       'All right. It's a start,' Joe replied.
       `->done`
 
-TODO fallback
+<!-- TODO fallback -->
 
 `->joe_in_hall1`
 
@@ -368,19 +368,19 @@ TODO fallback
 - `?inventory.has('cane')` Knock it with the cane `->knock_with_cane`
 - `?turns_since('reaching')>1` Stand up `1` I stood up once more, and brushed my coat down. `->murder_scene`
 
-TODO fallback
+<!-- TODO fallback -->
 
 # done
 <!-- this is also a fallback option... -->
 
-```js
+```js ~
 if (reached(knife_knowledge, 'joe_wants_better_prints') && !reached(knife_knowledge, 'joe_got_better_prints')) {
   reach(knife_knowledge, 'joe_got_better_prints');
-  render("I'll get those prints from the window now.");
+  "I'll get those prints from the window now.";
 } else if (reached(knife_knowledge, 'joe_seen_prints_on_knife')) {
-  render("I'll run those prints as best I can.");
+  "I'll run those prints as best I can.";
 } else {
-  render("'Not much to go on.'");
+  "'Not much to go on.'";
 }
 ```
 THE END
