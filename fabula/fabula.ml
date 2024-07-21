@@ -496,38 +496,58 @@ let rec recursively_add_choices f ss =
    List.exists aux s *)
 
 let program_graph prog =
+  let regexes prog =
+    List.map
+      (fun c ->
+        (* relies on JS... but we're a practical system *)
+        let r =
+          {|\(.\|
+\)*\(jump(['"]\|tunnel(['"]\|->\|jump \|>->\|tunnel \)|}
+          ^ c.name
+        in
+        (c.name, Str.regexp r))
+      prog
+  in
+  let found regexes str =
+    List.filter_map
+      (fun (n, r) -> if Str.string_match r str 0 then Some n else None)
+      regexes
+  in
+  let regexes = regexes prog in
   let rec outgoing_scenes c =
     match c with
     | LinkCode (_, _)
     | Interpolate _ | Run _ | VerbatimBlock _ | Verbatim _ | Text _ | Break ->
-      SSet.empty
-    | Para p -> SSet.concat_map outgoing_scenes p
+      []
+    | Para p -> List.concat_map outgoing_scenes p
     | JumpDynamic _ ->
       (* cannot tell *)
-      SSet.empty
-    | Jump s | Tunnel s | LinkJump (_, s) -> SSet.singleton s
-    | Meta _ | MetaBlock _ ->
+      []
+    | Jump s | Tunnel s | LinkJump (_, s) -> [(s, true)]
+    | Meta b | MetaBlock b ->
       (* cannot tell in general *)
-      (* TODO heuristic *)
-      SSet.empty
+      found regexes b |> List.map (fun i -> (i, false))
     | Choices (_, cs) ->
-      SSet.concat_map
+      List.concat_map
         (fun c ->
-          SSet.concat
+          List.concat
             (List.map
-               (SSet.concat_map outgoing_scenes)
+               (List.concat_map outgoing_scenes)
                [c.initial; c.code; c.rest]))
         cs
   in
   let edges =
-    List.concat_map
-      (fun sc ->
-        let name = sc.name in
-        let scenes_to = SSet.concat_map outgoing_scenes sc.cmds in
-        List.map
-          (fun s -> Format.asprintf {|"%s" -> "%s";|} name s)
-          (SSet.to_list scenes_to))
-      prog
+    prog
+    |> List.concat_map (fun sc ->
+           let name = sc.name in
+           let scenes_to =
+             List.concat_map outgoing_scenes sc.cmds |> List.sort_uniq compare
+           in
+           List.map
+             (fun (s, static) ->
+               Format.asprintf {|"%s" -> "%s" %s;|} name s
+                 (if static then "" else "[style=dashed]"))
+             scenes_to)
     |> String.concat "\n"
   in
   Format.asprintf "digraph G {\n%s\n}" edges
