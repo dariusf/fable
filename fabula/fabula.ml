@@ -385,7 +385,8 @@ module Convert = struct
                      | Run s, _ when String.starts_with ~prefix:"?" s ->
                        (b, Acc.add (strip_prefix 1 s) gs, st, i, c, r)
                        (* things to stop at *)
-                     | (Run _ | Jump _ | JumpDynamic _ | Tunnel _), false ->
+                     | ( (Break | Run _ | Jump _ | JumpDynamic _ | Tunnel _),
+                         false ) ->
                        (true, gs, st, i, Some e, r)
                      (* the rest *)
                      | _, true -> (true, gs, st, i, c, Acc.add e r)

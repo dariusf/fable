@@ -24,9 +24,10 @@ function done_everything() {
 - `sticky` Set the temperature `->temp`
 - `sticky` Set the spin `->spin`
 - `sticky` Adjust the time `->time`
-- Add detergent `1` You added some detergent. `see('detergent')`
+- Add detergent
+    You added some detergent. `see('detergent')`
 - `?!outlet_closed` Close the outlet `outlet_closed = true` You closed the outlet.
-- `?done_everything()` Start the machine `1`
+- `?done_everything()` Start the machine
     ```js ~
     !outlet_closed ? '`->water`' : !seen('detergent') ? '`->unwashed`' : '`->wait`'
     ```

@@ -335,6 +335,23 @@
               ],
               "rest": [],
               "sticky": false
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "Choice break delimiters"
+                ]
+              ],
+              "code": [
+                [
+                  "Jump",
+                  "ChoiceBreakDelimiters"
+                ]
+              ],
+              "rest": [],
+              "sticky": false
             }
           ]
         ],
@@ -946,6 +963,47 @@
               "Text",
               "3"
             ]
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "ChoiceBreakDelimiters",
+      "cmds": [
+        [
+          "Run",
+          "clear()"
+        ],
+        [
+          "Choices",
+          [],
+          [
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "asd"
+                ]
+              ],
+              "code": [
+                [
+                  "Break"
+                ]
+              ],
+              "rest": [
+                [
+                  "Para",
+                  [
+                    [
+                      "Text",
+                      "selected"
+                    ]
+                  ]
+                ]
+              ],
+              "sticky": false
+            }
           ]
         ]
       ]

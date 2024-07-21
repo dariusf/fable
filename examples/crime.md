@@ -54,26 +54,23 @@ go_back_to = 'murder_scene'
 
 - `?bedroom_light.seen` `more seen_light`
 - `more compare_prints`
-- The bed... `1` The bed was low to the ground, but not so low something might not roll underneath. It was still neatly made. `->prebed`
-- `?dark_under && bedroom_light.loc === 'floor' && bedroom_light.on`
-    Look under the bed `1`
+- The bed...
+    The bed was low to the ground, but not so low something might not roll underneath. It was still neatly made. `->prebed`
+- `?dark_under && bedroom_light.loc === 'floor' && bedroom_light.on` Look under the bed
     I peered under the bed. Something glinted back at me.
     `->reaching`
 
 - `?turns_since('reaching') >= 4 && inventory.has('cane')` `more knock_with_cane`
 
-- `?knife_loc == 'floor'`
-    Pick up the knife `1`
+- `?knife_loc == 'floor'` Pick up the knife
     Careful not to touch the handle, I lifted the blade from the carpet.
     `inventory.add('knife')`
 
-- `?inventory.has('knife')`
-    Look at the knife `1`
+- `?inventory.has('knife')` Look at the knife
     The blood was dry enough. Dry enough to show up partial prints on the hilt!
     `reach(knife_knowledge, 'prints_on_knife')`
 
-- The desk... `1`
-
+- The desk...
     I turned my attention to the desk. A lamp sat in one corner, a neat, empty in-tray in the other. There was nothing else out.
 
     Leaning against the desk was a wooden cane.
@@ -82,14 +79,15 @@ go_back_to = 'murder_scene'
 
     `->predesk`
 
-- `?inventory.has('cane') && turns_since('desk') <= 2` Swoosh the cane `1`
+- `?inventory.has('cane') && turns_since('desk') <= 2` Swoosh the cane
     I was still holding the cane: I gave it an experimental swoosh. It was heavy indeed, though not heavy enough to be used as a bludgeon.
     But it might have been useful in self-defence. Why hadn't the victim reached for it? Knocked it over?
 
-- The window... `1` I went over to the window and peered out. A dismal view of the little brook that ran down beside the house.
+- The window...
+    I went over to the window and peered out. A dismal view of the little brook that ran down beside the house.
     `->prewindow`
 
-- `?seen('murder_scene')>=5` Leave the room `1`
+- `?seen('murder_scene')>=5` Leave the room
     I'd seen enough. I `$bedroom_light.on ? ' switched off the lamp, then ' : ''` turned and left the room.
     `->joe_in_hall`
 
@@ -119,11 +117,13 @@ var bed_state = 'made_up'; // made_up, covers_shifted, covers_off, bloodstain_vi
 - `?bed_state != 'made_up'` Remake the bed `bed_state = 'made_up'` Carefully, I pulled the bedsheets back into place, trying to make it seem undisturbed.
   <!-- seems like there's a bug here, shouldn't be able to pull back duvet after making -->
 
-- Test the bed `1`  I pushed the bed with spread fingers. It creaked a little, but not so much as to be obnoxious.
+- Test the bed
+    I pushed the bed with spread fingers. It creaked a little, but not so much as to be obnoxious.
 
 - Look under the bed `dark_under = true;` Lying down, I peered under the bed, but could make nothing out.
 
-- `?turns_since('prebed')>1` Something else? `1` I took a step back from the bed and looked around. `->murder_scene`
+- `?turns_since('prebed')>1` Something else?
+    I took a step back from the bed and looked around. `->murder_scene`
 
 `->bed`
 
@@ -139,13 +139,13 @@ var drawers_opened = 0;
 
 - `?!inventory.has('cane')` Pick up the cane `inventory.add('cane')` I picked up the wooden cane. It was heavy, and unmarked.
 
-- `?!bedroom_light.on` Turn on the lamp `1` `>->operate_lamp`
+- `?!bedroom_light.on` Turn on the lamp `>->operate_lamp`
 
-- Look at the in-tray `1`
+- Look at the in-tray
 
   I regarded the in-tray, but there was nothing to be seen. Either the victim's papers were taken, or his line of work had seriously dried up. Or the in-tray was all for show.
 
-- `sticky` `?drawers_opened<3` Open a drawer `1`
+- `sticky` `?drawers_opened<3` Open a drawer
 
     I tried `$['a drawer at random', 'another drawer', 'a third drawer'][drawers_opened]`. `$['Locked', 'Also locked', 'Unsurprisingly, locked as well'][drawers_opened]`.
 

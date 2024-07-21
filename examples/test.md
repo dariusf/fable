@@ -48,6 +48,7 @@ Make a choice:
 - Inline and block meta `->InlineBlockMeta`
 - Inline meta jump `->InlineMetaJump`
 - Block meta jump `->BlockMetaJump`
+- Choice break delimiters `->ChoiceBreakDelimiters`
 
 End of first scene
 
@@ -203,3 +204,12 @@ should not show
 # BlockMetaJump1
 
 3
+
+# ChoiceBreakDelimiters
+
+```js
+clear()
+```
+
+- asd
+    selected

@@ -53,3 +53,9 @@
 
   $ ./test.js 'Block meta jump'
   <div class="para fadein"><span>1</span></div><div class="para fadein"><span>2</span></div><div class="para fadein"><span>3</span></div>
+
+  $ ./test.js 'Choice break delimiters'
+  <ul class="choice fadein"><li><a idx="1" href="#" class="choice" draggable="false"><span>asd</span></a></li></ul>
+
+  $ ./test.js 'Choice break delimiters' 'asd'
+  <div class="para fadein"><span>selected</span></div>
