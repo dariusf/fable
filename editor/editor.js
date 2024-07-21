@@ -26,6 +26,7 @@ function setupEditor() {
   editor.renderer.setShowGutter(false);
   editor.setHighlightActiveLine(false);
   editor.setOption("displayIndentGuides", false);
+  editor.setOption("cursorStyle", "wide"); // disable blinking
   editor.commands.bindKey("Cmd-L", null);
   editor.session.setUseWorker(false);
   editor.session.setUseWrapMode(true);
