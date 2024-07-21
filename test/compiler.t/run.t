@@ -6,7 +6,7 @@
       "cmds": [
         [
           "Run",
-          "var items = ['Apple', 'Banana', 'Carrot'];\n// This makes testing tough\n// var a = items[Math.floor(Math.random()*items.length)];\nvar a = items[2-3+1];"
+          "tweet_style_choices = false;\nvar items = ['Apple', 'Banana', 'Carrot'];\n// This makes testing tough\n// var a = items[Math.floor(Math.random()*items.length)];\nvar a = items[2-3+1];"
         ],
         [
           "Para",

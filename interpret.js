@@ -57,7 +57,8 @@ function last_choice() {
 
 // CONFIG
 
-const choices_disappear = true;
+var choices_disappear = true;
+var tweet_style_choices = false;
 
 // INTERNALS
 
@@ -100,7 +101,7 @@ function defaultInternal() {
     // choices to immediately take when hot reloading
     immediately_take: [],
     // whether or not to send parent events. for internal use
-    silent_choice: false,
+    system_made_choice: false,
   };
 }
 
@@ -150,8 +151,8 @@ window.addEventListener("message", function (e) {
   }
 });
 
-function informParentChoice(choice) {
-  if (!internal.silent_choice) {
+function informEditorOfChoice(choice) {
+  if (!internal.system_made_choice) {
     window.parent.postMessage({ type: "CHOICE_MADE", choice }, "*");
   }
 }
@@ -523,12 +524,15 @@ function interpret(instrs, parent, k) {
               old.classList.add("old");
             }
             internal.choice_history.push(a.textContent);
-            informParentChoice(a.textContent);
+            informEditorOfChoice(a.textContent);
             internal.on_interact.forEach((f) => f());
             if (choices_disappear) {
               parent.removeChild(ul);
             } else {
               indicate_clicked(a);
+            }
+            if (tweet_style_choices) {
+              clear();
             }
             // if (item.code.length > 0) {
             // we want to separate code and rest because we don't want to create an empty div for a code instr that doesn't have any output
@@ -552,10 +556,10 @@ function interpret(instrs, parent, k) {
           let something_taken = false;
           for (const a of links) {
             if (a.textContent === internal.immediately_take[0]) {
-              let elt = internal.immediately_take.shift();
-              internal.silent_choice = true;
+              internal.immediately_take.shift();
+              internal.system_made_choice = true;
               a.click();
-              internal.silent_choice = false;
+              internal.system_made_choice = false;
               something_taken = a;
               break;
             }

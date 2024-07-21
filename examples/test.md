@@ -9,6 +9,7 @@ extra: hi there
 # Two
 
 ```js
+tweet_style_choices = false;
 var items = ['Apple', 'Banana', 'Carrot'];
 // This makes testing tough
 // var a = items[Math.floor(Math.random()*items.length)];
