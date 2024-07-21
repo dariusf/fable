@@ -26,6 +26,24 @@ let () =
            Jv.callback ~arity:1 (fun s ->
                Fabula.may_have_text (jv_to_ocaml Fabula.cmd_of_yojson s)
                |> Jv.of_bool) );
+         ( "useRandomSeed",
+           Jv.callback ~arity:1 (fun s -> Random.init (Jv.to_int s)) );
+         ( "random",
+           Jv.callback ~arity:1 (fun () -> Random.float 1. |> Jv.of_float) );
+         ( "randomIncl",
+           (* randomIncl(1, 3) = 1 + Random.int ((3+1)-1) *)
+           Jv.callback ~arity:2 (fun l h ->
+               let l = Jv.to_int l in
+               let h = Jv.to_int h in
+               let r = l + Random.int (h + 1 - l) in
+               Jv.of_int r) );
+         ( "randomExcl",
+           Jv.callback ~arity:2 (fun l h ->
+               let l = Jv.to_int l in
+               let h = Jv.to_int h in
+               let r = l + Random.int (h - l) in
+               Jv.of_int r) );
+         ("coin", Jv.callback ~arity:0 (fun () -> Random.bool () |> Jv.of_bool));
          (* ( "instantiate",
             Jv.callback ~arity:2 (fun s bs ->
                 Fabula.instantiate (obj_to_assoc bs)

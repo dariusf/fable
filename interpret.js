@@ -1,7 +1,20 @@
 // API
 
-function jump(s) {
-  return "`->" + s + "`";
+function capitalize(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+const { useRandomSeed, random, randomIncl, randomExcl, coin } = Fable;
+function randomFrom(xs) {
+  return xs[randomExcl(0, xs.length)];
+}
+
+function jump(label) {
+  return `\`->${label}\``;
+}
+
+function tunnel(label) {
+  return `\`>->${label}\``;
 }
 
 function clear() {
@@ -48,6 +61,9 @@ const choices_disappear = true;
 
 // INTERNALS
 
+if (!isDeterministic()) {
+  useRandomSeed(+new Date());
+}
 const content = document.querySelector("#content");
 const container = document.querySelector("#scroll-container");
 
@@ -618,7 +634,7 @@ function click_links() {
   if (elts.length === 0) {
     return location.reload();
   }
-  let elt = elts[Math.floor(Math.random() * elts.length)];
+  let elt = elts[randomExcl(0, elts.length)];
   // console.log(elt.textContent);
   elt.click();
   setTimeout(click_links, testing_freq);
@@ -664,6 +680,11 @@ function inIFrame() {
   } catch (e) {
     return true;
   }
+}
+
+function isDeterministic() {
+  const p = new URLSearchParams(window.location.search);
+  return navigator.webdriver || !!p.get("det");
 }
 
 // https://stackoverflow.com/a/52693392
