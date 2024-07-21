@@ -96,7 +96,8 @@ function fullReload() {
 }
 
 let onEdit = debounce(() => {
-  refreshEditor();
+  // refreshEditor();
+  triggerEdited();
 }, 250);
 
 window.addEventListener("message", (e) => {
@@ -120,13 +121,17 @@ window.addEventListener("message", (e) => {
   }
 });
 
-function onPageLoad() {
+function triggerEdited() {
   try {
     iframe.contentWindow.postMessage(
       { type: "EDITED", md: editorGet(), history: choice_history },
       "*"
     );
   } catch (e) {}
+}
+
+function onPageLoad() {
+  triggerEdited();
 }
 
 const examples = document.querySelector("#examples");
