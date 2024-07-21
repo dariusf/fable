@@ -40,7 +40,7 @@
   <div class="para fadein"><span>Tunnel</span></div><div class="para fadein"><span>End of first scene</span></div>
 
   $ ./test.js 'Tunnels followed by jumps'
-  <div class="para fadein"><span>before</span></div><div class="para fadein"><span>a</span></div><ul class="choice fadein"><li><a href="#" class="choice" draggable="false"><span>b</span></a></li></ul>
+  <div class="para fadein"><span>before</span></div><div class="para fadein"><span>a</span></div><ul class="choice fadein"><li><a idx="1" href="#" class="choice" draggable="false"><span>b</span></a></li></ul>
 
   $ ./test.js 'Spaces' 'choice text'
   <div class="para fadein"><span>code after</span></div><div class="para fadein"><span>"Hi,</span><span> </span><span>A</span><span>," he said.</span></div><div class="para fadein"><span>"</span><span>Edge case</span><span>" here</span></div><div class="para fadein"><span>A</span><span>'s thing</span></div>
@@ -49,7 +49,7 @@
   <div class="para fadein"><span>interpolation</span><span> </span><span>1</span></div><div class="para fadein"><span>inline meta</span><span> </span><span><span>1</span></span></div><div class="para fadein"><span>block meta</span></div>
 
   $ ./test.js 'Inline meta jump'
-  <div class="para fadein"><span>hi</span><span> </span><span><span>there</span></span></div><ul class="choice fadein"><li><a href="#" class="choice" draggable="false"><span>a</span></a></li><li><a href="#" class="choice" draggable="false"><span>b</span></a></li></ul>
+  <div class="para fadein"><span>hi</span><span> </span><span><span>there</span></span></div><ul class="choice fadein"><li><a idx="1" href="#" class="choice" draggable="false"><span>a</span></a></li><li><a idx="2" href="#" class="choice" draggable="false"><span>b</span></a></li></ul>
 
   $ ./test.js 'Block meta jump'
   <div class="para fadein"><span>1</span></div><div class="para fadein"><span>2</span></div><div class="para fadein"><span>3</span></div>

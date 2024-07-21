@@ -478,6 +478,7 @@ function interpret(instrs, parent, k) {
         );
 
         // generate choices
+        let idx = 1;
         for (const item of alts.concat(extra)) {
           if (!item.sticky) {
             let id = `c${internal.fresh++}`;
@@ -500,6 +501,7 @@ function interpret(instrs, parent, k) {
           let li = document.createElement("li");
           ul.appendChild(li);
           let a = document.createElement("a");
+          a.setAttribute("idx", idx);
           a.href = "#";
           a.classList.add("choice");
           a.draggable = false;
@@ -534,6 +536,7 @@ function interpret(instrs, parent, k) {
             // }
           };
           interpret(item.initial, a, () => {});
+          idx++;
         }
 
         // possibly take choices for hot reloading
@@ -708,3 +711,9 @@ function user_globals() {
         ].includes(a)
     );
 }
+
+document.body.onkeydown = function (e) {
+  if (e.key >= 1 && e.key <= 9) {
+    document.querySelector(`a[idx="${+e.key}"]`)?.click();
+  }
+};
