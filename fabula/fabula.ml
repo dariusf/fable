@@ -16,8 +16,8 @@ and cmd =
   | Verbatim of string (* inline *)
   | Text of string
   | Break
-  | LinkCode of string * string
-  | LinkJump of string * string
+  | LinkCode of string * string (* for links like [text](!id) *)
+  | LinkJump of string * string (* for links like [text](#id) *)
   | Run of string
   | Interpolate of string
   | Meta of string
@@ -243,7 +243,6 @@ module Convert = struct
             | None -> failwith "no destination"
             | Some (t1, _) when String.starts_with ~prefix:"#" t1 ->
               let r = String.sub t1 1 (String.length t1 - 1) in
-              (* for links like [text](#id) *)
               LinkJump (String.trim t, String.trim r)
             | Some (t1, _) when String.starts_with ~prefix:"!" t1 ->
               let r = String.sub t1 1 (String.length t1 - 1) in
@@ -495,6 +494,43 @@ let rec recursively_add_choices f ss =
        true
    in
    List.exists aux s *)
+
+let program_graph prog =
+  let rec outgoing_scenes c =
+    match c with
+    | LinkCode (_, _)
+    | Interpolate _ | Run _ | VerbatimBlock _ | Verbatim _ | Text _ | Break ->
+      SSet.empty
+    | Para p -> SSet.concat_map outgoing_scenes p
+    | JumpDynamic _ ->
+      (* cannot tell *)
+      SSet.empty
+    | Jump s | Tunnel s | LinkJump (_, s) -> SSet.singleton s
+    | Meta _ | MetaBlock _ ->
+      (* cannot tell in general *)
+      (* TODO heuristic *)
+      SSet.empty
+    | Choices (_, cs) ->
+      SSet.concat_map
+        (fun c ->
+          SSet.concat
+            (List.map
+               (SSet.concat_map outgoing_scenes)
+               [c.initial; c.code; c.rest]))
+        cs
+  in
+  let edges =
+    List.concat_map
+      (fun sc ->
+        let name = sc.name in
+        let scenes_to = SSet.concat_map outgoing_scenes sc.cmds in
+        List.map
+          (fun s -> Format.asprintf {|"%s" -> "%s";|} name s)
+          (SSet.to_list scenes_to))
+      prog
+    |> String.concat "\n"
+  in
+  Format.asprintf "digraph G {\n%s\n}" edges
 
 let print_json ?out program =
   let compact = true in

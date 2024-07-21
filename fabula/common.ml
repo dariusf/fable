@@ -25,7 +25,12 @@ let read_file filename =
   close_in ch;
   s
 
-module SSet = Set.Make (String)
+module SSet = struct
+  include Set.Make (String)
+
+  let concat xs = List.fold_right union xs empty
+  let concat_map f xs = concat (List.map f xs)
+end
 
 let show_inline i =
   Format.printf "%s@."
