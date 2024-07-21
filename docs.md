@@ -12,7 +12,8 @@
   - [The Runtime](#the-runtime)
   - [The CLI](#the-cli)
     - [Exporting a standalone story](#exporting-a-standalone-story)
-    - [Testing](#testing)
+    - [Expect tests](#expect-tests)
+    - [Random testing](#random-testing)
 - [Development](#development)
   - [Compiler and Runtime](#compiler-and-runtime)
   - [Editor](#editor)
@@ -157,7 +158,7 @@ zip -r game.zip *
 butler push game.zip $USER/$GAME:html5
 ```
 
-### Testing
+### Expect tests
 
 ```sh
 fable -s examples/crime.md -o _build -t
@@ -165,7 +166,7 @@ cp tests.t _build # make tests available
 
 # building blocks for your build script
 cd _build
-npm install selenium-webdriver
+npm install selenium-webdriver # or install globally and `npm link`
 dune test
 dune promote && cp tests.t ..
 ```
@@ -184,6 +185,15 @@ dune,
 node and npm,
 chromedriver/geckodriver on the `$PATH`,
 Firefox/Chrome.
+
+### Random testing
+
+Standalone stories can be tested randomly by evaluating `randomly_test()` in the console.
+
+The default oracle looks for unhandled exceptions.
+Custom testing oracles can be added by pushing functions which return `true` on error into `internal.bug_detectors`.
+
+To stop, remove the URL hash property or evaluate `stop_testing()` in the console.
 
 # Development
 

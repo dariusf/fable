@@ -174,7 +174,7 @@ function surfaceError(...args) {
 function createPara() {
   let d = document.createElement("div");
   d.classList.add("para");
-  if (isStandalone()) {
+  if (isStandalone() && !isTesting()) {
     d.classList.add("fadein");
   }
   return d;
@@ -604,6 +604,10 @@ function interpret(instrs, parent, k) {
 
 // TESTING
 
+function isTesting() {
+  return window.location.hash === "#testing";
+}
+
 function randomly_test() {
   window.location.hash = "testing";
   click_links();
@@ -639,18 +643,25 @@ document.onkeydown = (e) => {
 const testing_freq = 30;
 function click_links() {
   let bug = bug_found();
-  if (window.location.hash !== "#testing" || bug) {
-    if (bug) {
-      console.log(internal.choice_history);
-    }
+  if (!isTesting()) {
+    console.log("stopped testing");
+    return;
+  }
+  if (bug) {
+    console.log("bug found", internal.choice_history);
     return;
   }
   let elts = document.querySelectorAll(".choice");
   if (elts.length === 0) {
-    return location.reload();
+    console.log("no links left");
+    // testing reloads on every edit, to find semantic non-closure issues,
+    // while the editor restarts for speed.
+    // testing could also restart, to be faster.
+    location.reload();
+    return;
   }
   let elt = elts[randomExcl(0, elts.length)];
-  // console.log(elt.textContent);
+  console.log("choice taken:", elt.textContent);
   elt.click();
   setTimeout(click_links, testing_freq);
 }
