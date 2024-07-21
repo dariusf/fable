@@ -185,8 +185,37 @@ function spacer() {
   return e;
 }
 
+function addBlock(parent, elt) {
+  parent.appendChild(elt);
+}
+
 // Inserts elt into parent, deciding whether or not to put a space before elt
 function addInline(parent, elt) {
+  let addSpace = inlinePrecedingSpaceCondition(parent, elt);
+  let eltHasNoText = elt.innerText.length === 0;
+
+  if (addSpace) {
+    parent.appendChild(spacer());
+  }
+  parent.appendChild(elt);
+
+  if (!eltHasNoText) {
+    if (inlineSucceedingSpaceCondition(elt)) {
+      parent.needsSpace = false;
+    } else {
+      parent.needsSpace = true;
+    }
+  } else {
+    // Otherwise, keep the state unchanged.
+  }
+}
+
+function inlineSucceedingSpaceCondition(elt) {
+  // If we added any text at all, default to needing space before the next element.
+  return elt.innerText.match(/["']$/);
+}
+
+function inlinePrecedingSpaceCondition(parent, elt) {
   // Initially (when parent is empty), there is no need for a space.
   // This is local state of the parent element.
   let needsSpace = parent.needsSpace || false;
@@ -203,28 +232,8 @@ function addInline(parent, elt) {
   // so this should do the right thing.
   // another workaround is to keeps quotes inside interpolations / metas.
   let addSpace = !noSpacePrecedingPunctuation && needsSpace && !eltHasNoText;
-  // !noSpaceSucceedingPunctuation &&
 
-  if (addSpace) {
-    parent.appendChild(spacer());
-  }
-  parent.appendChild(elt);
-
-  // If we added any text at all, default to needing space before the next element.
-  if (!eltHasNoText) {
-    let noSpaceSucceedingPunctuation = elt.innerText.match(/["']$/);
-    if (noSpaceSucceedingPunctuation) {
-      parent.needsSpace = false;
-    } else {
-      parent.needsSpace = true;
-    }
-  } else {
-    // Otherwise, keep the state unchanged.
-  }
-}
-
-function addBlock(parent, elt) {
-  parent.appendChild(elt);
+  return addSpace;
 }
 
 function interpret(instrs, parent, k) {
@@ -418,8 +427,7 @@ function interpret(instrs, parent, k) {
             The solution is to retroactively fix the spaces after.
           */
           if (kind === "Meta") {
-            if (into.innerText.length > 0) {
-              // TODO more granular condition, reuse the one above
+            if (inlinePrecedingSpaceCondition(into.parentNode, into)) {
               // console.log("retroactively fixed spaces");
               into.parentNode.insertBefore(spacer(), into);
             }
