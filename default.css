@@ -20,11 +20,12 @@ html, body {
 }
 
 body {
-  font-family: "Noto Serif", serif;
+  /* https://github.com/system-fonts/modern-font-stacks */
+  /* font-family: Charter, 'Bitstream Charter', 'Sitka Text', Cambria, serif; */
+  font-family: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, serif;
   background-color: var(--main-bg-color);
   color: var(--main-fg-color);
   line-height: 1.4;
-  /* font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu; */
   font-size: calc(15px + 0.390625vw);
   /* font-size: 2.5vmin; */
   /* font-size: 3.5vmin; */

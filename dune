@@ -39,7 +39,9 @@
 (subdir deploy
  (rule
   (alias editor)
-  (deps ../story.html (glob_files ../examples/*.md)
+  (deps ../story.html
+   (glob_files ../web/*)
+   (glob_files ../examples/*.md)
    ../editor/examples.sh ../editor/editor.html)
   (action (progn
    (copy ../fablejs.bc.js fablejs.bc.js)

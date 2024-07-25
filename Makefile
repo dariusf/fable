@@ -32,7 +32,7 @@ watch: default
 .PHONY: editor
 editor:
 	dune build @editor --display=short
-	python -m http.server 8005 --directory _build/default/deploy
+	serve _build/default/deploy
 
 .PHONY: clean
 clean:
