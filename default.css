@@ -122,3 +122,12 @@ a:visited {
   scrollbar-color: var(--main-bg-color-lighter) var(--main-bg-color);
   scrollbar-width: thin;
 }
+
+select {
+	color: var(--main-fg-color);
+	background-color: var(--main-bg-color);
+	border: solid var(--main-fg-color) 1px;
+	border-radius: 5px;
+	font-family: inherit;
+	font-size: inherit;
+}
