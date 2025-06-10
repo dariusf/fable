@@ -1,7 +1,15 @@
 :root {
-  --main-bg-color: #202124;
-  --main-bg-color-lighter: #4e5159;
-  --main-fg-color: #e8eaed;
+  --main-bg-color: #f7f7f7;
+  --main-bg-color-lighter: #fafafa;
+  --main-fg-color: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --main-bg-color: #202124;
+    --main-bg-color-lighter: #4e5159;
+    --main-fg-color: #e8eaed;
+  }
 }
 
 /* prevent body from scrolling */
