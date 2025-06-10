@@ -357,9 +357,13 @@ function interpret(instrs, parent, k) {
     }
     case "Jump": {
       // abandon current k and instructions, go back to top element
-      let scene = current[1];
-      internal.on_scene_visit.forEach((f) => f(scene));
-      interpret(internal.scenes[scene], content, () => {});
+      const scene_name = current[1];
+      internal.on_scene_visit.forEach((f) => f(scene_name));
+      const scene = internal.scenes[scene_name];
+      if (scene === undefined) {
+        surfaceError("Jump", scene_name, "scene not found");
+      }
+      interpret(scene, content, () => {});
       return;
     }
     case "JumpDynamic": {
