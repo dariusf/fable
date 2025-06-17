@@ -648,7 +648,7 @@ const testing_freq = 30;
 function click_links() {
   let bug = bug_found();
   if (!isTesting()) {
-    console.log("stopped testing");
+    // console.log("stopped testing");
     return;
   }
   if (bug) {
