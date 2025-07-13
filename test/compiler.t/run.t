@@ -1,5 +1,7 @@
 
-  $ fable ../test.md | sed -e 's/var story = //g' -e 's/;$//g' | jq .
+  $ . ../testing.sh
+
+  $ compile ../programs/test.md
   [
     {
       "name": "Two",

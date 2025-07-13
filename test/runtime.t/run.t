@@ -1,7 +1,7 @@
 
-  $ . testing.sh
+  $ . ../testing.sh
 
-  $ fable -s ../test.md -o test
+  $ fable -s ../programs/test.md -o test
 
   $ node test.js test/index.html 'Go to Scene 1' 'Apple'
   <div class="para fadein old"><span>Hello</span><span> </span><span>Apple</span><span>!</span></div><div class="para fadein old"><span>inline comments</span><span> </span><span><i>don't</i></span><span> </span><span>appear</span></div><div class="para fadein old"><a href="#">jump</a></div><div class="para fadein old"><a href="#">code</a></div><div class="para fadein old"><span>Make a choice:</span></div><div class="para fadein old"><span>text from Scene 1</span></div><div class="para fadein"><details>
@@ -60,8 +60,11 @@
   $ node test.js test/index.html 'Choice break delimiters' 'asd'
   <div class="para fadein"><span>selected</span></div>
 
-  $ simple nonexistent-section.md Hello
+  $ simple ../programs/nonexistent-section.md Hello
   <div class="para fadein error" style="color: red;">Jump a scene not found</div>
 
-  $ simple consumable-choices.md c1
+  $ simple ../programs/consumable-choices.md c1
+  <ul class="choice fadein"><li><a idx="1" href="#" class="choice" draggable="false"><span>c1</span></a></li><li><a idx="2" href="#" class="choice" draggable="false"><span>c2</span></a></li></ul>
+
+  $ simple ../programs/sticky-choices.md c1
   <ul class="choice fadein"><li><a idx="1" href="#" class="choice" draggable="false"><span>c1</span></a></li><li><a idx="2" href="#" class="choice" draggable="false"><span>c2</span></a></li></ul>

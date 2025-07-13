@@ -1,6 +1,10 @@
 #!/bin/bash
 
 
+compile() {
+  fable $1 | sed -e 's/var story = //g' -e 's/;$//g' | jq .
+}
+
 simple() {
   md="$1"
   shift
