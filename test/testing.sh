@@ -5,7 +5,7 @@ compile() {
   fable $1 | sed -e 's/var story = //g' -e 's/;$//g' | jq .
 }
 
-simple() {
+run() {
   md="$1"
   shift
   out=$(mktemp -d)
