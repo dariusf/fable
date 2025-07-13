@@ -106,7 +106,10 @@
                   ]
                 ]
               ],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c14"
+              ]
             },
             {
               "guard": [],
@@ -137,7 +140,10 @@
                   ]
                 ]
               ],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c13"
+              ]
             },
             {
               "guard": [],
@@ -154,7 +160,10 @@
                 ]
               ],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c12"
+              ]
             },
             {
               "guard": [],
@@ -166,7 +175,10 @@
               ],
               "code": [],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c11"
+              ]
             },
             {
               "guard": [],
@@ -183,7 +195,10 @@
                 ]
               ],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c10"
+              ]
             },
             {
               "guard": [],
@@ -200,7 +215,10 @@
                 ]
               ],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c9"
+              ]
             },
             {
               "guard": [],
@@ -217,7 +235,10 @@
                 ]
               ],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c8"
+              ]
             },
             {
               "guard": [],
@@ -234,7 +255,10 @@
                 ]
               ],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c7"
+              ]
             },
             {
               "guard": [],
@@ -251,7 +275,10 @@
                 ]
               ],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c6"
+              ]
             },
             {
               "guard": [],
@@ -268,7 +295,10 @@
                 ]
               ],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c5"
+              ]
             },
             {
               "guard": [],
@@ -285,7 +315,10 @@
                 ]
               ],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c4"
+              ]
             },
             {
               "guard": [],
@@ -302,7 +335,10 @@
                 ]
               ],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c3"
+              ]
             },
             {
               "guard": [],
@@ -319,7 +355,10 @@
                 ]
               ],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c2"
+              ]
             },
             {
               "guard": [],
@@ -336,7 +375,10 @@
                 ]
               ],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c1"
+              ]
             },
             {
               "guard": [],
@@ -353,7 +395,10 @@
                 ]
               ],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c0"
+              ]
             }
           ]
         ],
@@ -454,7 +499,10 @@
                         ]
                       ],
                       "rest": [],
-                      "sticky": false
+                      "kind": [
+                        "Consumable",
+                        "c19"
+                      ]
                     },
                     {
                       "guard": [],
@@ -471,12 +519,18 @@
                         ]
                       ],
                       "rest": [],
-                      "sticky": false
+                      "kind": [
+                        "Consumable",
+                        "c18"
+                      ]
                     }
                   ]
                 ]
               ],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c20"
+              ]
             },
             {
               "guard": [],
@@ -510,7 +564,10 @@
                   ]
                 ]
               ],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c17"
+              ]
             },
             {
               "guard": [],
@@ -537,7 +594,10 @@
                   ]
                 ]
               ],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c16"
+              ]
             },
             {
               "guard": [],
@@ -559,7 +619,10 @@
                   "console.log('you chose choice 4');"
                 ]
               ],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c15"
+              ]
             }
           ]
         ],
@@ -609,7 +672,10 @@
               ],
               "code": [],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c22"
+              ]
             },
             {
               "guard": [],
@@ -621,7 +687,10 @@
               ],
               "code": [],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c21"
+              ]
             }
           ]
         ]
@@ -649,7 +718,10 @@
               ],
               "code": [],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c23"
+              ]
             }
           ]
         ]
@@ -729,7 +801,10 @@
                   ]
                 ]
               ],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c24"
+              ]
             }
           ]
         ],
@@ -858,7 +933,10 @@
               ],
               "code": [],
               "rest": [],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c25"
+              ]
             }
           ]
         ]
@@ -1004,8 +1082,138 @@
                   ]
                 ]
               ],
-              "sticky": false
+              "kind": [
+                "Consumable",
+                "c26"
+              ]
             }
+          ]
+        ]
+      ]
+    }
+  ]
+
+  $ compile ../programs/consumable-choices.md
+  [
+    {
+      "name": "b",
+      "cmds": [
+        [
+          "Choices",
+          [],
+          [
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "c1"
+                ]
+              ],
+              "code": [
+                [
+                  "Jump",
+                  "c"
+                ]
+              ],
+              "rest": [],
+              "kind": [
+                "Consumable",
+                "c1"
+              ]
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "c2"
+                ]
+              ],
+              "code": [],
+              "rest": [],
+              "kind": [
+                "Consumable",
+                "c0"
+              ]
+            }
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "c",
+      "cmds": [
+        [
+          "Para",
+          [
+            [
+              "Jump",
+              "b"
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+
+  $ compile ../programs/sticky-choices.md
+  [
+    {
+      "name": "b",
+      "cmds": [
+        [
+          "Choices",
+          [],
+          [
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "c1"
+                ]
+              ],
+              "code": [
+                [
+                  "Jump",
+                  "c"
+                ]
+              ],
+              "rest": [],
+              "kind": [
+                "Sticky"
+              ]
+            },
+            {
+              "guard": [],
+              "initial": [
+                [
+                  "Text",
+                  "c2"
+                ]
+              ],
+              "code": [],
+              "rest": [],
+              "kind": [
+                "Consumable",
+                "c0"
+              ]
+            }
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "c",
+      "cmds": [
+        [
+          "Para",
+          [
+            [
+              "Jump",
+              "b"
+            ]
           ]
         ]
       ]

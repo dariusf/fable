@@ -94,7 +94,6 @@ function defaultInternal() {
     // this shouldn't be accessed directly by users as on_scene_visit won't fire
     scenes: {},
     // sticky choices
-    fresh: 0,
     choice_state: {},
     // choices taken by the user
     choice_history: [],
@@ -493,14 +492,21 @@ function interpret(instrs, parent, k) {
         // generate choices
         let idx = 1;
         for (const item of alts.concat(extra)) {
-          if (!item.sticky) {
-            let id = `c${internal.fresh++}`;
-            internal.choice_state[id] = false;
-            item.code.push(["Run", `internal.choice_state.${id} = true;`]);
-            item.guard.unshift(`!internal.choice_state.${id}`);
+          let extra_code = [];
+          let extra_guard = [];
+          switch (item.kind[0]) {
+            case "Sticky":
+              break;
+            case "Consumable":
+              let id = item.kind[1];
+              extra_code.push(["Run", `internal.choice_state.${id} = true;`]);
+              extra_guard.push(`!internal.choice_state.${id}`);
+              break;
+            default:
+              throw `unknown kind ${current[0]}`;
           }
           let generate = true;
-          for (const g of item.guard) {
+          for (const g of extra_guard.concat(item.guard)) {
             try {
               generate &&= !!eval?.(g);
             } catch (e) {
@@ -540,7 +546,7 @@ function interpret(instrs, parent, k) {
             }
             // if (item.code.length > 0) {
             // we want to separate code and rest because we don't want to create an empty div for a code instr that doesn't have any output
-            interpret(item.code, createPara(), () => {
+            interpret(extra_code.concat(item.code), createPara(), () => {
               interpret(item.rest, parent, () => {
                 interpret(rest, parent, k);
               });
@@ -577,7 +583,7 @@ function interpret(instrs, parent, k) {
       }
       break;
     default:
-      throw `unknown kind ${current[0]}`;
+      throw `unknown kind of instruction ${current[0]}`;
   }
 }
 

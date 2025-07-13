@@ -5,8 +5,12 @@ type choice = {
   initial : cmd list;
   code : cmd list;
   rest : cmd list;
-  sticky : bool;
+  kind : choice_kind;
 }
+
+and choice_kind =
+  | Sticky
+  | Consumable of string
 
 and more = (string * string) list
 
@@ -400,7 +404,8 @@ module Convert = struct
                 rest =
                   (let r = Acc.to_list r in
                    match r with [] -> after_first | _ -> Para r :: after_first);
-                sticky = st;
+                kind =
+                  (if st then Sticky else Consumable (fresh ~prefix:"c" ()));
               }
         in
         let more, choices =
