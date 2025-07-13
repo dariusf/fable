@@ -3,44 +3,53 @@
   --main-bg-color-lighter: #4e5159;
   --main-fg-color: #e8eaed;
 }
+
+/* prevent body from scrolling */
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
 body {
   font-family: "Noto Serif", serif;
   background-color: var(--main-bg-color);
   color: var(--main-fg-color);
-  margin: 0;
-  /* margin: 2rem auto; */
-  /* max-width: 640px; */
   line-height: 1.4;
   /* font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu; */
+  font-size: calc(15px + 0.390625vw);
   /* font-size: 2.5vmin; */
   /* font-size: 3.5vmin; */
-  font-size: calc(15px + 0.390625vw);
-  /* overflow-y: hidden; */
+}
 
-  /* prevent body from scrolling */
-  /* margin: 0; */
-  overflow: hidden;
-  /* height: 100vh; */
-
-  /* display: flex;
+#centred-container {
+  display: flex;
   justify-content: center;
-  align-items: center; */
+  height: 100%;
 }
 
 /* this is so we don't rely on the page's scrollbars, which are buggy on ios/itch */
 #scroll-container {
-  /* overflow-y: scroll; */
-  /* padding: 20pt; */
-  /* width: 100%; */
-  /* width: 640px; */
-  height: 100%;
-  /* padding: 20px; */
-  /* margin: 10px; */
+  max-height: 100%;
+  width: 80%;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 #scroll-placeholder {
   height: 10%;
+}
+
+/* hide the scrollbars of the contain container */
+#scroll-container {
+  overflow-y: scroll;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+}
+
+#scroll-container::-webkit-scrollbar { /* WebKit */
+  width: 0;
+  height: 0;
 }
 
 #content-container {
