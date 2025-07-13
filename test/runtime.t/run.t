@@ -1,4 +1,6 @@
 
+  $ . testing.sh
+
   $ fable -s ../test.md -o test
 
   $ node test.js test/index.html 'Go to Scene 1' 'Apple'
@@ -57,3 +59,6 @@
 
   $ node test.js test/index.html 'Choice break delimiters' 'asd'
   <div class="para fadein"><span>selected</span></div>
+
+  $ simple nonexistent-section.md Hello
+  <div class="para fadein error" style="color: red;">Jump a scene not found</div>
