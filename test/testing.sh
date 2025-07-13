@@ -10,5 +10,5 @@ run() {
   shift
   out=$(mktemp -d)
   fable -s $md -o $out/test
-  node test.js $out/test/index.html "$@"
+  node test.js $out/test/index.html "$@" | npx prettier --parser html
 }
