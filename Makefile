@@ -9,7 +9,7 @@ default:
 .PHONY: example
 example: default
 	@rm -rf _build/story
-	dune exec ./fable.exe -- -s examples/test.md -o _build/story
+	./fable -s examples/test.md -o _build/story
 	python -m http.server 8005 --directory  _build/story
 
 .PHONY: test
