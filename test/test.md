@@ -36,14 +36,14 @@ inline comments <i>don't</i> appear <!-- comment -->
 Make a choice:
 
 - Go to Scene 1 `jump One` should not show
-- Say something, then go to Scene 1 `1` should show. `jump One`
+- Say something, then to Scene 1 `1` should show. `jump One`
 - Go to Scene 3 `jump Three`
 - Continue
 - Nested lists `jump Nested`
 - Copy `jump Copy`
 - More `->More`
 - Jump dynamic `->$items[0]`
-- Tunnel `>->Tunnel`
+- Tunnel! `>->Tunnel`
 - Tunnels followed by jumps `->tunnel_test`
 - Spaces `->Spaces`
 - Inline and block meta `->InlineBlockMeta`

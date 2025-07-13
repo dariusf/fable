@@ -3,7 +3,8 @@ export OCAMLRUNPARAM=b
 
 .PHONY: default
 default:
-	dune build @compiler # fast cram tests
+	@echo 'note: this only runs unit tests; make test to run integration tests'
+	dune build @compiler
 	dune build @editor
 
 .PHONY: example

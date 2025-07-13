@@ -1,4 +1,4 @@
 
 ; bin is determined by what is installed
 (cram
- (deps (glob_files ../examples/*.md) %{bin:fable}))
+ (deps (glob_files *.md) %{bin:fable}))

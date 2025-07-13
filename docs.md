@@ -166,7 +166,7 @@ cp tests.t _build # make tests available
 
 # building blocks for your build script
 cd _build
-npm install selenium-webdriver # or install globally and `npm link`
+npm install
 dune test
 dune promote && cp tests.t ..
 ```
@@ -213,7 +213,7 @@ The editor can be used to share Fable stories, so it [sandboxes JS evaluation us
 
 It simulates[^1] hot reloading on edit by _restarting_ and replaying choices made since the last restart, stopping short if a choice can no longer be taken in a new version.
 
-### Restarting 
+### Restarting
 
 How does a restart work, given that stories may have arbitrary, user-defined global state in the `window`?
 
@@ -252,7 +252,7 @@ Having crashes hidden like this may seem nasty, but...
 2. An easy way to ensure closure is to initialize all user-defined state with `var` in the prelude
 3. Random testing (which reloads) can be used to check this closure property
 
-Hence, we assume stories are closed and default to restarting. 
+Hence, we assume stories are closed and default to restarting.
 
 ### Reloading
 

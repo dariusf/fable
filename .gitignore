@@ -2,6 +2,5 @@ _build
 story.js
 node_modules
 package-lock.json
-package.json
 *.ink
 *.install

@@ -1,5 +1,5 @@
 
-  $ fable ../../examples/test.md | sed -e 's/var story = //g' -e 's/;$//g' | jq .
+  $ fable ../test.md | sed -e 's/var story = //g' -e 's/;$//g' | jq .
   [
     {
       "name": "Two",
@@ -111,7 +111,7 @@
               "initial": [
                 [
                   "Text",
-                  "Say something, then go to Scene 1"
+                  "Say something, then to Scene 1"
                 ]
               ],
               "code": [
@@ -239,7 +239,7 @@
               "initial": [
                 [
                   "Text",
-                  "Tunnel"
+                  "Tunnel!"
                 ]
               ],
               "code": [
