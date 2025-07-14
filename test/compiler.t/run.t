@@ -81,3 +81,8 @@
 
   $ compile ../programs/jump-to-current-section.md
   [{"name":"ha","cmds":[["Para",[["Text","hello"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","ha"]],"rest":[],"kind":["Consumable","c0"]}]]]}]
+
+  $ graph ../programs/jump-to-current-section.md
+  digraph G {
+    "ha" -> "ha";
+  }

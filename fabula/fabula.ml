@@ -559,8 +559,8 @@ let program_graph prog =
            in
            List.map
              (fun (s, static) ->
-               Format.asprintf {|"%s" -> "%s" %s;|} name s
-                 (if static then "" else "[style=dashed]"))
+               Format.asprintf {|  "%s" -> "%s"%s;|} name s
+                 (if static then "" else " [style=dashed]"))
              scenes_to)
     |> String.concat "\n"
   in
