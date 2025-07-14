@@ -18,7 +18,7 @@
   $ run ../programs/frontmatter.md
   <div class="para fadein"><span>hello</span></div>
 
-  $ run ../programs/tweet-style-choices.md a
+  $ run ../programs/choices-tweet-style.md a
   <div class="para fadein"><span>this is later cleared</span></div>
   <ul class="choice fadein">
     <li>
@@ -26,7 +26,7 @@
     </li>
   </ul>
 
-  $ run ../programs/tweet-style-choices.md a c
+  $ run ../programs/choices-tweet-style.md a c
   <div class="para fadein"><span>after</span></div>
 
   $ run ../programs/meta.md
@@ -139,27 +139,27 @@
   <div class="para fadein"><span>2</span></div>
   <div class="para fadein"><span>3</span></div>
 
-  $ run ../programs/choice-break-delimiters.md
+  $ run ../programs/choices-break-delimiters.md
   <ul class="choice fadein">
     <li>
       <a idx="1" href="#" class="choice" draggable="false"><span>c1</span></a>
     </li>
   </ul>
 
-  $ run ../programs/choice-break-delimiters.md c1
+  $ run ../programs/choices-break-delimiters.md c1
   <div class="para fadein"><span>selected</span></div>
 
-  $ run ../programs/nonexistent-section.md Hello
+  $ run ../programs/error-nonexistent-section.md Hello
   <div class="para fadein error" style="color: red">Jump: a scene not found</div>
 
-  $ run ../programs/consumable-choices.md c1
+  $ run ../programs/choices-consumable.md c1
   <ul class="choice fadein">
     <li>
       <a idx="1" href="#" class="choice" draggable="false"><span>c2</span></a>
     </li>
   </ul>
 
-  $ run ../programs/sticky-choices.md c1
+  $ run ../programs/choices-sticky.md c1
   <ul class="choice fadein">
     <li>
       <a idx="1" href="#" class="choice" draggable="false"><span>c1</span></a>
@@ -183,7 +183,7 @@
     </li>
   </ul>
 
-  $ run ../programs/local-state.md b a b a b
+  $ run ../programs/api-local-state.md b a b a b
   <div class="para fadein old">
     <span>ha's state:</span><span> </span><span>0</span>
   </div>
@@ -208,14 +208,14 @@
     </li>
   </ul>
 
-  $ run ../programs/seen.md
+  $ run ../programs/api-seen.md
   <ul class="choice fadein">
     <li>
       <a idx="1" href="#" class="choice" draggable="false"><span>a</span></a>
     </li>
   </ul>
 
-  $ run ../programs/seen.md a
+  $ run ../programs/api-seen.md a
   <ul class="choice fadein">
     <li>
       <a idx="1" href="#" class="choice" draggable="false"><span>b</span></a>

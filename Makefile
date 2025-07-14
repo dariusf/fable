@@ -5,8 +5,8 @@ export OCAMLRUNPARAM=b
 default:
 	@echo 'note: this only runs unit tests; make test to run integration tests'
 	dune build ./fable.exe
-	dune build @compiler
-	dune build @editor
+	dune build @compiler # cram tests
+	dune build @editor # build
 
 .PHONY: example
 example: default
