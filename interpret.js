@@ -37,11 +37,6 @@ function see(scene) {
   }
 }
 
-function seen(scene) {
-  // truthiness supported for this, 0 is false, nonzero is true
-  return internal.seen_scenes[scene];
-}
-
 function make_choices(cs) {
   if (cs.length > 0) {
     let c = cs[0].trim();
@@ -112,6 +107,12 @@ function defaultInternal() {
 function resetInternals() {
   internal = defaultInternal();
 }
+
+// function seen(scene) {
+//   // truthiness supported for this, 0 is false, nonzero is true
+//   return internal.seen_scenes[scene];
+// }
+window.seen = internal.seen_scenes;
 
 function start(story) {
   if (story.length === 0) {

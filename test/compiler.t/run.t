@@ -75,3 +75,6 @@
 
   $ compile ../programs/local-state.md
   [{"name":"ha","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","ha's state:"],["Interpolate","local.state"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","hb"]]]],"kind":["Sticky"]}]]]},{"name":"hb","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","hb's state:"],["Interpolate","local.state"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","ha"]]]],"kind":["Sticky"]}]]]}]
+
+  $ compile ../programs/seen.md
+  [{"name":"ha","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","a"]],"rest":[],"kind":["Consumable","c1"]},{"guard":["seen.a"],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]]]},{"name":"a","cmds":[["Para",[["Jump","ha"]]]]}]

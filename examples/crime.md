@@ -87,7 +87,7 @@ go_back_to = 'murder_scene'
     I went over to the window and peered out. A dismal view of the little brook that ran down beside the house.
     `->prewindow`
 
-- `?seen('murder_scene')>=5` Leave the room
+- `?seen.murder_scene>=5` Leave the room
     I'd seen enough. I `$bedroom_light.on ? ' switched off the lamp, then ' : ''` turned and left the room.
     `->joe_in_hall`
 
@@ -151,7 +151,7 @@ var drawers_opened = 0;
 
     `drawers_opened++`
 
-- `?seen('desk') >= 2` Something else? `1` I took a step away from the desk once more. `->murder_scene`
+- `?seen.desk >= 2` Something else? `1` I took a step away from the desk once more. `->murder_scene`
 
 `->desk`
 
@@ -179,7 +179,7 @@ go_back_to = 'window';
       'The glass in the window was greasy. No one had cleaned it in a while, inside or out.'
     }
     ```
-- `?window_state == 'steamed' && !seen('see_prints_on_glass') && seen('downy') && seen('greasy')`
+- `?window_state == 'steamed' && !seen.see_prints_on_glass && seen.downy && seen.greasy`
     Look at the steam `1`
     A cold day outside. Natural my breath should steam. `>->see_prints_on_glass`
 - `sticky`  `?window_state == 'steam_gone'` Breathe on the glass `1`
@@ -192,7 +192,7 @@ go_back_to = 'window';
 - `sticky` Something else? `1`
     ```js ~
     let acc = '';
-    if (seen('window') < 2 || reached(window_knowledge, 'fingerprints_on_glass') || window_state == 'steamed') {
+    if (seen.window < 2 || reached(window_knowledge, 'fingerprints_on_glass') || window_state == 'steamed') {
       acc += 'I looked away from the dreary glass.\n\n';
       //render('I looked away from the dreary glass.');
       if (window_state == 'steamed') {
@@ -302,7 +302,7 @@ My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you fin
 
 # joe_in_hall1
 
-- `?seen('joe_in_hall1') == 1` 'Nothing.' `1`
+- `?seen.joe_in_hall1 == 1` 'Nothing.' `1`
     He shrugged. 'Shame.'
     `->done`
 
@@ -354,7 +354,7 @@ My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you fin
     - 'Perhaps the murderer hoped to clean up the scene.' `1`
         'But they were disturbed? It's possible.'
 
-  - `?seen('joe_in_hall1') > 1` 'That's it.' `1`
+  - `?seen.joe_in_hall1 > 1` 'That's it.' `1`
       'All right. It's a start,' Joe replied.
       `->done`
 

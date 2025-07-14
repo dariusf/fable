@@ -16,7 +16,7 @@ The outlet is `$' ' + (outlet_closed ? 'closed' : 'open')`.
 
 ```js
 function done_everything() {
-  return ['dial', 'temp', 'spin', 'time'].map(i => !!seen(i)).reduce((a, b) => a && b, true);
+  return ['dial', 'temp', 'spin', 'time'].map(i => !!seen[i]).reduce((a, b) => a && b, true);
 }
 ```
 
@@ -29,7 +29,7 @@ function done_everything() {
 - `?!outlet_closed` Close the outlet `outlet_closed = true` You closed the outlet.
 - `?done_everything()` Start the machine
     ```js ~
-    !outlet_closed ? '`->water`' : !seen('detergent') ? '`->unwashed`' : '`->wait`'
+    !outlet_closed ? '`->water`' : !seen.detergent ? '`->unwashed`' : '`->wait`'
     ```
 
 `->hub`

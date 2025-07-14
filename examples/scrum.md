@@ -52,7 +52,7 @@ Reviewing...
 
 <!--Debug {saw_review} {review} {TURNS_SINCE(->review)}-->
 
-- `?seen_review > 1 && !seen('exceeded')` Energy exceeded `->exceeded`
+- `?seen_review > 1 && !seen.exceeded` Energy exceeded `->exceeded`
 - Pick a ticket `1` So how are we doing on this next story?
     - It's done `1` Great! `->review`
     - It's not yet done `1` Is it still something you want to do today?

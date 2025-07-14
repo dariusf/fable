@@ -207,3 +207,17 @@
       <a idx="1" href="#" class="choice" draggable="false"><span>a</span></a>
     </li>
   </ul>
+
+  $ run ../programs/seen.md
+  <ul class="choice fadein">
+    <li>
+      <a idx="1" href="#" class="choice" draggable="false"><span>a</span></a>
+    </li>
+  </ul>
+
+  $ run ../programs/seen.md a
+  <ul class="choice fadein">
+    <li>
+      <a idx="1" href="#" class="choice" draggable="false"><span>b</span></a>
+    </li>
+  </ul>
