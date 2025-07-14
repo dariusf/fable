@@ -80,4 +80,4 @@
   [{"name":"ha","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","a"]],"rest":[],"kind":["Consumable","c1"]},{"guard":["seen.a"],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]]]},{"name":"a","cmds":[["Para",[["Jump","ha"]]]]}]
 
   $ compile ../programs/jump-to-current-section.md
-  [{"name":"ha","cmds":[["Para",[["Text","hello"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump",""]],"rest":[],"kind":["Consumable","c0"]}]]]}]
+  [{"name":"ha","cmds":[["Para",[["Text","hello"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","ha"]],"rest":[],"kind":["Consumable","c0"]}]]]}]

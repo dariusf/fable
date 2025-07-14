@@ -8,6 +8,7 @@ module Acc : sig
   val add_all : 'a list -> 'a t -> 'a t
   val to_list : 'a t -> 'a list
   val change_last : ('a -> 'a) -> 'a t -> 'a t
+  val last : 'a t -> 'a option
 end = struct
   type 'a t = 'a list
 
@@ -17,6 +18,7 @@ end = struct
   let plus = ( @ )
   let to_list = List.rev
   let change_last f xs = match xs with [] -> [] | x :: ys -> f x :: ys
+  let last xs = match xs with [] -> None | x :: _ -> Some x
 end
 
 let read_file filename =

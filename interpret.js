@@ -373,7 +373,7 @@ function interpret(instrs, parent, k) {
     }
     case "Jump": {
       // abandon current k and instructions, go back to top element
-      const scene_name = current[1] || internal.current_scene;
+      const scene_name = current[1];
       internal.on_scene_visit.forEach((f) => f(scene_name));
       const scene = internal.scenes[scene_name];
       if (scene === undefined) {

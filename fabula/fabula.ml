@@ -198,7 +198,7 @@ end
 module Convert = struct
   open Cmarkit
 
-  let inline_cmd_folder =
+  let inline_cmd_folder section =
     let inline : (Inline.t, cmd Acc.t) Folder.folder =
      fun _f acc i ->
       match i with
@@ -216,8 +216,11 @@ module Convert = struct
           else if String.starts_with ~prefix:"->$" c then
             JumpDynamic (strip_prefix 3 c)
           else if String.starts_with ~prefix:"jump " c then
-            Jump (strip_prefix 5 c)
-          else if String.starts_with ~prefix:"->" c then Jump (strip_prefix 2 c)
+            let dest = strip_prefix 5 c in
+            match dest with "" -> Jump section | _ -> Jump dest
+          else if String.starts_with ~prefix:"->" c then
+            let dest = strip_prefix 2 c in
+            match dest with "" -> Jump section | _ -> Jump dest
           else if String.starts_with ~prefix:"tunnel " c then
             Tunnel (strip_prefix 7 c)
           else if String.starts_with ~prefix:">->" c then
@@ -279,9 +282,11 @@ module Convert = struct
      fun self acc b ->
       match b with
       | Block.Paragraph (p, _m) ->
+        let section, _ = Acc.last acc |> Option.get in
         let a =
-          Folder.fold_inline inline_cmd_folder Acc.empty
-            (Block.Paragraph.inline p)
+          Folder.fold_inline
+            (inline_cmd_folder section)
+            Acc.empty (Block.Paragraph.inline p)
         in
         Folder.ret
           (Acc.change_last
@@ -344,10 +349,11 @@ module Convert = struct
       | Block.Link_reference_definition (_, _) ->
         failwith "unimplemented Link_reference_definition"
       | Block.List (l, _) ->
+        let section, _ = Acc.last acc |> Option.get in
         let list_item_to_choice i =
           let bs =
             Folder.fold_block self
-              (Acc.add ("", Acc.empty) Acc.empty)
+              (Acc.add (section, Acc.empty) Acc.empty)
               (Block.List_item.block i)
             |> Acc.to_list
           in
