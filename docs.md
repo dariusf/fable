@@ -74,6 +74,7 @@ as part of the flow of a section (in which case the section seamlessly ends and 
 Jumps are represented as inline code with a different family of prefixes.
 
 A `jump` or `->` (e.g. `` `->SECTION` ``) prefix denotes a jump to SECTION.
+An empty SECTION is shorthand for the current section.
 
 A _dynamic jump_ `->$` prefix jumps to the name of the section that its content evaluates to.
 

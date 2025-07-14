@@ -221,3 +221,8 @@
       <a idx="1" href="#" class="choice" draggable="false"><span>b</span></a>
     </li>
   </ul>
+
+  $ run ../programs/jump-to-current-section.md a
+  <div class="para fadein old"><span>hello</span></div>
+  <div class="para fadein"><span>hello</span></div>
+  <ul class="choice fadein"></ul>
