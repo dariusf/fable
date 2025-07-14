@@ -24,9 +24,11 @@
 
 ## Syntax
 
-Fable is a Markdown dialect.
+Fable is a Markdown dialect. This has several advantages.
 
-New constructs are encoded as Markdown elements, so editor tooling works.
+- New constructs are encoded as Markdown elements, so editor tooling works -- syntax highlighting, folding and jumping to headings, structural editing, etc.
+- There is no need to reinvent mechanisms for typesetting, formatting, escaping into HTML, including code blocks, etc.
+- There is a clear distinction between prose, code, and meta constructs.
 
 ### Prose
 
