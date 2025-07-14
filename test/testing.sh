@@ -2,7 +2,7 @@
 
 
 compile() {
-  fable $1 | sed -e 's/var story = //g' -e 's/;$//g' | jq .
+  fable $1 | sed -e 's/var story = //g' -e 's/;$//g' #| jq .
 }
 
 run() {
