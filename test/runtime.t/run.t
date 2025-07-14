@@ -182,3 +182,28 @@
       <a idx="1" href="#" class="choice" draggable="false"><span>b</span></a>
     </li>
   </ul>
+
+  $ run ../programs/local-state.md b a b a b
+  <div class="para fadein old">
+    <span>ha's state:</span><span> </span><span>0</span>
+  </div>
+  <div class="para fadein old">
+    <span>hb's state:</span><span> </span><span>0</span>
+  </div>
+  <div class="para fadein old">
+    <span>ha's state:</span><span> </span><span>1</span>
+  </div>
+  <div class="para fadein old">
+    <span>hb's state:</span><span> </span><span>1</span>
+  </div>
+  <div class="para fadein old">
+    <span>ha's state:</span><span> </span><span>2</span>
+  </div>
+  <div class="para fadein">
+    <span>hb's state:</span><span> </span><span>2</span>
+  </div>
+  <ul class="choice fadein">
+    <li>
+      <a idx="1" href="#" class="choice" draggable="false"><span>a</span></a>
+    </li>
+  </ul>

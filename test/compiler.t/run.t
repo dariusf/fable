@@ -72,3 +72,6 @@
 
   $ compile ../programs/choices-otherwise.md
   [{"name":"h","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[],"rest":[],"kind":["Consumable","c1"]},{"guard":[],"otherwise":true,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]],["Para",[["Jump","h"]]]]}]
+
+  $ compile ../programs/local-state.md
+  [{"name":"ha","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","ha's state:"],["Interpolate","local.state"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","hb"]]]],"kind":["Sticky"]}]]]},{"name":"hb","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","hb's state:"],["Interpolate","local.state"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","ha"]]]],"kind":["Sticky"]}]]]}]

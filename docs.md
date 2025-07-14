@@ -24,9 +24,11 @@
 
 ## Syntax
 
-### Prose
-
 Fable is a Markdown dialect.
+
+New constructs are encoded as Markdown elements, so editor tooling works.
+
+### Prose
 
 Like with other narrative scripting languages, unadorned text is prose to be shown to the player.
 Interactivity may be expressed using _instructions_, and are represented using Markdown elements.
@@ -61,6 +63,7 @@ The block form of this uses the `meta` or `~` info-string after the language typ
     CODE
     ```
 
+See [the docs on the runtime](#the-runtime) for APIs and conventions.
 
 ### Jumps and Tunnels
 
@@ -139,9 +142,24 @@ Necessary data structures, libraries, and language features can be used without 
 
 ## The Runtime
 
-The [runtime system](interpret.js) contains code supporting the execution of Fable stories.
-User APIs are at the top of the file.
-These include things like turn and seen counters, callbacks, and other utilities for automated testing and saving and loading stories, which can be used directly via the console.
+The [runtime system](interpret.js) supports the execution of Fable stories.
+Direct console access to its APIs is supported.
+
+- `seen[SECTION]`: the number of times SECTION has been seen; can be used truthy manner
+- `internal`: internal state of the runtime system
+    - `internal.bug_detectors`: push oracles in here
+    - `internal.on_scene_visit`: push callbacks in here
+    - `internal.on_interact`: push callbacks in here
+- `local`: section-local state, may be mutated
+- `clear()`: clears the screen
+- `jump(label)`, `tunnel(label)`: builders for Fable fragments which may help reduce the amount of quoting required
+- `randomly_test()`, `stop_testing()`: start and stop random testing
+
+All other APIs are considered unstable.
+
+By convention, user state should be maintained in `window.state`.
+
+<!-- TODO save and load -->
 
 ## The CLI
 

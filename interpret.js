@@ -79,6 +79,8 @@ function defaultInternal() {
     on_scene_visit: [
       (s) => {
         see(s);
+        internal.current_scene = s;
+        internal.section_state[s] ||= {};
         internal.last_visited_turn[s] = internal.turns;
       },
     ],
@@ -91,6 +93,9 @@ function defaultInternal() {
     turns: 0,
     seen_scenes: {},
     last_visited_turn: {},
+    // section state
+    current_scene: null,
+    section_state: {},
     // this shouldn't be accessed directly by users as on_scene_visit won't fire
     scenes: {},
     // sticky choices
@@ -236,6 +241,17 @@ function inlinePrecedingSpaceCondition(parent, elt) {
   return addSpace;
 }
 
+function execute(s) {
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval
+  // indirect eval, which runs in the global scope
+  window.local = internal.section_state[internal.current_scene];
+  return eval?.(s);
+
+  // function constructor also runs in the global scope
+  // can access this, but cannot see previous definitions
+  // return new Function(s).call(internal.section_state[internal.current_scene]);
+}
+
 function interpret(instrs, parent, k) {
   loop: for (var i = 0; i < instrs.length; i++) {
     const instr = instrs[i];
@@ -245,7 +261,7 @@ function interpret(instrs, parent, k) {
     switch (instr[0]) {
       case "Run":
         try {
-          eval?.(instr[1]);
+          execute(instr[1]);
         } catch (e) {
           surfaceError("run", instr[1], e);
         }
@@ -309,7 +325,7 @@ function interpret(instrs, parent, k) {
           let s = document.createElement("span");
           let v;
           try {
-            v = eval?.(instr[1]);
+            v = execute(instr[1]);
           } catch (e) {
             surfaceError("interpolate", instr[1], e);
           }
@@ -368,7 +384,7 @@ function interpret(instrs, parent, k) {
     case "JumpDynamic": {
       let scene;
       try {
-        scene = eval?.(current[1]);
+        scene = execute(current[1]);
       } catch (e) {
         surfaceError("JumpDynamic", current[1], e);
       }
@@ -382,7 +398,7 @@ function interpret(instrs, parent, k) {
       let s;
       let instrs;
       try {
-        s = eval?.(metaText);
+        s = execute(metaText);
         if (s === undefined) {
           s = "";
         }
@@ -506,7 +522,7 @@ function interpret(instrs, parent, k) {
           let generate = true;
           for (const g of extra_guard.concat(item.guard)) {
             try {
-              generate &&= !!eval?.(g);
+              generate &&= !!execute(g);
             } catch (e) {
               surfaceError("guard", g, e);
               continue;
