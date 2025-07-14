@@ -489,9 +489,7 @@ function interpret(instrs, parent, k) {
           more
         );
 
-        // generate choices
-        let idx = 1;
-        for (const item of alts.concat(extra)) {
+        function generateChoice(item, idk) {
           let extra_code = [];
           let extra_guard = [];
           switch (item.kind[0]) {
@@ -515,7 +513,7 @@ function interpret(instrs, parent, k) {
             }
           }
           if (!generate) {
-            continue;
+            return false;
           }
           let li = document.createElement("li");
           ul.appendChild(li);
@@ -558,7 +556,26 @@ function interpret(instrs, parent, k) {
             // }
           };
           interpret(item.initial, a, () => {});
-          idx++;
+          return true;
+        }
+
+        // generate choices
+        let idx = 1;
+        let choicesGenerated = 0;
+        const allChoiceItems = alts.concat(extra);
+        for (const item of allChoiceItems.filter((i) => !i.otherwise)) {
+          if (generateChoice(item, idx)) {
+            choicesGenerated++;
+            idx++;
+          }
+        }
+        if (choicesGenerated === 0) {
+          const otherwises = allChoiceItems.filter((i) => i.otherwise);
+          console.assert(otherwises.length <= 1); // TODO compile time check
+          for (const item of otherwises) {
+            generateChoice(item, idx);
+            idx++;
+          }
         }
 
         // possibly take choices for hot reloading

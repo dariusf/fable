@@ -86,7 +86,7 @@ Lists denote choices. Each choice item is minimally of the form ``TEXT `CODE` BO
 
 The section continues after a choice, like Ink's [weave](https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md#the-weave-philosophy). This is the default, unlike in Ink.
 
-**Preconditions.** choice item may have a _precondition_ `` `guard CODE` `` or `` `?CODE` ``. It will then only be shown if CODE evaluates to a truthy value.
+**Preconditions.** Each choice item may have a _precondition_ `` `guard CODE` `` or `` `?CODE` ``. It will then only be shown if CODE evaluates to a truthy value.
 
 **Persistence.** By default, each item in the choice can only be selected once: after selecting an item, if control later returns to the section the choice was in, the item cannot be selected again.
 This can be overriden by including `` `sticky` `` somewhere in the body, making the choice _persistent_.
@@ -98,7 +98,7 @@ Whether a choice is persistent is orthogonal to whether it has a precondition.
 This may happen recursively.
 Such items may have preconditions, in which case they apply to every item inlined.
 
-<!-- TODO fallback -->
+**Fallback.** A fallback choice can be given by including `` `otherwise` `` somewhere in the body. It will only be shown if no other choices are available.
 
 ### Breaks and Spaces
 

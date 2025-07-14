@@ -2,6 +2,7 @@ open Common
 
 type choice = {
   guard : string list;
+  otherwise : bool;
   initial : cmd list;
   code : cmd list;
   rest : cmd list;
@@ -376,28 +377,30 @@ module Convert = struct
             `More ("true", strip_prefix 5 m)
           | _ ->
             (* only look for special syntax in the first paragraph *)
-            let _, gs, st, i, c, r =
+            let _, gs, st, i, c, r, ow =
               para
               |> List.fold_left
-                   (fun (b, gs, st, i, c, r) e ->
+                   (fun (b, gs, st, i, c, r, ow) e ->
                      match (e, b) with
                      (* special things encoded as Runs *)
-                     | Run "sticky", _ -> (b, gs, true, i, c, r)
+                     | Run "sticky", _ -> (b, gs, true, i, c, r, ow)
+                     | Run "otherwise", _ -> (b, gs, st, i, c, r, true)
                      | Run s, _ when String.starts_with ~prefix:"guard " s ->
-                       (b, Acc.add (strip_prefix 6 s) gs, st, i, c, r)
+                       (b, Acc.add (strip_prefix 6 s) gs, st, i, c, r, ow)
                      | Run s, _ when String.starts_with ~prefix:"?" s ->
-                       (b, Acc.add (strip_prefix 1 s) gs, st, i, c, r)
+                       (b, Acc.add (strip_prefix 1 s) gs, st, i, c, r, ow)
                        (* things to stop at *)
                      | ( (Break | Run _ | Jump _ | JumpDynamic _ | Tunnel _),
                          false ) ->
-                       (true, gs, st, i, Some e, r)
+                       (true, gs, st, i, Some e, r, ow)
                      (* the rest *)
-                     | _, true -> (true, gs, st, i, c, Acc.add e r)
-                     | _, false -> (false, gs, st, Acc.add e i, c, r))
-                   (false, Acc.empty, false, Acc.empty, None, Acc.empty)
+                     | _, true -> (true, gs, st, i, c, Acc.add e r, ow)
+                     | _, false -> (false, gs, st, Acc.add e i, c, r, ow))
+                   (false, Acc.empty, false, Acc.empty, None, Acc.empty, false)
             in
             `Choice
               {
+                otherwise = ow;
                 guard = Acc.to_list gs;
                 initial = Acc.to_list i;
                 code = Option.to_list c;
