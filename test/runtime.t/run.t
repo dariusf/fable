@@ -150,7 +150,7 @@
   <div class="para fadein"><span>selected</span></div>
 
   $ run ../programs/nonexistent-section.md Hello
-  <div class="para fadein error" style="color: red">Jump a scene not found</div>
+  <div class="para fadein error" style="color: red">Jump: a scene not found</div>
 
   $ run ../programs/consumable-choices.md c1
   <ul class="choice fadein">

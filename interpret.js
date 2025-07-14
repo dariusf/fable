@@ -166,12 +166,12 @@ function informParentDiverged(which) {
   window.parent.postMessage({ type: "DIVERGED", which }, "*");
 }
 
-function surfaceError(...args) {
-  console.error(args);
+function surfaceError(kind, ...args) {
+  console.error(kind + ":", args);
   let elt = createPara();
   elt.classList.add("error");
   elt.style.color = "red";
-  elt.textContent = args.join(" ");
+  elt.textContent = kind + ": " + args.join(" ");
   content.append(elt);
   throw "failure";
 }
