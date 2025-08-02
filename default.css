@@ -40,7 +40,7 @@ body {
 /* this is so we don't rely on the page's scrollbars, which are buggy on ios/itch */
 #scroll-container {
   max-height: 100%;
-  width: 80%;
+  width: 90%;
   overflow-y: auto;
   box-sizing: border-box;
 }
