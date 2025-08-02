@@ -9,11 +9,12 @@
     - [Breaks and Spaces](#breaks-and-spaces)
     - [Links](#links)
   - [Semantics](#semantics)
-  - [The Runtime](#the-runtime)
-  - [The CLI](#the-cli)
+  - [Runtime](#runtime)
+  - [CLI](#cli)
     - [Exporting a standalone story](#exporting-a-standalone-story)
     - [Expect tests](#expect-tests)
     - [Random testing](#random-testing)
+  - [Related work](#related-work)
 - [Development](#development)
   - [Compiler and Runtime](#compiler-and-runtime)
   - [Editor](#editor)
@@ -65,7 +66,7 @@ The block form of this uses the `meta` or `~` info-string after the language typ
     CODE
     ```
 
-See [the docs on the runtime](#the-runtime) for APIs and conventions.
+See [the docs on the runtime](#runtime) for APIs and conventions.
 
 ### Jumps and Tunnels
 
@@ -143,7 +144,7 @@ It's clear when a particular bit of prose "executes", allowing things like raw H
 The browser console is fully available, and the state of the story can be queried at any point without doing anything special.
 Necessary data structures, libraries, and language features can be used without any fanfare.
 
-## The Runtime
+## Runtime
 
 The [runtime system](interpret.js) supports the execution of Fable stories.
 Direct console access to its APIs is supported.
@@ -153,7 +154,7 @@ Direct console access to its APIs is supported.
     - `internal.bug_detectors`: push oracles in here
     - `internal.on_scene_visit`: push callbacks in here
     - `internal.on_interact`: push callbacks in here
-- `local`: section-local state, may be mutated
+- `local`: section-local state, may be mutated; initialise it before the section is entered
 - `clear()`: clears the screen
 - `jump(label)`, `tunnel(label)`: builders for Fable fragments which may help reduce the amount of quoting required
 - `randomly_test()`, `stop_testing()`: start and stop random testing
@@ -164,7 +165,7 @@ By convention, user state should be maintained in `window.state`.
 
 <!-- TODO save and load -->
 
-## The CLI
+## CLI
 
 ### Exporting a standalone story
 
@@ -215,6 +216,16 @@ The default oracle looks for unhandled exceptions.
 Custom testing oracles can be added by pushing functions which return `true` on error into `internal.bug_detectors`.
 
 To stop, remove the URL hash property or evaluate `stop_testing()` in the console.
+
+## Related work
+
+Fable's closest relative is Ink.
+
+Ink is a scripting language: it is interpreted at runtime by a separate game engine. In contrast, the Markdown file in which you write a Fable story is compiled into the actual game. Fable also only targets the web. These differences underlie many of the design decisions Fable makes:
+
+- Ink defines its own scripting language, as it is engine-independent, whereas Fable just uses JavaScript.
+- In Ink, you attach tags to bits of text and rely on the engine interpreting them the way you want, whereas in Fable you can directly evaluate code as part of the flow of the story to make something happen/appear in the game.
+- Fable's language is simpler and smaller. It is a Markdown dialect, so e.g. inline HTML can be used to tag things, there is already syntax for images, etc. It relies _unquoting_ to JavaScript to dynamically generate bits of Fable, compared to having special syntax for e.g. conditionals.
 
 # Development
 
