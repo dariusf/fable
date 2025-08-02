@@ -15,7 +15,7 @@ example: default
 	python -m http.server 8005 --directory  _build/story
 
 .PHONY: test
-test: default
+test:
 	dune test
 
 .PHONY: release
