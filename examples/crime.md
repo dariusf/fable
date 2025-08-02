@@ -112,7 +112,7 @@ var bed_state = 'made_up'; // made_up, covers_shifted, covers_off, bloodstain_vi
 
 - `?bed_state == 'covers_off'` Pull back the duvet `reach(bed_knowledge, 'body_on_bed'); bed_state = 'bloodstain_visible'` I pulled back the duvet. Beneath it was a sheet, sticky with blood.
 
-    Either the body had been moved here before being dragged to the floor - or this is was where the murder had taken place.
+    Either the body had been moved here before being dragged to the floor - or this was where the murder had taken place.
 
 - `?bed_state != 'made_up'` Remake the bed `bed_state = 'made_up'` Carefully, I pulled the bedsheets back into place, trying to make it seem undisturbed.
   <!-- seems like there's a bug here, shouldn't be able to pull back duvet after making -->

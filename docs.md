@@ -34,7 +34,7 @@ Fable is a Markdown dialect. This has several advantages.
 ### Prose
 
 Like with other narrative scripting languages, unadorned text is prose to be shown to the player.
-Interactivity may be expressed using _instructions_, and are represented using Markdown elements.
+Interactivity may be expressed using _instructions_, where are represented using Markdown elements.
 
 ### Sections
 
