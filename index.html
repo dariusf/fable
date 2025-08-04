@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+
+    <!-- <script src="fablejs.bc.js"></script> -->
+    <!-- <link href="default.css" rel="stylesheet" /> -->
+
+    <!-- stop google thinking this page is in spanish -->
+    <!-- <meta name="google" content="notranslate" /> -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fable Editor</title>
+    <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.20.0/src-min-noconflict/ace.min.js"></script>
+    <style>
+      :root {
+        --main-bg-color: #202124;
+        --main-bg-color-lighter: #4e5159;
+        --main-fg-color: #e8eaed;
+        /* light mode */
+        /* --divider-color: gray */
+        --divider-color: var(--main-bg-color);
+      }
+      body {
+        background-color: var(--main-bg-color);
+        font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI",
+          Roboto, Ubuntu;
+      }
+      * {
+        scrollbar-color: var(--main-bg-color-lighter) var(--main-bg-color);
+        scrollbar-width: thin;
+      }
+      a,
+      a:visited {
+        color: var(--main-fg-color);
+        font-size: 14px;
+      }
+      label {
+        color: var(--main-fg-color);
+        background-color: var(--main-bg-color);
+        font-size: 14px;
+      }
+      /* input[type="checkbox"]:checked::before {
+        background-color: var(--main-bg-color);
+      } */
+      input[type="checkbox"] {
+        accent-color: var(--main-bg-color);
+        color: var(--main-fg-color);
+        /* background-color: var(--main-bg-color); */
+      }
+      iframe {
+        border: 0px;
+      }
+      button.btn,
+      select {
+        background-color: var(--main-bg-color);
+        color: var(--main-fg-color);
+      }
+
+      /* layout taken from https://github.com/mwillsey/egg-smol */
+      body {
+        margin: 0;
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+      }
+
+      #editor {
+        width: 50%;
+        resize: horizontal;
+        margin: 10px;
+      }
+
+      #panel {
+        padding: 10px;
+        flex: 1 1 0;
+        border-left: 2px solid var(--divider-color);
+
+        display: flex;
+        flex-flow: column;
+
+        /* this size causes no resizing of the output div when the output lines get long. */
+        /* an alternative is break-all, see below */
+        /* max-width: 37%; */
+      }
+
+      #toolbar button {
+        margin-right: 5px;
+      }
+
+      #output {
+        font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo,
+          Consolas, "DejaVu Sans Mono", monospace;
+        margin-top: 10px;
+        flex-grow: 1;
+        white-space: pre-wrap;
+        overflow-y: scroll;
+      }
+
+      .output-line {
+        overflow-wrap: anywhere;
+        /* overflow-wrap: break-word; */
+        /* background: white; */
+        min-height: 1em;
+        line-height: 1;
+      }
+
+      /* .output-line:hover {
+        background: lightblue;
+      } */
+    </style>
+  </head>
+
+  <body>
+    <div id="editor"></div>
+    <!-- <div id="editor">
+      <textarea id="input" spellcheck="false"></textarea>
+    </div> -->
+    <!-- Built: Mon Aug  4 11:09:19 +08 2025 -->
+    <div id="panel">
+      <div id="toolbar">
+        <select
+          name="examples"
+          id="examples"
+          onchange="load_selected_example()"
+        >
+          <option value="Crime" data-text="
+# beginning
+
+```js
+internal.bug_detectors.push(() => {
+  let not_ended = !findContainingText(&quot;THE END&quot;).length;
+  let no_options = !document.querySelectorAll('.choice').length
+  return not_ended && no_options;
+});
+
+var inventory = new Set();
+
+var dark_under = false;
+
+var bedroom_light = {seen: false, on: false, loc: 'desk'}; // desk, floor, bed
+
+var knife_loc = 'under_bed'; // under_bed, floor, joe
+
+var go_back_to = null; // for compare_prints
+
+// knowledge subsystem
+bed_knowledge = {meta: ['neatly_made', 'crumpled_duvet', 'hastily_remade', 'body_on_bed', 'murdered_in_bed', 'murdered_while_asleep']};
+knife_knowledge = {meta: ['prints_on_knife', 'joe_seen_prints_on_knife', 'joe_wants_better_prints', 'joe_got_better_prints']};
+window_knowledge = {meta: ['steam_on_glass', 'fingerprints_on_glass', 'fingerprints_on_glass_match_knife']};
+
+for (let k of [bed_knowledge, knife_knowledge, window_knowledge]) {
+  for (let i of k.meta) {
+    k[i] = false;
+  }
+}
+
+function reached(st, which) {
+  return st[which];
+}
+
+function reach(st, which) {
+  let i = st.meta.indexOf(which);
+  if (i < 0) {
+    throw 'fail';
+  }
+  for (let e of st.meta.slice(0, i+1)) {
+    st[e] = true;
+  }
+}
+```
+
+The bedroom. This is where it happened. Now to look for clues. `->murder_scene`
+
+# murder_scene
+
+```js
+go_back_to = 'murder_scene'
+```
+
+- `?bedroom_light.seen` `more seen_light`
+- `more compare_prints`
+- The bed...
+    The bed was low to the ground, but not so low something might not roll underneath. It was still neatly made. `->prebed`
+- `?dark_under && bedroom_light.loc === 'floor' && bedroom_light.on` Look under the bed
+    I peered under the bed. Something glinted back at me.
+    `->reaching`
+
+- `?turns_since('reaching') >= 4 && inventory.has('cane')` `more knock_with_cane`
+
+- `?knife_loc == 'floor'` Pick up the knife
+    Careful not to touch the handle, I lifted the blade from the carpet.
+    `inventory.add('knife')`
+
+- `?inventory.has('knife')` Look at the knife
+    The blood was dry enough. Dry enough to show up partial prints on the hilt!
+    `reach(knife_knowledge, 'prints_on_knife')`
+
+- The desk...
+    I turned my attention to the desk. A lamp sat in one corner, a neat, empty in-tray in the other. There was nothing else out.
+
+    Leaning against the desk was a wooden cane.
+
+    `bedroom_light.seen = true`
+
+    `->predesk`
+
+- `?inventory.has('cane') && turns_since('desk') <= 2` Swoosh the cane
+    I was still holding the cane: I gave it an experimental swoosh. It was heavy indeed, though not heavy enough to be used as a bludgeon.
+    But it might have been useful in self-defence. Why hadn't the victim reached for it? Knocked it over?
+
+- The window...
+    I went over to the window and peered out. A dismal view of the little brook that ran down beside the house.
+    `->prewindow`
+
+- `?seen.murder_scene>=5` Leave the room
+    I'd seen enough. I `$bedroom_light.on ? ' switched off the lamp, then ' : ''` turned and left the room.
+    `->joe_in_hall`
+
+`->murder_scene`
+
+# prebed
+
+```js
+reach(bed_knowledge, 'neatly_made');
+var bed_state = 'made_up'; // made_up, covers_shifted, covers_off, bloodstain_visible
+```
+
+`->bed`
+
+# bed
+
+- Lift the bedcover `reach(bed_knowledge, 'crumpled_duvet'); bed_state = 'covers_shifted'` I lifted back the bedcover. The duvet underneath was crumpled.
+
+- `?reached(bed_knowledge, 'crumpled_duvet')` Remove the cover `reach(bed_knowledge, 'hastily_remade'); bed_state = 'covers_off'` Careful not to disturb anything beneath, I removed the cover entirely. The duvet below was rumpled.
+
+    Not the work of the maid, who was conscientious to a point. Clearly this had been thrown on in a hurry.
+
+- `?bed_state == 'covers_off'` Pull back the duvet `reach(bed_knowledge, 'body_on_bed'); bed_state = 'bloodstain_visible'` I pulled back the duvet. Beneath it was a sheet, sticky with blood.
+
+    Either the body had been moved here before being dragged to the floor - or this was where the murder had taken place.
+
+- `?bed_state != 'made_up'` Remake the bed `bed_state = 'made_up'` Carefully, I pulled the bedsheets back into place, trying to make it seem undisturbed.
+  <!-- seems like there's a bug here, shouldn't be able to pull back duvet after making -->
+
+- Test the bed
+    I pushed the bed with spread fingers. It creaked a little, but not so much as to be obnoxious.
+
+- Look under the bed `dark_under = true;` Lying down, I peered under the bed, but could make nothing out.
+
+- `?turns_since('prebed')>1` Something else?
+    I took a step back from the bed and looked around. `->murder_scene`
+
+`->bed`
+
+# predesk
+
+```js
+var drawers_opened = 0;
+```
+
+`->desk`
+
+# desk
+
+- `?!inventory.has('cane')` Pick up the cane `inventory.add('cane')` I picked up the wooden cane. It was heavy, and unmarked.
+
+- `?!bedroom_light.on` Turn on the lamp `>->operate_lamp`
+
+- Look at the in-tray
+
+  I regarded the in-tray, but there was nothing to be seen. Either the victim's papers were taken, or his line of work had seriously dried up. Or the in-tray was all for show.
+
+- `sticky` `?drawers_opened<3` Open a drawer
+
+    I tried `$['a drawer at random', 'another drawer', 'a third drawer'][drawers_opened]`. `$['Locked', 'Also locked', 'Unsurprisingly, locked as well'][drawers_opened]`.
+
+    `drawers_opened++`
+
+- `?seen.desk >= 2` Something else? `1` I took a step away from the desk once more. `->murder_scene`
+
+`->desk`
+
+# prewindow
+
+```js
+var window_state = 'none'; // none, steamed, steam_gone
+```
+
+`->window`
+
+# window
+
+```js
+go_back_to = 'window';
+```
+
+- `more compare_prints`
+- Look down at the brook `1` `>->downy`
+- Look at the glass `see('greasy')`
+    ```js ~
+    if (window_state === 'steamed') {
+      '`->downy`'
+    } else {
+      'The glass in the window was greasy. No one had cleaned it in a while, inside or out.'
+    }
+    ```
+- `?window_state == 'steamed' && !seen.see_prints_on_glass && seen.downy && seen.greasy`
+    Look at the steam `1`
+    A cold day outside. Natural my breath should steam. `>->see_prints_on_glass`
+- `sticky`  `?window_state == 'steam_gone'` Breathe on the glass `1`
+    I breathed gently on the glass once more.
+    ```js ~
+    window_state = 'steamed';
+    reached(window_knowledge, 'fingerprints_on_glass') ? 'The fingerprints reappeared.' : ''
+    ```
+
+- `sticky` Something else? `1`
+    ```js ~
+    let acc = '';
+    if (seen.window < 2 || reached(window_knowledge, 'fingerprints_on_glass') || window_state == 'steamed') {
+      acc += 'I looked away from the dreary glass.\n\n';
+      //render('I looked away from the dreary glass.');
+      if (window_state == 'steamed') {
+        window_state = 'steam_gone';
+        //render('The steam from my breath faded.');
+        acc += 'The steam from my breath faded.\n\n';
+      }
+      //render('`->murder_scene`');
+      acc += '`->murder_scene`';
+    }
+    acc
+    ```
+    I leant back from the glass. My breath had steamed up the pane a little.
+    `window_state = 'steamed'`
+
+<!-- TODO fallback -->
+
+`->window`
+
+# downy
+
+```js ~
+if (window_state == 'steamed') {
+  // TODO higher-level helper
+  &quot;Through the steamed glass I couldn't see the brook. `>->see_prints_on_glass` `->window`&quot;
+}
+```
+I watched the little stream rush past for a while. The house probably had damp but otherwise, it told me nothing.
+
+# knock_with_cane
+
+- Use the cane to reach under the bed `1`
+
+    Positioning the cane above the carpet, I gave the glinting thing a sharp tap. It slid out from the under the foot of the bed.
+    `knife_loc = 'floor'`
+
+    - Stand up `1`
+    - Look under the bed once more `1` Moving the cane aside, I looked under the bed once more, but there was nothing more there.
+
+    Satisfied, I stood up, and saw I had knocked free a bloodied knife. `->murder_scene`
+
+# seen_light
+
+- `?!bedroom_light.on` Turn on lamp `1` `>->operate_lamp`
+
+- `?bedroom_light.loc === 'bed'  && bed_state == 'bloodstain_visible'`
+    Move the light to the bed `bedroom_light.loc = 'bed'`
+
+    I moved the light over to the bloodstain and peered closely at it. It had soaked deeply into the fibres of the cotton sheet.
+    There was no doubt about it. This was where the blow had been struck. `reach(bed_knowledge, 'murdered_in_bed')`
+
+- `?bedroom_light.loc != 'desk' && turns_since('moved_light_to_floor') >= 2`
+    Move the light back to the desk
+    `bedroom_light.loc = 'desk'`
+    I moved the light back to the desk, setting it down where it had originally been.
+
+- `?bedroom_light.loc != 'floor' && dark_under`
+    Move the light to the floor
+    `bedroom_light.loc = 'floor'`
+    I picked the light up and set it down on the floor.
+    `visit('moved_light_to_floor')`
+
+<!-- `->murder_scene` -->
+
+# compare_prints
+
+- `?reached(window_knowledge, 'fingerprints_on_glass') && reached(knife_knowledge, 'prints_on_knife') && !reached(window_knowledge, 'fingerprints_on_glass_match_knife')`
+    Compare the prints on the knife and the window `1`
+    Holding the bloodied knife near the window, I breathed to bring out the prints once more, and compared them as best I could.
+    Hardly scientific, but they seemed very similar - very similiar indeed.
+    `reach(window_knowledge, 'fingerprints_on_glass_match_knife')`
+    `->$go_back_to`
+
+# see_prints_on_glass
+
+`reach(window_knowledge, 'fingerprints_on_glass')`
+`$['But I could see a few fingerprints, as though someone hadpressed their palm against it.', 'The fingerprints were quite clear and well-formed.'][0]`
+They faded as I watched.
+
+`window_state= 'steam_gone'`
+
+# operate_lamp
+
+I flicked the light switch.
+
+```js ~
+let res = '';
+if (bedroom_light.on) {
+  res = 'The bulb fell dark';
+  bedroom_light.on = false;
+} else {
+  if (bedroom_light.loc === 'floor') {
+    res = 'A little light spilled under the bed.';
+  } else if (bedroom_light.loc === 'desk') {
+    res = 'The light gleamed on the polished tabletop.';
+  }
+  bedroom_light.on = true;
+}
+res
+```
+
+# joe_in_hall
+
+My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you find anything interesting?'
+
+`->joe_in_hall1`
+
+# joe_in_hall1
+
+- `?seen.joe_in_hall1 == 1` 'Nothing.' `1`
+    He shrugged. 'Shame.'
+    `->done`
+
+- `?inventory.has('knife')` 'I found the murder weapon.' `1`
+    'Good going!' Joe replied with a grin. 'We thought the murderer had gotten rid of it. I'll bag that for you now.'
+    `knife_loc = 'joe'`
+
+- `?reached(knife_knowledge, 'prints_on_knife') && knife_loc == 'joe'`
+    'There are prints on the blade.' `1`
+    'There are prints on the blade,' I told him.
+    He regarded them carefully.
+    'Hrm. Not very complete. It'll be hard to get a match from these.'
+    `reach(knife_knowledge, 'joe_seen_prints_on_knife')`
+
+- `?reached(window_knowledge, 'fingerprints_on_glass_match_knife') && reached(knife_knowledge, 'joe_seen_prints_on_knife') `
+    'They match a set of prints on the window, too.' `1`
+    'Anyone could have touched the window,' Joe replied thoughtfully. 'But if they're more complete, they should help us get a decent match!'
+    `reach(knife_knowledge, 'joe_wants_better_prints')`
+
+- `?reached(bed_knowledge, 'body_on_bed') && !reached(bed_knowledge, 'murdered_in_bed')`
+    'The body was moved to the bed at some point.' `1`
+    'The body was moved to the bed at some point,' I told him. 'And then moved back to the floor.'
+    'Why?'
+    - 'I don't know.' `1`
+        Joe nods. 'All right.'
+    - 'Perhaps to get something from the floor?' `1`
+        'You wouldn't move a whole body for that.'
+    - 'Perhaps he was killed in bed.' `1`
+        'It's just speculation at this point,' Joe remarks.
+
+- `?reached(bed_knowledge, 'murdered_in_bed')`
+    'The victim was murdered in bed, and then the body was moved to the floor.' `1`
+    'Why?'
+    - 'I don't know.' `1`
+        Joe nods. 'All right, then.'
+    - 'Perhaps the murderer wanted to mislead us.' `1`
+        'How so?'
+
+        - 'They wanted us to think the victim was awake.' `1`
+            'They wanted us to think the victim was awake[.'], I replied thoughtfully.
+            'That they were meeting their attacker, rather than being stabbed in their sleep.'
+
+        - 'They wanted us to think there was some kind of struggle.' `1`
+            'They wanted us to think there was some kind of struggle,' I replied.
+            'That the victim wasn't simply stabbed in their sleep.'
+
+        'But if they were killed in bed, that's most likely what happened. Stabbed, while sleeping.'
+        `reach(bed_knowledge, 'murdered_while_asleep')`
+    - 'Perhaps the murderer hoped to clean up the scene.' `1`
+        'But they were disturbed? It's possible.'
+
+  - `?seen.joe_in_hall1 > 1` 'That's it.' `1`
+      'All right. It's a start,' Joe replied.
+      `->done`
+
+<!-- TODO fallback -->
+
+`->joe_in_hall1`
+
+# reaching
+
+- Reach for it `1` I fished with one arm under the bed, but whatever it was, it had been kicked far enough back that I couldn't get my fingers on it. `->reaching`
+- `?inventory.has('cane')` Knock it with the cane `->knock_with_cane`
+- `?turns_since('reaching')>1` Stand up `1` I stood up once more, and brushed my coat down. `->murder_scene`
+
+<!-- TODO fallback -->
+
+# done
+<!-- this is also a fallback option... -->
+
+```js ~
+if (reached(knife_knowledge, 'joe_wants_better_prints') && !reached(knife_knowledge, 'joe_got_better_prints')) {
+  reach(knife_knowledge, 'joe_got_better_prints');
+  &quot;I'll get those prints from the window now.&quot;;
+} else if (reached(knife_knowledge, 'joe_seen_prints_on_knife')) {
+  &quot;I'll run those prints as best I can.&quot;;
+} else {
+  &quot;'Not much to go on.'&quot;;
+}
+```
+THE END
+
+
+<!--
+
+make_choices([
+    &quot;The bed...&quot;,
+    &quot;Lift the bedcover&quot;,
+    &quot;Remove the cover&quot;,
+    &quot;Pull back the duvet&quot;,
+    &quot;Remake the bed&quot;,
+    &quot;Test the bed&quot;,
+    &quot;Look under the bed&quot;,
+    &quot;Something else?&quot;,
+    &quot;The desk...&quot;,
+    &quot;Pick up the cane&quot;,
+    &quot;Turn on the lamp&quot;,
+    &quot;Look at the in-tray&quot;,
+    &quot;Open a drawer&quot;,
+    &quot;Open a drawer&quot;,
+    &quot;Open a drawer&quot;,
+    &quot;Something else?&quot;,
+    &quot;Swoosh the cane&quot;,
+    &quot;The window...&quot;,
+    &quot;Look down at the brook&quot;,
+    &quot;Look at the glass&quot;,
+    &quot;Something else?&quot;,
+    &quot; Look at the steam&quot;,
+    &quot;Breathe on the glass&quot;,
+    &quot;Something else?&quot;,
+    &quot; Move the light to the floor &quot;,
+    &quot; Look under the bed&quot;,
+    &quot;Knock it with the cane&quot;,
+    &quot;Use the cane to reach under the bed&quot;,
+    &quot;Look under the bed once more&quot;,
+    &quot; Pick up the knife&quot;,
+    &quot; Look at the knife&quot;,
+    &quot; Compare the prints on the knife and the window&quot;,
+    &quot; Move the light back to the desk &quot;,
+    &quot; Move the light to the floor &quot;,
+    &quot;Leave the room&quot;
+])
+
+-->">Crime</option><option value="Scrum" data-text="
+```js
+var seen_review = 0;
+```
+
+`->start`
+
+# start
+
+Let's begin today's standup.
+
+<!-- This records energy level -->
+How are you feeling today?
+
+- Green
+- Amber
+- Red
+
+`->do`
+
+# do
+
+What would you like to do next?
+
+- Review `1` `->review`
+- `sticky` Add a story `1` `>->add` `->start`
+
+# add
+
+How many points is this story worth?
+
+- 2 points
+- 3 points
+- 5 points
+
+How much creative energy do you think you'll need to finish this?
+
+- A bit
+- A lot
+
+Okay, I've added it to the backlog.
+
+`->do`
+
+# review
+
+```js
+seen_review++;
+```
+
+Reviewing...
+
+<!--Debug {saw_review} {review} {TURNS_SINCE(->review)}-->
+
+- `?seen_review > 1 && !seen.exceeded` Energy exceeded `->exceeded`
+- Pick a ticket `1` So how are we doing on this next story?
+    - It's done `1` Great! `->review`
+    - It's not yet done `1` Is it still something you want to do today?
+        - Yes `1` Do you think you'll be able to finish it today?
+            - Yes `1` Great, let's move on. `->review`
+            - No `1` Maybe we should break it down into smaller stories.
+                - Yes `>->add` `->review`
+                - No `1` Okay, I'll leave it. `->review`
+        - No `1` I'll move it to the backlog, then. `->review`
+- No tickets `1` Great!
+    Would you like to take some things out of the backlog?
+    - Yes `->take_from_backlog`
+    - No `->enjoy_your_day`
+- All tickets seen `1` Great! Here's your schedule for today. `->enjoy_your_day`
+
+# exceeded
+
+Are you sure you'll be able to complete everything?
+
+- Yes `1` Great, let's move on. `-> review`
+- No `1` We should reassess. What can or can't you do? `-> prune_aggressively`
+
+# prune_aggressively
+
+- Not done `1` Still pruning. `-> prune_aggressively`
+- Done and under limit `1` Great, let's move on. `-> review`
+
+# take_from_backlog
+
+Pick a random story. Does this look ok?
+
++ Yes `-> review`
++ No `-> take_from_backlog`
+
+# enjoy_your_day
+
+Enjoy the rest of your day!">Scrum</option><option value="Wash" data-text="```js
+var outlet_closed = false;
+```
+
+`->start`
+
+# start
+
+You stand before the washing machine.
+
+The outlet is `$' ' + (outlet_closed ? 'closed' : 'open')`.
+
+`->hub`
+
+# hub
+
+```js
+function done_everything() {
+  return ['dial', 'temp', 'spin', 'time'].map(i => !!seen[i]).reduce((a, b) => a && b, true);
+}
+```
+
+- `sticky` Turn the dial `->dial`
+- `sticky` Set the temperature `->temp`
+- `sticky` Set the spin `->spin`
+- `sticky` Adjust the time `->time`
+- Add detergent
+    You added some detergent. `see('detergent')`
+- `?!outlet_closed` Close the outlet `outlet_closed = true` You closed the outlet.
+- `?done_everything()` Start the machine
+    ```js ~
+    !outlet_closed ? '`->water`' : !seen.detergent ? '`->unwashed`' : '`->wait`'
+    ```
+
+`->hub`
+
+# dial
+
+- `sticky` Cottons
+- `sticky` Mixed
+- `sticky` Delicates
+- `sticky` Quick 18
+- `sticky` Spin
+- `sticky` Rinse
+- `sticky` Energy Saver
+- `sticky` Bedding
+- `sticky` Wool
+- `sticky` Jeans
+- `sticky` Sensitive Plus
+
+You turned the dial to `$' ' + last_choice()`.
+
+`->hub`
+
+# temp
+
+- `sticky` 90
+- `sticky` 60
+- `sticky` 50
+- `sticky` 40
+- `sticky` 30
+- `$'*'` `sticky`
+
+You set the temperature to `$' ' + last_choice()`.
+
+`->hub`
+
+# spin
+
+- `sticky` 1000
+- `sticky` 800
+- `sticky` 600
+- `sticky` Swirl
+- `sticky` Box
+
+You set the spin to `$' ' + last_choice()`.
+
+`->hub`
+
+# time
+
+- `sticky` 115
+- `sticky` 55
+
+You set the time to `$' ' + last_choice()`.
+
+`->hub`
+
+# water
+
+You left the machine and came back to find the clothes unwashed and the floor covered with water.
+
+THE END
+
+# unwashed
+
+You came back to find the clothes wet but unwashed, because you had forgotten to add detergent.
+
+THE END
+
+# wait
+
+Time to wait.
+
+THE END">Wash</option>
+        </select>
+        <button class="btn" onclick="restart()">Restart</button>
+        <!-- <button class="btn" onclick="reload()">Reload</button> -->
+        <a
+          href="https://github.com/dariusf/fable/blob/master/docs.md"
+          target="_blank"
+          >Docs</a
+        >
+        <!-- <button onclick="saveFile()">Save</button> -->
+        <!-- <label for="upload">Load</label>
+        <input
+          name="upload"
+          type="file"
+          accept=".md"
+          onchange="loadFile(this)"
+        /> -->
+        <button class="btn" onclick="share()">Share</button>
+        <!-- prevent the checkbox and label from wrapping separately -->
+        <!-- <span style="display: inline-block">
+          <input
+            type="checkbox"
+            id="fastreload"
+            style="vertical-align: middle"
+          />
+          <label for="fastreload" style="vertical-align: middle"
+            >Fast reload</label
+          >
+        </span> -->
+      </div>
+      <div id="content"></div>
+      <iframe
+        sandbox="allow-scripts"
+        src="story.html"
+        style="width: 100%; height: 100%"
+      ></iframe>
+    </div>
+    <!-- <script type="text/javascript" src="page.js"></script> -->
+    <!-- hipjs logs to the console (page) -->
+    <!-- <script type="text/javascript" src="hipjs.bc.js"></script> -->
+    <!-- bundle.js/main.js requires ocaml_ready (hipjs) and enable_buttons (page) to be defined -->
+    <!-- <script type="text/javascript" src="bundle.js"></script> -->
+    <script type="text/javascript" src="editor.js"></script>
+    <!-- <script type="text/javascript" src="story.js"></script> -->
+    <!-- <script type="text/javascript" src="interpret.js"></script> -->
+    <script>
+      const queryParams = new URLSearchParams(window.location.search);
+      if (queryParams.get("story") !== null) {
+        editorSet(window.atob(queryParams.get("story")));
+      } else {
+        editorSet(current_example_text());
+      }
+      onPageLoad();
+    </script>
+  </body>
+</html>
