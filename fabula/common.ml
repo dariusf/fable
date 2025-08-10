@@ -65,3 +65,34 @@ let fresh =
     let r = !i in
     incr i;
     Format.asprintf "%s%d" prefix r
+
+exception InputError of string
+
+let fail fmt = Format.kasprintf (fun a -> raise (InputError a)) fmt
+
+let inline_text_folder =
+  let open Cmarkit in
+  Folder.make
+    ~inline:(fun _f acc i ->
+      match i with
+      | Inline.Text (s, _) when not (is_whitespace s) ->
+        Folder.ret (Acc.add (String.trim s) acc)
+      | Inline.Text _ -> Folder.default
+      | Inline.Autolink (_, _) -> failwith "unimplemented Autolink"
+      | Inline.Break (_, _) -> failwith "unimplemented Break"
+      | Inline.Code_span (_, _) -> failwith "code span"
+      | Inline.Emphasis (_, _) -> failwith "unimplemented Emphasis"
+      | Inline.Image (_, _) -> failwith "unimplemented Image"
+      | Inline.Inlines (_is, _) -> Folder.default
+      | Inline.Link (_, _) -> failwith "unimplemented Link"
+      | Inline.Raw_html (s, _) ->
+        let s =
+          s |> List.map snd |> List.map fst |> String.concat "" |> String.trim
+        in
+        (* Format.printf "ninline text folder. raw html |%s|@." s; *)
+        Folder.ret (Acc.add s acc)
+        (* failwith "unimplemented Raw_html" *)
+      | Inline.Strong_emphasis (_, _) ->
+        failwith "unimplemented Strong_emphasis"
+      | _ -> Folder.default)
+    ()
