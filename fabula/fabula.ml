@@ -279,8 +279,13 @@ module Convert = struct
         failwith "unimplemented Strong_emphasis"
       | _ -> Folder.default
     in
-
     Folder.make ~inline ()
+
+  let check_only_one_otherwise choices =
+    let count =
+      List.fold_right (fun c t -> if c.otherwise then 1 + t else t) choices 0
+    in
+    if count > 1 then fail "more than one otherwise"
 
   let block_cmd_folder =
     let block : (Block.t, (string * cmd Acc.t) Acc.t) Folder.folder =
@@ -433,6 +438,7 @@ module Convert = struct
             (Block.List'.items l) ([], [])
         in
         let choice = Choices (more, choices) in
+        check_only_one_otherwise choices;
         Folder.ret
           (Acc.change_last
              (fun (name, cmds) -> (name, Acc.add choice cmds))

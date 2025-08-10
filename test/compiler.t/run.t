@@ -88,3 +88,6 @@
   }
   $ compile ../programs/error-unmatched-inline-closing.md
   error: unclosed tag a
+
+  $ compile ../programs/error-multiple-otherwise.md
+  error: more than one otherwise
