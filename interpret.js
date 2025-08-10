@@ -166,14 +166,14 @@ function informParentDiverged(which) {
   window.parent.postMessage({ type: "DIVERGED", which }, "*");
 }
 
-function surfaceError(kind, ...args) {
-  console.error(kind + ":", args);
+function surfaceError(message, ...args) {
+  console.error(message, args);
   let elt = createPara();
   elt.classList.add("error");
   elt.style.color = "red";
-  elt.textContent = kind + ": " + args.join(" ");
+  elt.textContent = message;
   content.append(elt);
-  throw "failure";
+  throw new Error(message);
 }
 
 function createPara() {
@@ -257,7 +257,7 @@ function interpret_Run(code) {
   try {
     execute(code);
   } catch (e) {
-    surfaceError("run", code, e);
+    surfaceError(`Run: error when executing ${code}: ${e.toString()}`, e);
   }
 }
 
@@ -315,7 +315,10 @@ function interpret_Interpolate(parent, code) {
   try {
     v = execute(code);
   } catch (e) {
-    surfaceError("interpolate", code, e);
+    surfaceError(
+      `Interpolate: error when executing ${code}: ${e.toString()}`,
+      e
+    );
   }
   s.textContent = v + "";
   // parent.appendChild(d);
@@ -333,7 +336,7 @@ function interpret_Jump(scene_name) {
   internal.on_scene_visit.forEach((f) => f(scene_name));
   const scene = internal.scenes[scene_name];
   if (scene === undefined) {
-    surfaceError("Jump", scene_name, "scene not found");
+    surfaceError(`Jump: scene ${scene_name} not found`);
   }
   // go back to top element
   interpret(scene, content, () => {});
@@ -344,7 +347,10 @@ function interpret_JumpDynamic(scene_name) {
   try {
     scene = execute(scene_name);
   } catch (e) {
-    surfaceError("JumpDynamic", scene_name, e);
+    surfaceError(
+      `JumpDynamic: error when executing ${code}: ${e.toString()}`,
+      e
+    );
   }
   internal.on_scene_visit.forEach((f) => f(scene));
   interpret(internal.scenes[scene], content, () => {});
@@ -413,7 +419,10 @@ function interpret_MetaMetaBlock(parent, k, current, rest) {
       interpret(rest, parent, k);
     }
   } catch (e) {
-    surfaceError("meta", metaText, s, instrs, e);
+    surfaceError(
+      `${kind}: error when executing ${metaText}: ${e.toString()}`,
+      e
+    );
   }
 }
 
@@ -456,6 +465,10 @@ function interpret_Choices(parent, k, current, rest) {
     });
   };
 
+  // add more alternatives.
+  // even though this is here, dynamic more use is quite limited; see tests
+  let extra = Fable.recursivelyAddChoices((s) => internal.scenes[s], more);
+
   function generateChoice(item, idk) {
     let extra_code = [];
     let extra_guard = [];
@@ -475,7 +488,7 @@ function interpret_Choices(parent, k, current, rest) {
       try {
         generate &&= !!execute(g);
       } catch (e) {
-        surfaceError("guard", g, e);
+        surfaceError(`guard: error when executing ${g}: ${e.toString()}`, e);
         continue;
       }
     }
@@ -527,7 +540,7 @@ function interpret_Choices(parent, k, current, rest) {
   // generate choices
   let idx = 1;
   let choicesGenerated = 0;
-  const allChoiceItems = alts;
+  const allChoiceItems = alts.concat(extra);
   for (const item of allChoiceItems.filter((i) => !i.otherwise)) {
     if (generateChoice(item, idx)) {
       choicesGenerated++;

@@ -149,8 +149,10 @@
   $ run ../programs/choices-break-delimiters.md c1
   <div class="para fadein"><span>selected</span></div>
 
+This has to be checked dynamically because jumps may be produced by meta blocks. Currently we only check it dynamically.
+
   $ run ../programs/error-nonexistent-section.md Hello
-  <div class="para fadein error" style="color: red">Jump: a scene not found</div>
+  <div class="para fadein error" style="color: red">Jump: scene a not found</div>
 
   $ run ../programs/choices-consumable.md c1
   <ul class="choice fadein">
@@ -226,3 +228,20 @@
   <div class="para fadein old"><span>hello</span></div>
   <div class="para fadein"><span>hello</span></div>
   <ul class="choice fadein"></ul>
+
+more cannot reference other sections when used in a meta block, so essentially only static use is supported.
+
+  $ run ../programs/dynamic-more.md
+  <div class="para fadein error" style="color: red">
+    MetaBlock: error when executing '- `more x`': Error: parse: nonexistent
+    section x used in more
+  </div>
+
+Sections created in meta blocks do not make it out.
+
+  $ run ../programs/dynamic-section.md
+  <div class="para fadein"><span>hello</span></div>
+  <div class="para fadein error" style="color: red">Jump: scene a not found</div>
+  <div class="para fadein error" style="color: red">
+    MetaBlock: error when executing `# a hello`: Error: Jump: scene a not found
+  </div>

@@ -92,11 +92,21 @@
   $ compile ../programs/error-multiple-otherwise.md
   error: more than one otherwise
 
+more is mostly checked statically.
+
   $ compile ../programs/error-multiple-otherwise-more.md
   error: more than one otherwise
 
   $ compile ../programs/error-nonexistent-section-more.md
   error: nonexistent section a used in more
 
+An empty more is just a run.
+
   $ compile ../programs/error-empty-more.md
   [{"name":"prelude","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[],"code":[["Run","more"]],"rest":[],"kind":["Consumable","c0"]}]]]}]
+
+  $ compile ../programs/dynamic-more.md
+  [{"name":"prelude","cmds":[["MetaBlock","'- `more x`'"]]},{"name":"x","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","hello"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]]]}]
+
+  $ compile ../programs/dynamic-section.md
+  [{"name":"prelude","cmds":[["MetaBlock","`# a\n\nhello`"],["Para",[["Jump","a"]]]]}]

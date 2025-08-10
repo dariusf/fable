@@ -20,8 +20,11 @@ let () =
        [|
          ( "parse",
            Jv.callback ~arity:1 (fun s ->
-               Fabula.md_to_instrs (Jv.to_string s)
-               |> ocaml_to_jv Fabula.program_to_yojson) );
+               try
+                 Fabula.md_to_instrs (Jv.to_string s)
+                 |> ocaml_to_jv Fabula.program_to_yojson
+               with Fabula.InputError s ->
+                 Jv.throw (Jstr.of_string ("parse: " ^ s))) );
          ( "mayHaveText",
            Jv.callback ~arity:1 (fun s ->
                Fabula.may_have_text (jv_to_ocaml Fabula.cmd_of_yojson s)
