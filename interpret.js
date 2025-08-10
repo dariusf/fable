@@ -253,6 +253,319 @@ function execute(s) {
   // return new Function(s).call(internal.section_state[internal.current_scene]);
 }
 
+function interpret_Run(code) {
+  try {
+    execute(code);
+  } catch (e) {
+    surfaceError("run", code, e);
+  }
+}
+
+function interpret_Verbatim(parent, text) {
+  // this is a span that must appear inside a Para
+  let s = document.createElement("span");
+  s.innerHTML = text;
+  // parent.appendChild(text);
+  // parent.insertAdjacentHTML("beforeend", text);
+  addInline(parent, s);
+}
+
+function interpret_VerbatimBlock(parent, text) {
+  let d = createPara();
+  d.innerHTML = text;
+  addBlock(parent, d);
+}
+
+function interpret_Text(parent, text) {
+  // this is inline
+  let s = document.createElement("span");
+  s.textContent = text;
+  addInline(parent, s);
+}
+
+function interpret_Break() {
+  // parent.appendChild(document.createElement("br"));
+  // addInline(parent, spacer());
+  // do nothing, as space insertion will take care of this?
+}
+
+function interpret_LinkCodeJump(parent, kind0, text, dest) {
+  let e = document.createElement("a");
+  e.href = "#";
+  let kind = kind0 === "LinkCode" ? "Run" : "Jump";
+  let target = kind0 === "LinkCode" ? dest + "()" : dest;
+  e.onclick = (ev) => {
+    ev.preventDefault();
+    internal.on_interact.forEach((f) => f());
+    if (kind === "Jump") {
+      // ensure that it is not used
+      interpret([[kind, target]], parent, null);
+    } else {
+      interpret([[kind, target]], parent, () => {});
+    }
+  };
+  e.textContent = text;
+  // parent.appendChild(e);
+  addInline(parent, e);
+}
+
+function interpret_Interpolate(parent, code) {
+  let s = document.createElement("span");
+  let v;
+  try {
+    v = execute(code);
+  } catch (e) {
+    surfaceError("interpolate", code, e);
+  }
+  s.textContent = v + "";
+  // parent.appendChild(d);
+  addInline(parent, s);
+  // parent.appendChild(d);
+}
+
+function interpret_Tunnel(k, scene) {
+  // keep current k
+  internal.on_scene_visit.forEach((f) => f(scene));
+  interpret(internal.scenes[scene], content, k);
+}
+
+function interpret_Jump(scene_name) {
+  internal.on_scene_visit.forEach((f) => f(scene_name));
+  const scene = internal.scenes[scene_name];
+  if (scene === undefined) {
+    surfaceError("Jump", scene_name, "scene not found");
+  }
+  // go back to top element
+  interpret(scene, content, () => {});
+}
+
+function interpret_JumpDynamic(scene_name) {
+  let scene;
+  try {
+    scene = execute(scene_name);
+  } catch (e) {
+    surfaceError("JumpDynamic", scene_name, e);
+  }
+  internal.on_scene_visit.forEach((f) => f(scene));
+  interpret(internal.scenes[scene], content, () => {});
+}
+
+function interpret_MetaMetaBlock(parent, k, current, rest) {
+  let [kind, metaText] = current;
+  let s;
+  let instrs;
+  try {
+    s = execute(metaText);
+    if (s === undefined) {
+      s = "";
+    }
+    if (Array.isArray(s)) {
+      // fake a list of scenes, assuming internal.scenes[name] is used
+      instrs = [{ cmds: s }];
+    } else {
+      // console.log(kind, "result", s);
+      instrs = Fable.parse(s + "");
+    }
+    if (instrs.length > 0) {
+      let into;
+      if (kind === "Meta") {
+        into = document.createElement("span");
+        // assume there is a single para
+        // extract its contents as inline instrs
+        instrs = instrs[0].cmds[0][1];
+      } else {
+        // the result of evaluating the MetaBlock is a Para,
+        // so add it directly
+        into = parent;
+        instrs = instrs[0].cmds;
+      }
+
+      // console.log(kind, "produced", instrs);
+
+      if (kind === "Meta") {
+        // Always add the inline meta's span, but retroactively
+        // fix spaces after it's rendered.
+        addInline(parent, into);
+      }
+      // We don't have to do anything for blocks
+
+      interpret(instrs, into, () => {
+        interpret(rest, parent, k);
+      });
+
+      /*
+            This fixes the edge case of a jump in a meta causing the entire meta to disappear.
+            The problem is there is no ideal place to put the addInline.
+            We need it to happen after some text is rendered in order to add preceding space, so we can't have it before.
+            If we put it in the continuation, a jump might interrupt it and cause it to disappear (the original problem).
+            If we put it after, the ordering of into and whatever else instrs renders is reversed in parent.
+            We can't do the last one, but render into a temp element to preserve the order, because that last part is hard - it's unpredictable when a call to interpret returns.
+            We also can't speculatively run it in order to determine if we should add a space because of potential side effects.
+            The solution is to retroactively fix the spaces after.
+          */
+      if (kind === "Meta") {
+        if (inlinePrecedingSpaceCondition(into.parentNode, into)) {
+          // console.log("retroactively fixed spaces");
+          into.parentNode.insertBefore(spacer(), into);
+        }
+      }
+    } else {
+      interpret(rest, parent, k);
+    }
+  } catch (e) {
+    surfaceError("meta", metaText, s, instrs, e);
+  }
+}
+
+function interpret_Para(parent, k, current, rest) {
+  if (current[0].length > 0) {
+    let d;
+    if (Fable.mayHaveText(current)) {
+      // removes unneccessary divs
+      d = createPara();
+      addBlock(parent, d);
+    } else {
+      d = parent;
+    }
+    interpret(current[1], d, () => {
+      interpret(rest, parent, k);
+    });
+  } else {
+    // optimization
+    interpret(rest, parent, k);
+  }
+}
+
+function interpret_Choices(parent, k, current, rest) {
+  let [_, more, alts] = current;
+  let ul = document.createElement("ul");
+  ul.classList.add("choice");
+  if (isStandalone()) {
+    ul.classList.add("fadein");
+  }
+  addBlock(parent, ul);
+  let links = [];
+  let indicate_clicked = (clicked) => {
+    links.forEach((a) => {
+      if (a !== clicked) {
+        a.removeAttribute("href");
+      }
+      a.onclick = (ev) => {
+        ev.preventDefault();
+      };
+    });
+  };
+  // add more alternatives
+  let extra = Fable.recursivelyAddChoices((s) => internal.scenes[s], more);
+
+  function generateChoice(item, idk) {
+    let extra_code = [];
+    let extra_guard = [];
+    switch (item.kind[0]) {
+      case "Sticky":
+        break;
+      case "Consumable":
+        let id = item.kind[1];
+        extra_code.push(["Run", `internal.choice_state.${id} = true;`]);
+        extra_guard.push(`!internal.choice_state.${id}`);
+        break;
+      default:
+        throw `unknown kind ${current[0]}`;
+    }
+    let generate = true;
+    for (const g of extra_guard.concat(item.guard)) {
+      try {
+        generate &&= !!execute(g);
+      } catch (e) {
+        surfaceError("guard", g, e);
+        continue;
+      }
+    }
+    if (!generate) {
+      return false;
+    }
+    let li = document.createElement("li");
+    ul.appendChild(li);
+    let a = document.createElement("a");
+    a.setAttribute("idx", idx);
+    a.href = "#";
+    a.classList.add("choice");
+    a.draggable = false;
+    links.push(a);
+    li.appendChild(a);
+    a.onclick = (ev) => {
+      ev.preventDefault();
+      for (const old of document.querySelectorAll("#content > div:not(.old)")) {
+        old.classList.add("old");
+      }
+      internal.choice_history.push(a.textContent);
+      informEditorOfChoice(a.textContent);
+      internal.on_interact.forEach((f) => f());
+      if (choices_disappear) {
+        parent.removeChild(ul);
+      } else {
+        indicate_clicked(a);
+      }
+      if (tweet_style_choices) {
+        clear();
+      }
+      // if (item.code.length > 0) {
+      // we want to separate code and rest because we don't want to create an empty div for a code instr that doesn't have any output
+      interpret(extra_code.concat(item.code), createPara(), () => {
+        interpret(item.rest, parent, () => {
+          interpret(rest, parent, k);
+        });
+      });
+      // } else {
+      //   interpret(item.rest, parent, () => {
+      //     interpret(rest, parent, k);
+      //   });
+      // }
+    };
+    interpret(item.initial, a, () => {});
+    return true;
+  }
+
+  // generate choices
+  let idx = 1;
+  let choicesGenerated = 0;
+  const allChoiceItems = alts.concat(extra);
+  for (const item of allChoiceItems.filter((i) => !i.otherwise)) {
+    if (generateChoice(item, idx)) {
+      choicesGenerated++;
+      idx++;
+    }
+  }
+  if (choicesGenerated === 0) {
+    const otherwises = allChoiceItems.filter((i) => i.otherwise);
+    console.assert(otherwises.length <= 1); // TODO compile time check
+    for (const item of otherwises) {
+      generateChoice(item, idx);
+      idx++;
+    }
+  }
+
+  // possibly take choices for hot reloading
+  if (internal.immediately_take.length > 0) {
+    let something_taken = false;
+    for (const a of links) {
+      if (a.textContent === internal.immediately_take[0]) {
+        internal.immediately_take.shift();
+        internal.system_made_choice = true;
+        a.click();
+        internal.system_made_choice = false;
+        something_taken = a;
+        break;
+      }
+    }
+    if (!something_taken) {
+      // there were choices we could have immediately taken, but nothing was chosen - we've diverged
+      informParentDiverged(internal.immediately_take[0]);
+      internal.immediately_take = [];
+    }
+  }
+}
+
 function interpret(instrs, parent, k) {
   loop: for (var i = 0; i < instrs.length; i++) {
     const instr = instrs[i];
@@ -261,80 +574,26 @@ function interpret(instrs, parent, k) {
     }
     switch (instr[0]) {
       case "Run":
-        try {
-          execute(instr[1]);
-        } catch (e) {
-          surfaceError("run", instr[1], e);
-        }
+        interpret_Run(instr[1]);
         break;
       case "Verbatim":
-        {
-          // this is a span that must appear inside a Para
-          let s = document.createElement("span");
-          s.innerHTML = instr[1];
-          // parent.appendChild(instr[1]);
-          // parent.insertAdjacentHTML("beforeend", instr[1]);
-          addInline(parent, s);
-        }
+        interpret_Verbatim(parent, instr[1]);
         break;
       case "VerbatimBlock":
-        {
-          let d = createPara();
-          d.innerHTML = instr[1];
-          addBlock(parent, d);
-        }
+        interpret_VerbatimBlock(parent, instr[1]);
         break;
       case "Text":
-        {
-          // this is inline
-          let s = document.createElement("span");
-          s.textContent = instr[1];
-          addInline(parent, s);
-        }
+        interpret_Text(parent, instr[1]);
         break;
       case "Break":
-        {
-          // parent.appendChild(document.createElement("br"));
-          // addInline(parent, spacer());
-          // do nothing, as space insertion will take care of this?
-        }
+        interpret_Break();
         break;
       case "LinkCode":
       case "LinkJump":
-        {
-          let e = document.createElement("a");
-          e.href = "#";
-          let kind = instr[0] === "LinkCode" ? "Run" : "Jump";
-          let target = instr[0] === "LinkCode" ? instr[2] + "()" : instr[2];
-          e.onclick = (ev) => {
-            ev.preventDefault();
-            internal.on_interact.forEach((f) => f());
-            if (kind === "Jump") {
-              // ensure that it is not used
-              interpret([[kind, target]], parent, null);
-            } else {
-              interpret([[kind, target]], parent, () => {});
-            }
-          };
-          e.textContent = instr[1];
-          // parent.appendChild(e);
-          addInline(parent, e);
-        }
+        interpret_LinkCodeJump(parent, instr[0], instr[1], instr[2]);
         break;
       case "Interpolate":
-        {
-          let s = document.createElement("span");
-          let v;
-          try {
-            v = execute(instr[1]);
-          } catch (e) {
-            surfaceError("interpolate", instr[1], e);
-          }
-          s.textContent = v + "";
-          // parent.appendChild(d);
-          addInline(parent, s);
-          // parent.appendChild(d);
-        }
+        interpret_Interpolate(parent, instr[1]);
         break;
 
       default:
@@ -363,258 +622,26 @@ function interpret(instrs, parent, k) {
   // corollary: from the placement of Run above, it cannot access the continuation
 
   switch (current[0]) {
-    case "Tunnel": {
-      // keep current k
-      let scene = current[1];
-      internal.on_scene_visit.forEach((f) => f(scene));
-      interpret(internal.scenes[scene], content, k);
+    case "Tunnel":
+      interpret_Tunnel(k, current[1]);
       // handling the rest is not needed because a tunnel is usually inside a para
       return;
-    }
-    case "Jump": {
-      // abandon current k and instructions, go back to top element
-      const scene_name = current[1];
-      internal.on_scene_visit.forEach((f) => f(scene_name));
-      const scene = internal.scenes[scene_name];
-      if (scene === undefined) {
-        surfaceError("Jump", scene_name, "scene not found");
-      }
-      interpret(scene, content, () => {});
+    case "Jump":
+      // abandon current k and instructions
+      interpret_Jump(current[1]);
       return;
-    }
-    case "JumpDynamic": {
-      let scene;
-      try {
-        scene = execute(current[1]);
-      } catch (e) {
-        surfaceError("JumpDynamic", current[1], e);
-      }
-      internal.on_scene_visit.forEach((f) => f(scene));
-      interpret(internal.scenes[scene], content, () => {});
+    case "JumpDynamic":
+      interpret_JumpDynamic(current[1]);
       return;
-    }
     case "Meta":
     case "MetaBlock":
-      let [kind, metaText] = current;
-      let s;
-      let instrs;
-      try {
-        s = execute(metaText);
-        if (s === undefined) {
-          s = "";
-        }
-        if (Array.isArray(s)) {
-          // fake a list of scenes, assuming internal.scenes[name] is used
-          instrs = [{ cmds: s }];
-        } else {
-          // console.log(kind, "result", s);
-          instrs = Fable.parse(s + "");
-        }
-        if (instrs.length > 0) {
-          let into;
-          if (kind === "Meta") {
-            into = document.createElement("span");
-            // assume there is a single para
-            // extract its contents as inline instrs
-            instrs = instrs[0].cmds[0][1];
-          } else {
-            // the result of evaluating the MetaBlock is a Para,
-            // so add it directly
-            into = parent;
-            instrs = instrs[0].cmds;
-          }
-
-          // console.log(kind, "produced", instrs);
-
-          if (kind === "Meta") {
-            // Always add the inline meta's span, but retroactively
-            // fix spaces after it's rendered.
-            addInline(parent, into);
-          }
-          // We don't have to do anything for blocks
-
-          interpret(instrs, into, () => {
-            interpret(rest, parent, k);
-          });
-
-          /*
-            This fixes the edge case of a jump in a meta causing the entire meta to disappear.
-            The problem is there is no ideal place to put the addInline.
-            We need it to happen after some text is rendered in order to add preceding space, so we can't have it before.
-            If we put it in the continuation, a jump might interrupt it and cause it to disappear (the original problem).
-            If we put it after, the ordering of into and whatever else instrs renders is reversed in parent.
-            We can't do the last one, but render into a temp element to preserve the order, because that last part is hard - it's unpredictable when a call to interpret returns.
-            We also can't speculatively run it in order to determine if we should add a space because of potential side effects.
-            The solution is to retroactively fix the spaces after.
-          */
-          if (kind === "Meta") {
-            if (inlinePrecedingSpaceCondition(into.parentNode, into)) {
-              // console.log("retroactively fixed spaces");
-              into.parentNode.insertBefore(spacer(), into);
-            }
-          }
-        } else {
-          interpret(rest, parent, k);
-        }
-      } catch (e) {
-        surfaceError("meta", metaText, s, instrs, e);
-      }
+      interpret_MetaMetaBlock(parent, k, current, rest);
       break;
     case "Para":
-      {
-        if (current[0].length > 0) {
-          let d;
-          if (Fable.mayHaveText(current)) {
-            // removes unneccessary divs
-            d = createPara();
-            addBlock(parent, d);
-          } else {
-            d = parent;
-          }
-          interpret(current[1], d, () => {
-            interpret(rest, parent, k);
-          });
-        } else {
-          // optimization
-          interpret(rest, parent, k);
-        }
-      }
+      interpret_Para(parent, k, current, rest);
       break;
     case "Choices":
-      {
-        let [_, more, alts] = current;
-        let ul = document.createElement("ul");
-        ul.classList.add("choice");
-        if (isStandalone()) {
-          ul.classList.add("fadein");
-        }
-        addBlock(parent, ul);
-        let links = [];
-        let indicate_clicked = (clicked) => {
-          links.forEach((a) => {
-            if (a !== clicked) {
-              a.removeAttribute("href");
-            }
-            a.onclick = (ev) => {
-              ev.preventDefault();
-            };
-          });
-        };
-        // add more alternatives
-        let extra = Fable.recursivelyAddChoices(
-          (s) => internal.scenes[s],
-          more
-        );
-
-        function generateChoice(item, idk) {
-          let extra_code = [];
-          let extra_guard = [];
-          switch (item.kind[0]) {
-            case "Sticky":
-              break;
-            case "Consumable":
-              let id = item.kind[1];
-              extra_code.push(["Run", `internal.choice_state.${id} = true;`]);
-              extra_guard.push(`!internal.choice_state.${id}`);
-              break;
-            default:
-              throw `unknown kind ${current[0]}`;
-          }
-          let generate = true;
-          for (const g of extra_guard.concat(item.guard)) {
-            try {
-              generate &&= !!execute(g);
-            } catch (e) {
-              surfaceError("guard", g, e);
-              continue;
-            }
-          }
-          if (!generate) {
-            return false;
-          }
-          let li = document.createElement("li");
-          ul.appendChild(li);
-          let a = document.createElement("a");
-          a.setAttribute("idx", idx);
-          a.href = "#";
-          a.classList.add("choice");
-          a.draggable = false;
-          links.push(a);
-          li.appendChild(a);
-          a.onclick = (ev) => {
-            ev.preventDefault();
-            for (const old of document.querySelectorAll(
-              "#content > div:not(.old)"
-            )) {
-              old.classList.add("old");
-            }
-            internal.choice_history.push(a.textContent);
-            informEditorOfChoice(a.textContent);
-            internal.on_interact.forEach((f) => f());
-            if (choices_disappear) {
-              parent.removeChild(ul);
-            } else {
-              indicate_clicked(a);
-            }
-            if (tweet_style_choices) {
-              clear();
-            }
-            // if (item.code.length > 0) {
-            // we want to separate code and rest because we don't want to create an empty div for a code instr that doesn't have any output
-            interpret(extra_code.concat(item.code), createPara(), () => {
-              interpret(item.rest, parent, () => {
-                interpret(rest, parent, k);
-              });
-            });
-            // } else {
-            //   interpret(item.rest, parent, () => {
-            //     interpret(rest, parent, k);
-            //   });
-            // }
-          };
-          interpret(item.initial, a, () => {});
-          return true;
-        }
-
-        // generate choices
-        let idx = 1;
-        let choicesGenerated = 0;
-        const allChoiceItems = alts.concat(extra);
-        for (const item of allChoiceItems.filter((i) => !i.otherwise)) {
-          if (generateChoice(item, idx)) {
-            choicesGenerated++;
-            idx++;
-          }
-        }
-        if (choicesGenerated === 0) {
-          const otherwises = allChoiceItems.filter((i) => i.otherwise);
-          console.assert(otherwises.length <= 1); // TODO compile time check
-          for (const item of otherwises) {
-            generateChoice(item, idx);
-            idx++;
-          }
-        }
-
-        // possibly take choices for hot reloading
-        if (internal.immediately_take.length > 0) {
-          let something_taken = false;
-          for (const a of links) {
-            if (a.textContent === internal.immediately_take[0]) {
-              internal.immediately_take.shift();
-              internal.system_made_choice = true;
-              a.click();
-              internal.system_made_choice = false;
-              something_taken = a;
-              break;
-            }
-          }
-          if (!something_taken) {
-            // there were choices we could have immediately taken, but nothing was chosen - we've diverged
-            informParentDiverged(internal.immediately_take[0]);
-            internal.immediately_take = [];
-          }
-        }
-      }
+      interpret_Choices(parent, k, current, rest);
       break;
     default:
       throw `unknown kind of instruction ${current[0]}`;
