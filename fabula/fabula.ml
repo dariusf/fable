@@ -210,22 +210,23 @@ module Convert = struct
       | Inline.Code_span (cs, _) ->
         let c = Inline.Code_span.code cs in
         let r =
-          if String.starts_with ~prefix:"$" c then
+          match () with
+          | _ when String.starts_with ~prefix:"$" c ->
             Interpolate (strip_prefix 1 c)
-          else if String.starts_with ~prefix:"~" c then Meta (strip_prefix 1 c)
-          else if String.starts_with ~prefix:"->$" c then
+          | _ when String.starts_with ~prefix:"~" c -> Meta (strip_prefix 1 c)
+          | _ when String.starts_with ~prefix:"->$" c ->
             JumpDynamic (strip_prefix 3 c)
-          else if String.starts_with ~prefix:"jump " c then
+          | _ when String.starts_with ~prefix:"jump " c ->
             let dest = strip_prefix 5 c in
-            match dest with "" -> Jump section | _ -> Jump dest
-          else if String.starts_with ~prefix:"->" c then
+            (match dest with "" -> Jump section | _ -> Jump dest)
+          | _ when String.starts_with ~prefix:"->" c ->
             let dest = strip_prefix 2 c in
-            match dest with "" -> Jump section | _ -> Jump dest
-          else if String.starts_with ~prefix:"tunnel " c then
+            (match dest with "" -> Jump section | _ -> Jump dest)
+          | _ when String.starts_with ~prefix:"tunnel " c ->
             Tunnel (strip_prefix 7 c)
-          else if String.starts_with ~prefix:">->" c then
+          | _ when String.starts_with ~prefix:">->" c ->
             Tunnel (strip_prefix 3 c)
-          else Run (String.trim c)
+          | _ -> Run (String.trim c)
         in
         Folder.ret (Acc.add r acc)
       | Inline.Emphasis (_, _) -> failwith "unimplemented Emphasis"
@@ -383,38 +384,40 @@ module Convert = struct
             `More ("true", strip_prefix 5 m)
           | _ ->
             (* only look for special syntax in the first paragraph *)
-            let _, gs, st, i, c, r, ow =
-              para
-              |> List.fold_left
-                   (fun (b, gs, st, i, c, r, ow) e ->
-                     match (e, b) with
-                     (* special things encoded as Runs *)
-                     | Run "sticky", _ -> (b, gs, true, i, c, r, ow)
-                     | Run "otherwise", _ -> (b, gs, st, i, c, r, true)
-                     | Run s, _ when String.starts_with ~prefix:"guard " s ->
-                       (b, Acc.add (strip_prefix 6 s) gs, st, i, c, r, ow)
-                     | Run s, _ when String.starts_with ~prefix:"?" s ->
-                       (b, Acc.add (strip_prefix 1 s) gs, st, i, c, r, ow)
-                       (* things to stop at *)
-                     | ( (Break | Run _ | Jump _ | JumpDynamic _ | Tunnel _),
-                         false ) ->
-                       (true, gs, st, i, Some e, r, ow)
-                     (* the rest *)
-                     | _, true -> (true, gs, st, i, c, Acc.add e r, ow)
-                     | _, false -> (false, gs, st, Acc.add e i, c, r, ow))
-                   (false, Acc.empty, false, Acc.empty, None, Acc.empty, false)
-            in
+            let sticky = ref false in
+            let otherwise = ref false in
+            let preconditions = ref Acc.empty in
+            let initial = ref Acc.empty in
+            let code = ref None in
+            let rest = ref Acc.empty in
+            para
+            |> List.iter (fun e ->
+                   match (e, !code) with
+                   (* special things encoded as Runs *)
+                   | Run "sticky", _ -> sticky := true
+                   | Run "otherwise", _ -> otherwise := true
+                   | Run s, _ when String.starts_with ~prefix:"guard " s ->
+                     preconditions := Acc.add (strip_prefix 6 s) !preconditions
+                   | Run s, _ when String.starts_with ~prefix:"?" s ->
+                     preconditions := Acc.add (strip_prefix 1 s) !preconditions
+                   (* things to stop at *)
+                   | (Break | Run _ | Jump _ | JumpDynamic _ | Tunnel _), None
+                     ->
+                     code := Some e
+                   (* the rest *)
+                   | _, Some _ -> rest := Acc.add e !rest
+                   | _, None -> initial := Acc.add e !initial);
             `Choice
               {
-                otherwise = ow;
-                guard = Acc.to_list gs;
-                initial = Acc.to_list i;
-                code = Option.to_list c;
+                otherwise = !otherwise;
+                guard = Acc.to_list !preconditions;
+                initial = Acc.to_list !initial;
+                code = Option.to_list !code;
                 rest =
-                  (let r = Acc.to_list r in
+                  (let r = Acc.to_list !rest in
                    match r with [] -> after_first | _ -> Para r :: after_first);
                 kind =
-                  (if st then Sticky else Consumable (fresh ~prefix:"c" ()));
+                  (if !sticky then Sticky else Consumable (fresh ~prefix:"c" ()));
               }
         in
         let more, choices =
