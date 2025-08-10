@@ -52,17 +52,23 @@ let () =
     "fable [-s] <file1> [<file2>] ... -o <output>";
   match !input_files with
   | [f] ->
-    let frontmatter, json = Fabula.md_file_to_json f in
-    (match !standalone with
-    | true ->
-      (match !output_file with
-      | None -> Format.printf "expected an output directory name@."
-      | Some dir -> write_standalone dir frontmatter json)
-    | false ->
-      (match !output_file with
-      | None -> Fabula.print_json json
-      | Some o ->
-        Out_channel.with_open_text o (fun out -> Fabula.print_json ~out json)))
+    (* let frontmatter, json = *)
+    (match Fabula.md_file_to_json f with
+    | exception Fabula.InputError s ->
+      Format.eprintf "error: %s@." s;
+      exit 1
+    | frontmatter, json ->
+      (* in *)
+      (match !standalone with
+      | true ->
+        (match !output_file with
+        | None -> Format.printf "expected an output directory name@."
+        | Some dir -> write_standalone dir frontmatter json)
+      | false ->
+        (match !output_file with
+        | None -> Fabula.print_json json
+        | Some o ->
+          Out_channel.with_open_text o (fun out -> Fabula.print_json ~out json))))
   | _ -> Format.printf "expected one input file@."
 
 (* let () =

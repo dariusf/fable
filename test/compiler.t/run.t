@@ -86,3 +86,5 @@
   digraph G {
     "ha" -> "ha";
   }
+  $ compile ../programs/error-unmatched-inline-closing.md
+  error: unclosed tag a

@@ -45,6 +45,10 @@ type choices = choice list [@@deriving yojson]
 
 let _ = pp_program
 
+exception InputError of string
+
+let fail fmt = Format.kasprintf (fun a -> raise (InputError a)) fmt
+
 let inline_text_folder =
   let open Cmarkit in
   Folder.make
@@ -170,7 +174,7 @@ module Preprocess = struct
       let p, stk =
         Folder.fold_inline inline (Acc.empty, []) (Block.Paragraph.inline p)
       in
-      (match stk with [] -> () | _ :: _ -> failwith "unclosed tags");
+      (match stk with [] -> () | a :: _ -> fail "unclosed tag %s" a);
       let p =
         Inline.Inlines
           ( Acc.to_list p
