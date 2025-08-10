@@ -455,8 +455,6 @@ function interpret_Choices(parent, k, current, rest) {
       };
     });
   };
-  // add more alternatives
-  let extra = Fable.recursivelyAddChoices((s) => internal.scenes[s], more);
 
   function generateChoice(item, idk) {
     let extra_code = [];
@@ -529,7 +527,7 @@ function interpret_Choices(parent, k, current, rest) {
   // generate choices
   let idx = 1;
   let choicesGenerated = 0;
-  const allChoiceItems = alts.concat(extra);
+  const allChoiceItems = alts;
   for (const item of allChoiceItems.filter((i) => !i.otherwise)) {
     if (generateChoice(item, idx)) {
       choicesGenerated++;

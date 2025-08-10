@@ -29,15 +29,28 @@ and cmd =
   | Tunnel of string
   | JumpDynamic of string
   | Choices of more * choice list
-[@@deriving show { with_path = false }, yojson]
+[@@deriving
+  show { with_path = false },
+  yojson,
+  visitors { variety = "map"; name = "map_cmd" }]
+
+[@@@warning "-17"]
 
 type scene = {
   name : string;
   cmds : cmd list;
 }
-[@@deriving show { with_path = false }, yojson]
+[@@deriving
+  show { with_path = false },
+  yojson,
+  visitors { variety = "map"; name = "map_scene" }]
 
-type program = scene list [@@deriving show { with_path = false }, yojson]
+type program = scene list
+[@@deriving
+  show { with_path = false },
+  yojson,
+  visitors { variety = "map"; name = "map_program" }]
+
 type cmds = cmd list [@@deriving show { with_path = false }, yojson]
 type choices = choice list [@@deriving yojson]
 

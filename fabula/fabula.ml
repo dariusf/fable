@@ -38,17 +38,7 @@ let rec may_have_text s =
              })
            cs ) *)
 
-let rec recursively_add_choices f ss =
-  List.concat_map
-    (fun (g, s) ->
-      match f s with
-      | [Choices (m, cs)] ->
-        cs @ recursively_add_choices f m
-        |> List.map (fun c -> { c with guard = g :: c.guard })
-      | _e ->
-        (* Format.printf "%a@." pp_cmds e; *)
-        failwith (s ^ " is not a scene with a single choice in it"))
-    ss
+let recursively_add_choices = Convert.recursively_add_choices
 
 (* let contains_control_change s =
    let rec aux s =

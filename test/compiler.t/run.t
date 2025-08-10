@@ -35,7 +35,7 @@
   [{"name":"prelude","cmds":[["Run","var items = ['Apple', 'Banana', 'Carrot'];"],["Para",[["JumpDynamic","items[0]"]]]]},{"name":"Apple","cmds":[["Para",[["Text","Apple"]]]]}]
 
   $ compile ../programs/choices-more.md
-  [{"name":"prelude","cmds":[["Choices",[["true","Some choices"]],[{"guard":[],"otherwise":false,"initial":[["Text","Hi"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]]]},{"name":"Some choices","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[],"rest":[],"kind":["Consumable","c2"]},{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c1"]}]]]}]
+  [{"name":"prelude","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","Hi"]],"code":[],"rest":[],"kind":["Consumable","c0"]},{"guard":["true"],"otherwise":false,"initial":[["Text","a"]],"code":[],"rest":[],"kind":["Consumable","c2"]},{"guard":["true"],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c1"]}]]]},{"name":"Some choices","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[],"rest":[],"kind":["Consumable","c2"]},{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c1"]}]]]}]
 
   $ compile ../programs/choices-copy.md
   [{"name":"prelude","cmds":[["MetaBlock","internal.scenes['One']"]]},{"name":"One","cmds":[["Para",[["Text","text from Scene 1"]]]]}]
@@ -91,3 +91,12 @@
 
   $ compile ../programs/error-multiple-otherwise.md
   error: more than one otherwise
+
+  $ compile ../programs/error-multiple-otherwise-more.md
+  error: more than one otherwise
+
+  $ compile ../programs/error-nonexistent-section-more.md
+  error: nonexistent section a used in more
+
+  $ compile ../programs/error-empty-more.md
+  [{"name":"prelude","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[],"code":[["Run","more"]],"rest":[],"kind":["Consumable","c0"]}]]]}]

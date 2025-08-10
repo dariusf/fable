@@ -234,13 +234,60 @@ let block_cmd_folder =
           (Block.List'.items l) ([], [])
       in
       let choice = Choices (more, choices) in
-      check_only_one_otherwise choices;
       Folder.ret
         (Acc.change_last (fun (name, cmds) -> (name, Acc.add choice cmds)) acc)
     | Block.Thematic_break (_, _) -> Folder.default
     | _ -> Folder.default (* let the folder thread the fold *)
   in
   Folder.make ~block ()
+
+let rec recursively_add_choices f ss =
+  List.concat_map
+    (fun (g, s) ->
+      match f s with
+      | [Choices (m, cs)] ->
+        cs @ recursively_add_choices f m
+        |> List.map (fun c -> { c with guard = g :: c.guard })
+      | _e ->
+        (* Format.printf "%a@." pp_cmds e; *)
+        failwith (s ^ " is not a scene with a single choice in it"))
+    ss
+
+let expand_more p =
+  let visitor =
+    object (_)
+      inherit [_] Ast.map_scene
+      inherit! [_] Ast.map_cmd
+      inherit! [_] Ast.map_program
+
+      method! visit_Choices _env more ch =
+        let ch1 =
+          recursively_add_choices
+            (fun name ->
+              (try List.find (fun s -> s.Ast.name = name) p
+               with Not_found ->
+                 fail "nonexistent section %s used in more" name)
+                .cmds)
+            more
+        in
+        Choices ([], ch @ ch1)
+    end
+  in
+  visitor#visit_program () p
+
+let validate p =
+  let visitor =
+    object (_)
+      inherit [_] Ast.map_scene
+      inherit! [_] Ast.map_cmd
+      inherit! [_] Ast.map_program
+
+      method! visit_Choices _env more ch =
+        check_only_one_otherwise ch;
+        Choices (more, ch)
+    end
+  in
+  visitor#visit_program () p
 
 let to_program doc =
   let doc = Preprocess.run doc in
@@ -252,4 +299,4 @@ let to_program doc =
            let cmds = Acc.to_list cmds in
            match cmds with [] -> None | _ -> Some { name; cmds })
   in
-  scenes
+  scenes |> expand_more |> validate
