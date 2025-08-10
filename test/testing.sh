@@ -6,6 +6,7 @@ compile() {
 }
 
 run() {
+  set -e
   md="$1"
   shift
   out=$(mktemp -d)
@@ -14,6 +15,7 @@ run() {
 }
 
 graph() {
+  set -e
   md="$1"
   out=$(mktemp -d)
   fable -s $md -o $out/test
