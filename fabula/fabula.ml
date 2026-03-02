@@ -57,11 +57,27 @@ let recursively_add_choices = Convert.recursively_add_choices
    in
    List.exists aux s *)
 
-let program_graph prog =
+let graphviz_renderer =
+  ( (* ~edge: *) (fun a b static ->
+      Format.asprintf {|  "%s" -> "%s"%s;|} a b
+        (if static then "" else " [style=dashed]")),
+    (* ~overall: *) fun s -> Format.asprintf "digraph G {\n%s\n}" s )
+
+let mermaid_renderer =
+  ( (* ~edge: *) (fun a b static ->
+      Format.asprintf {|  %s -%s-> %s;|} a (if static then "" else ".") b),
+    (* ~overall: *) fun s ->
+      {|%%{ init: { 'flowchart': {'defaultRenderer': 'elk' } } }%%
+flowchart TD|}
+      ^ "\n" ^ s )
+
+let program_graph
+    (* (~edge:render_edge, ~overall) *)
+      (render_edge, overall) prog =
   let regexes prog =
     List.map
       (fun c ->
-        (* relies on JS... but we're a practical system *)
+        (* relies on the content of code blocks being JS... but we're a practical system *)
         let r =
           {|\(.\|
 \)*\(jump(['"]\|tunnel(['"]\|->\|jump \|>->\|tunnel \)|}
@@ -101,18 +117,19 @@ let program_graph prog =
   let edges =
     prog
     |> List.concat_map (fun sc ->
-           let name = sc.name in
-           let scenes_to =
-             List.concat_map outgoing_scenes sc.cmds |> List.sort_uniq compare
-           in
-           List.map
-             (fun (s, static) ->
-               Format.asprintf {|  "%s" -> "%s"%s;|} name s
-                 (if static then "" else " [style=dashed]"))
-             scenes_to)
+        let name = sc.name in
+        let scenes_to =
+          List.concat_map outgoing_scenes sc.cmds |> List.sort_uniq compare
+        in
+        scenes_to
+        |> List.map (fun (s, static) ->
+            render_edge name s static
+            (* Format.asprintf {|  "%s" -> "%s"%s;|} name s *)
+            (* (if static then "" else " [style=dashed]") *)))
     |> String.concat "\n"
   in
-  Format.asprintf "digraph G {\n%s\n}" edges
+  overall edges
+(* Format.asprintf "digraph G {\n%s\n}" edges *)
 
 let print_json ?out program =
   let compact = true in
@@ -152,20 +169,20 @@ let extract_frontmatter =
       let multi =
         let multi = match_all [1; 2] multiline_kvp front in
         multi
-        |> List.map (fun [@warning "-8"] [k; v] ->
-               let v1 =
-                 String.split_on_char '\n' v
-                 |> List.map String.trim |> String.concat "\n"
-               in
-               (k, v1))
+        |> List.map (fun[@warning "-8"] [k; v] ->
+            let v1 =
+              String.split_on_char '\n' v
+              |> List.map String.trim |> String.concat "\n"
+            in
+            (k, v1))
       in
       let simple =
         let simple = match_all [1; 2] simple_kvp front in
         (* this matches multi too so remove those *)
         simple
-        |> List.filter_map (fun [@warning "-8"] [k; v] ->
-               if List.exists (fun (mk, _) -> mk = k) multi then None
-               else Some (k, v))
+        |> List.filter_map (fun[@warning "-8"] [k; v] ->
+            if List.exists (fun (mk, _) -> mk = k) multi then None
+            else Some (k, v))
       in
       (simple @ multi, rest)
     with Fail -> ([], str)

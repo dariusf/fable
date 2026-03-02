@@ -35,7 +35,8 @@ let write_standalone dir frontmatter json =
     write_file (s "%s/default.css" dir) Embedded.default_css;
     write_file (s "%s/interpret.js" dir) Embedded.interpret;
     write_file (s "%s/runtime.js" dir) Embedded.runtime;
-    write_file (s "%s/graph.dot" dir) (Fabula.program_graph json);
+    write_file (s "%s/graph.dot" dir) (Fabula.(program_graph graphviz_renderer) json);
+    write_file (s "%s/graph.mmd" dir) (Fabula.(program_graph mermaid_renderer) json);
     (* testing *)
     if !testing then begin
       write_file (s "%s/test.js" dir) Embedded.test;
