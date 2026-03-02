@@ -1,6 +1,6 @@
 
 - [Fable User Guide](#fable-user-guide)
-  - [Syntax](#syntax)
+  - [Syntax, and some design notes](#syntax-and-some-design-notes)
     - [Prose](#prose)
     - [Sections](#sections)
     - [Code](#code)
@@ -23,18 +23,24 @@
 
 # Fable User Guide
 
-## Syntax
+## Syntax, and some design notes
 
-Fable is a Markdown dialect. This has several advantages.
+Fable is a Markdown dialect. Its design is guided by a number of desiderata:
 
-- New constructs are encoded as Markdown elements, so editor tooling works -- syntax highlighting, folding and jumping to headings, structural editing, etc.
-- There is no need to reinvent mechanisms for typesetting, formatting, escaping into HTML, including code blocks, etc.
-- There is a clear distinction between prose, code, and meta constructs.
+- Web-first. The web is the only open mainstream platform, and also the most accessible one for casual players.
+- First-class support for programming. Substantial stories will need a substantial amount of code. Rather than reinventing the programming language, we start with the most popular language, JavaScript.
+- Future-proof. Stories are just Markdown text files. The Fable compiler is open source. The output is vanilla HTML/JS/CSS which can be immediately uploaded to e.g. itch.
+- Interoperability with the existing ecosystem. The use of Markdown confers many advantages: editor extensions, e.g., folding, jumping to headings, syntax highlighting, will just work (even if they can be specialised a little). Typesetting, formatting, escaping into HTML, etc. are all solved. Diagrams can be rendered with Graphviz or Mermaid.
+- Lightweight. The pipeline is simple and minimal: a markdown file is compiled into high-level instructions for a small runtime. The mental model is also simple: choice-based interface fiction where code blocks imperatively modify the page as they become visible. While a framework or game engine might be useful for larger projects or teams, for small, indie ones, this is the right balance.
 
 ### Prose
 
-Like with other narrative scripting languages, unadorned text is prose to be shown to the player.
-Interactivity may be expressed using _instructions_, where are represented using Markdown elements.
+Like other narrative scripting languages, unadorned text is prose to be shown to the player.
+
+_Meta_ things (e.g. code, choices) are quoted using backticks, or represented using typographic elements which wouldn't normally appear in prose (e.g. lists).
+Meta elements which have imperative effects are called _instructions_.
+
+<!-- Interactivity may be expressed using _instructions_, where are represented using Markdown elements. -->
 
 ### Sections
 
