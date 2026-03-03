@@ -79,6 +79,16 @@ let inline_cmd_folder section =
   in
   Folder.make ~inline ()
 
+let check_no_sticky_and_otherwise choices =
+  let has_sticky =
+    List.exists
+      (fun c -> match c.kind with Sticky -> true | Consumable _ -> false)
+      choices
+  in
+  let has_otherwise = List.exists (fun c -> c.otherwise) choices in
+  if has_sticky && has_otherwise then
+    fail "sticky is incompatible with otherwise"
+
 let check_only_one_otherwise choices =
   let count =
     List.fold_right (fun c t -> if c.otherwise then 1 + t else t) choices 0
@@ -198,20 +208,20 @@ let block_cmd_folder =
           let rest = ref Acc.empty in
           para
           |> List.iter (fun e ->
-                 match (e, !code) with
-                 (* special things encoded as Runs *)
-                 | Run "sticky", _ -> sticky := true
-                 | Run "otherwise", _ -> otherwise := true
-                 | Run s, _ when String.starts_with ~prefix:"guard " s ->
-                   preconditions := Acc.add (strip_prefix 6 s) !preconditions
-                 | Run s, _ when String.starts_with ~prefix:"?" s ->
-                   preconditions := Acc.add (strip_prefix 1 s) !preconditions
-                 (* things to stop at *)
-                 | (Break | Run _ | Jump _ | JumpDynamic _ | Tunnel _), None ->
-                   code := Some e
-                 (* the rest *)
-                 | _, Some _ -> rest := Acc.add e !rest
-                 | _, None -> initial := Acc.add e !initial);
+              match (e, !code) with
+              (* special things encoded as Runs *)
+              | Run "sticky", _ -> sticky := true
+              | Run "otherwise", _ -> otherwise := true
+              | Run s, _ when String.starts_with ~prefix:"guard " s ->
+                preconditions := Acc.add (strip_prefix 6 s) !preconditions
+              | Run s, _ when String.starts_with ~prefix:"?" s ->
+                preconditions := Acc.add (strip_prefix 1 s) !preconditions
+              (* things to stop at *)
+              | (Break | Run _ | Jump _ | JumpDynamic _ | Tunnel _), None ->
+                code := Some e
+              (* the rest *)
+              | _, Some _ -> rest := Acc.add e !rest
+              | _, None -> initial := Acc.add e !initial);
           `Choice
             {
               otherwise = !otherwise;
@@ -284,6 +294,7 @@ let validate p =
 
       method! visit_Choices _env more ch =
         check_only_one_otherwise ch;
+        check_no_sticky_and_otherwise ch;
         Choices (more, ch)
     end
   in
@@ -296,7 +307,7 @@ let to_program doc =
   let scenes =
     Acc.to_list prog
     |> List.filter_map (fun (name, cmds) ->
-           let cmds = Acc.to_list cmds in
-           match cmds with [] -> None | _ -> Some { name; cmds })
+        let cmds = Acc.to_list cmds in
+        match cmds with [] -> None | _ -> Some { name; cmds })
   in
   scenes |> expand_more |> validate

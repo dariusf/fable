@@ -112,6 +112,7 @@ This may happen recursively.
 Such items may have preconditions, in which case they apply to every item inlined.
 
 **Fallback.** A fallback choice can be given by including `` `otherwise` `` somewhere in the body. It will only be shown if no other choices are available.
+Persistent choices are incompatible with fallback choices, as then the fallback choices will never be taken.
 
 ### Breaks and Spaces
 
