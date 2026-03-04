@@ -320,6 +320,9 @@ function interpret_Interpolate(parent, code) {
       e,
     );
   }
+  // if (typeof v !== "string") {
+  //   surfaceError(`Interpolate: ${code} evaluated to ${v}, not a string`);
+  // }
   s.textContent = v + "";
   // parent.appendChild(d);
   addInline(parent, s);
@@ -365,6 +368,9 @@ function interpret_MetaMetaBlock(parent, k, current, rest) {
     if (s === undefined) {
       s = "";
     }
+    // else if (typeof s !== "string") {
+    //   surfaceError(`Meta: ${metaText} evaluated to ${s}, not a string`);
+    // }
     if (Array.isArray(s)) {
       // fake a list of scenes, assuming internal.scenes[name] is used
       instrs = [{ cmds: s }];

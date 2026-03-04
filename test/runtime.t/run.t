@@ -50,6 +50,11 @@
     </li>
   </ul>
 
+  $ run ../programs/error-non-string-meta.md
+  <div class="para fadein">
+    <span><span>1</span></span>
+  </div>
+
   $ run ../programs/interpolation.md a c
   <div class="para fadein old">
     <span>Turns:</span><span> </span><span>0</span>

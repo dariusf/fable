@@ -19,6 +19,9 @@
   $ compile ../programs/choices-tweet-style.md
   [{"name":"h","cmds":[["Run","tweet_style_choices = true;"],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Run","1"]],"rest":[["Para",[["Text","this is later cleared"],["Jump","h"]]]],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","c"]],"code":[["Run","1"]],"rest":[],"kind":["Consumable","c0"]}]],["Para",[["Text","after"]]]]}]
 
+  $ compile ../programs/error-non-string-meta.md
+  [{"name":"prelude","cmds":[["Para",[["Meta","1"]]]]}]
+
   $ compile ../programs/meta.md
   [{"name":"prelude","cmds":[["Run","var items = ['Apple', 'Banana', 'Carrot'];"],["Para",[["Text","text from Scene 1"]]],["MetaBlock","items.map(i => `- ${i}`).join('\\n') + `\n\n<details>\n  <summary>Click me</summary>\n  This was hidden\n</details>`"]]}]
 
