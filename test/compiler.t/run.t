@@ -116,3 +116,6 @@ An empty more is just a run.
 
   $ compile ../programs/dynamic-section.md
   [{"name":"prelude","cmds":[["MetaBlock","`# a\n\nhello`"],["Para",[["Jump","a"]]]]}]
+
+  $ compile ../programs/error-duplicate-section.md
+  error: duplicate scene

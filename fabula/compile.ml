@@ -304,6 +304,12 @@ let validate p =
   in
   visitor#visit_program () p
 
+let validate_scenes prog =
+  let scenes = List.map (fun p -> p.name) prog in
+  let scenes1 = List.sort_uniq String.compare scenes in
+  if List.length scenes <> List.length scenes1 then fail "duplicate scene";
+  prog
+
 let to_program doc =
   let doc = Preprocess.run doc in
   let acc = Acc.add ("prelude", Acc.empty) Acc.empty in
@@ -314,4 +320,4 @@ let to_program doc =
         let cmds = Acc.to_list cmds in
         match cmds with [] -> None | _ -> Some { name; cmds })
   in
-  scenes |> expand_more |> validate
+  scenes |> expand_more |> validate |> validate_scenes
