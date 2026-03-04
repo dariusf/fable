@@ -156,13 +156,20 @@ Necessary data structures, libraries, and language features can be used without 
 The [runtime system](interpret.js) supports the execution of Fable stories.
 Direct console access to its APIs is supported.
 
-- `seen[SECTION]`: the number of times SECTION has been seen; can be used truthy manner
+- `seen[SECTION]`: the number of times SECTION has been seen; can be used in a truthy manner
 - `internal`: internal state of the runtime system
     - `internal.bug_detectors`: push oracles in here
     - `internal.on_scene_visit`: push callbacks in here
     - `internal.on_interact`: push callbacks in here
-- `local`: section-local state, may be mutated; initialise it before the section is entered
-- `clear()`: clears the screen
+- `local`: section-local state, may be mutated; initialise its variables at the top of a section using
+    ````markdown
+    # My Section
+
+    ```js
+    local.x ||= 0
+    ```
+    ````
+- `clear()`: clears the page
 - `jump(label)`, `tunnel(label)`: builders for Fable fragments which may help reduce the amount of quoting required
 - `randomly_test()`, `stop_testing()`: start and stop random testing
 
@@ -232,7 +239,7 @@ Ink is a scripting language: it is interpreted at runtime by a separate game eng
 
 - Ink defines its own scripting language, as it is engine-independent, whereas Fable just uses JavaScript.
 - In Ink, you attach tags to bits of text and rely on the engine interpreting them the way you want, whereas in Fable you can directly evaluate code as part of the flow of the story to make something happen/appear in the game.
-- Fable's language is simpler and smaller. It is a Markdown dialect, so e.g. inline HTML can be used to tag things, there is already syntax for images, etc. It relies _unquoting_ to JavaScript to dynamically generate bits of Fable, compared to having special syntax for e.g. conditionals.
+- Fable's authoring language is simpler and smaller. It is a Markdown dialect, so e.g. inline HTML can be used to tag things, there is already syntax for images, etc. It relies _unquoting_ to JavaScript to dynamically generate bits of Fable, compared to having special syntax for e.g. conditionals.
 
 # Development
 
