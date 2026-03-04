@@ -1,6 +1,9 @@
 
   $ . ../testing.sh
 
+  $ compile ../programs/unicode.md
+  [{"name":"prelude","cmds":[["Para",[["Text","“hello — don’t worry, we’ll be open 9–10…”"]]]]}]
+
   $ compile ../programs/empty-section.md
   [{"name":"a","cmds":[]}]
 

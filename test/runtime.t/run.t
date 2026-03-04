@@ -1,6 +1,11 @@
 
   $ . ../testing.sh
 
+  $ run ../programs/unicode.md
+  <div class="para fadein">
+    <span>“hello — don’t worry, we’ll be open 9–10…”</span>
+  </div>
+
   $ run ../programs/empty-section.md
 
   $ run ../programs/emphasis.md
