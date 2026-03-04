@@ -35,8 +35,10 @@ let write_standalone dir frontmatter json =
     write_file (s "%s/default.css" dir) Embedded.default_css;
     write_file (s "%s/interpret.js" dir) Embedded.interpret;
     write_file (s "%s/runtime.js" dir) Embedded.runtime;
-    write_file (s "%s/graph.dot" dir) (Fabula.(program_graph graphviz_renderer) json);
-    write_file (s "%s/graph.mmd" dir) (Fabula.(program_graph mermaid_renderer) json);
+    write_file (s "%s/graph.dot" dir)
+      (Fabula.(program_graph graphviz_renderer) json);
+    write_file (s "%s/graph.mmd" dir)
+      (Fabula.(program_graph mermaid_renderer) json);
     (* testing *)
     if !testing then begin
       write_file (s "%s/test.js" dir) Embedded.test;
@@ -45,7 +47,7 @@ let write_standalone dir frontmatter json =
     end;
     (* done *)
     Out_channel.with_open_text (s "%s/story.js" dir) (fun out ->
-        Fabula.print_json ~out json)
+        Fabula.print_story_js ~out json)
 
 let () =
   Arg.parse arg_specs
@@ -54,7 +56,7 @@ let () =
   match !input_files with
   | [f] ->
     (* let frontmatter, json = *)
-    (match Fabula.md_file_to_json f with
+    (match Fabula.parse_md_file f with
     | exception Fabula.InputError s ->
       Format.eprintf "error: %s@." s;
       exit 1
@@ -67,9 +69,10 @@ let () =
         | Some dir -> write_standalone dir frontmatter json)
       | false ->
         (match !output_file with
-        | None -> Fabula.print_json json
+        | None -> Fabula.print_story_js json
         | Some o ->
-          Out_channel.with_open_text o (fun out -> Fabula.print_json ~out json))))
+          Out_channel.with_open_text o (fun out ->
+              Fabula.print_story_js ~out json))))
   | _ -> Format.printf "expected one input file@."
 
 (* let () =

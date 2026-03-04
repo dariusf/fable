@@ -38,7 +38,7 @@ let rec may_have_text s =
              })
            cs ) *)
 
-let recursively_add_choices = Convert.recursively_add_choices
+let recursively_add_choices = Compile.recursively_add_choices
 
 (* let contains_control_change s =
    let rec aux s =
@@ -57,13 +57,15 @@ let recursively_add_choices = Convert.recursively_add_choices
    in
    List.exists aux s *)
 
-let graphviz_renderer =
+type renderer = (string -> string -> bool -> string) * (string -> string)
+
+let graphviz_renderer : renderer =
   ( (* ~edge: *) (fun a b static ->
       Format.asprintf {|  "%s" -> "%s"%s;|} a b
         (if static then "" else " [style=dashed]")),
     (* ~overall: *) fun s -> Format.asprintf "digraph G {\n%s\n}" s )
 
-let mermaid_renderer =
+let mermaid_renderer : renderer =
   ( (* ~edge: *) (fun a b static ->
       Format.asprintf {|  %s -%s-> %s;|} a (if static then "" else ".") b),
     (* ~overall: *) fun s ->
@@ -73,7 +75,7 @@ flowchart TD|}
 
 let program_graph
     (* (~edge:render_edge, ~overall) *)
-      (render_edge, overall) prog =
+      ((render_edge, overall) : renderer) prog =
   let regexes prog =
     List.map
       (fun c ->
@@ -131,7 +133,7 @@ let program_graph
   overall edges
 (* Format.asprintf "digraph G {\n%s\n}" edges *)
 
-let print_json ?out program =
+let print_story_js ?out program =
   let compact = true in
   let program = program_to_yojson program in
   if compact then (
@@ -154,7 +156,9 @@ let match_all groups regex str =
   in
   loop 0
 
-let extract_frontmatter =
+type frontmatter = (string * string) list
+
+let extract_frontmatter : string -> frontmatter * string =
   let fm_regex = Str.regexp "\\([ -~\n]+\\)---\n\\([ -~\n]*\\)\n*" in
   let simple_kvp = Str.regexp "\\([a-z]+\\): \\([ -~]+\\)" in
   let multiline_kvp = Str.regexp "\\([a-z]+\\): |\n\\(\\( +[ -~]+\n\\)+\\)" in
@@ -187,17 +191,17 @@ let extract_frontmatter =
       (simple @ multi, rest)
     with Fail -> ([], str)
 
-let md_file_to_json file =
+let parse_md_file file =
   let str = Common.read_file file in
   let front, str = extract_frontmatter str in
   let doc =
-    (* ~resolver:Convert.resolver  *)
+    (* ~resolver:Compile.resolver  *)
     Cmarkit.Doc.of_string str
   in
   (* Format.printf "html: %s@." (Cmarkit_html.of_doc ~safe:true doc); *)
-  (front, doc |> Convert.to_program)
+  (front, doc |> Compile.to_program)
 
-let md_to_instrs str =
-  (* ~resolver:Convert.resolver  *)
+let parse_str str =
+  (* ~resolver:Compile.resolver  *)
   let doc = Cmarkit.Doc.of_string str in
-  doc |> Convert.to_program
+  doc |> Compile.to_program
