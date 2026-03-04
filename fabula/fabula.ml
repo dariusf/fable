@@ -84,13 +84,15 @@ let match_all groups regex str =
 type frontmatter = (string * string) list
 
 let extract_frontmatter : string -> frontmatter * string =
-  let fm_regex = Str.regexp "\\([ -~\n]+\\)---\n\\([ -~\n]*\\)\n*" in
+  let fm_regex =
+    Str.regexp "[ \n\t]*---\n[ \n\t]*\\([ -~\n]+\\)---\n\\([ -~\n]*\\)\n*"
+  in
   let simple_kvp = Str.regexp "\\([a-z]+\\): \\([ -~]+\\)" in
   let multiline_kvp = Str.regexp "\\([a-z]+\\): |\n\\(\\( +[ -~]+\n\\)+\\)" in
   fun str ->
     let exception Fail in
     try
-      let@ _ = if_exn_then Fail in
+      let@ _ = if_any_exn_then Fail in
       let front, rest =
         let[@warning "-8"] [[front; rest]] = match_all [1; 2] fm_regex str in
         (front, rest)
