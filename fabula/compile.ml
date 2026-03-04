@@ -304,11 +304,17 @@ let validate p =
   in
   visitor#visit_program () p
 
+let rec find_dupes = function
+  | [] -> []
+  | h :: t ->
+    if List.mem h t && not (List.mem h (find_dupes t)) then h :: find_dupes t
+    else find_dupes t
+
 let validate_scenes prog =
   let scenes = List.map (fun p -> p.name) prog in
-  let scenes1 = List.sort_uniq String.compare scenes in
-  if List.length scenes <> List.length scenes1 then fail "duplicate scene";
-  prog
+  match find_dupes scenes with
+  | [] -> prog
+  | d :: _ -> fail "duplicate scene %s" d
 
 let to_program doc =
   let doc = Preprocess.run doc in
