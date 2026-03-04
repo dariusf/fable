@@ -1,3 +1,4 @@
-(** Allows us to treat Markdown inside HTML tags atomically, as a single
-    Inline.Raw_html node *)
-val run : Cmarkit.Doc.t -> Cmarkit.Doc.t
+open Cmarkit
+
+(** Various cosmetic and functional preprocessing passes *)
+val run : Doc.t -> Doc.t

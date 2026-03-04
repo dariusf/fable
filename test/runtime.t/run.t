@@ -6,6 +6,11 @@
     <span>“hello — don’t worry, we’ll be open 9–10…”</span>
   </div>
 
+  $ run ../programs/smartypants.md
+  <div class="para fadein">
+    <span>“hello — don’t worry, we’ll be open 9–10…”</span>
+  </div>
+
   $ run ../programs/empty-section.md
 
   $ run ../programs/emphasis.md
@@ -17,7 +22,7 @@
 
   $ run ../programs/comments.md
   <div class="para fadein">
-    <span>inline comments</span><span> </span><span><i>don't</i></span
+    <span>inline comments</span><span> </span><span><i>don’t</i></span
     ><span> </span><span>appear</span>
   </div>
 
@@ -131,12 +136,13 @@
   $ run ../programs/spaces.md 'choice text'
   <div class="para fadein"><span>code after</span></div>
   <div class="para fadein">
-    <span>"Hi,</span><span> </span><span>A</span><span>," he said.</span>
+    <span>“Hi,</span><span> </span><span>A</span><span>,” he said.</span>
   </div>
   <div class="para fadein">
-    <span>"</span><span>Edge case</span><span>" here</span>
+    <span>“</span><span> </span><span>Edge case</span><span> </span
+    ><span>“ here</span>
   </div>
-  <div class="para fadein"><span>A</span><span>'s thing</span></div>
+  <div class="para fadein"><span>A</span><span> </span><span>’s thing</span></div>
 
   $ run ../programs/inline-and-block-meta.md
   <div class="para fadein">
@@ -206,22 +212,22 @@ This has to be checked dynamically because jumps may be produced by meta blocks.
 
   $ run ../programs/api-local-state.md b a b a b
   <div class="para fadein old">
-    <span>ha's state:</span><span> </span><span>0</span>
+    <span>ha’s state:</span><span> </span><span>0</span>
   </div>
   <div class="para fadein old">
-    <span>hb's state:</span><span> </span><span>0</span>
+    <span>hb’s state:</span><span> </span><span>0</span>
   </div>
   <div class="para fadein old">
-    <span>ha's state:</span><span> </span><span>1</span>
+    <span>ha’s state:</span><span> </span><span>1</span>
   </div>
   <div class="para fadein old">
-    <span>hb's state:</span><span> </span><span>1</span>
+    <span>hb’s state:</span><span> </span><span>1</span>
   </div>
   <div class="para fadein old">
-    <span>ha's state:</span><span> </span><span>2</span>
+    <span>ha’s state:</span><span> </span><span>2</span>
   </div>
   <div class="para fadein">
-    <span>hb's state:</span><span> </span><span>2</span>
+    <span>hb’s state:</span><span> </span><span>2</span>
   </div>
   <ul class="choice fadein">
     <li>

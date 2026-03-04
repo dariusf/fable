@@ -4,6 +4,9 @@
   $ compile ../programs/unicode.md
   [{"name":"prelude","cmds":[["Para",[["Text","“hello — don’t worry, we’ll be open 9–10…”"]]]]}]
 
+  $ compile ../programs/smartypants.md
+  [{"name":"prelude","cmds":[["Para",[["Text","“hello — don’t worry, we’ll be open 9–10…”"]]]]}]
+
   $ compile ../programs/empty-section.md
   [{"name":"a","cmds":[]}]
 
@@ -11,7 +14,7 @@
   [{"name":"prelude","cmds":[["Para",[["Emph",[["Text","text"]]],["Text","from"],["Emph",[["Text","Scene"]]],["Text","1"]]]]}]
 
   $ compile ../programs/comments.md
-  [{"name":"prelude","cmds":[["Para",[["Text","inline comments"],["Verbatim","<i>don't</i>"],["Text","appear"]]]]}]
+  [{"name":"prelude","cmds":[["Para",[["Text","inline comments"],["Verbatim","<i>don’t</i>"],["Text","appear"]]]]}]
 
   $ compile ../programs/jump-links.md
   [{"name":"prelude","cmds":[["Para",[["LinkJump","jump","One"]]]]},{"name":"One","cmds":[["Para",[["Text","asd"]]]]}]
@@ -59,7 +62,7 @@
   [{"name":"prelude","cmds":[["Para",[["Text","before"]]],["Para",[["Tunnel","tunnel_test_a"]]],["Para",[["Text","after"]]]]},{"name":"tunnel_test_a","cmds":[["Para",[["Text","a"]]],["Para",[["Jump","tunnel_test_b"]]]]},{"name":"tunnel_test_b","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]]]}]
 
   $ compile ../programs/spaces.md
-  [{"name":"prelude","cmds":[["Choices",[],[{"guard":["true"],"otherwise":false,"initial":[["Text","choice text"]],"code":[["Run","1"]],"rest":[["Para",[["Text","code after"]]]],"kind":["Consumable","c0"]}]],["Para",[["Text","\"Hi,"],["Interpolate","'A'"],["Text",",\" he said."]]],["Para",[["Text","\""],["Interpolate","'Edge case'"],["Text","\" here"]]],["Para",[["Interpolate","'A'"],["Text","'s thing"]]]]}]
+  [{"name":"prelude","cmds":[["Choices",[],[{"guard":["true"],"otherwise":false,"initial":[["Text","choice text"]],"code":[["Run","1"]],"rest":[["Para",[["Text","code after"]]]],"kind":["Consumable","c0"]}]],["Para",[["Text","“Hi,"],["Interpolate","'A'"],["Text",",” he said."]]],["Para",[["Text","“"],["Interpolate","'Edge case'"],["Text","“ here"]]],["Para",[["Interpolate","'A'"],["Text","’s thing"]]]]}]
 
   $ compile ../programs/inline-and-block-meta.md
   [{"name":"prelude","cmds":[["Para",[["Text","interpolation"],["Interpolate","'1'"]]],["Para",[["Text","inline meta"],["Meta","'1'"]]],["MetaBlock","'block meta'"]]}]
@@ -89,7 +92,7 @@
   error: sticky is incompatible with otherwise
 
   $ compile ../programs/api-local-state.md
-  [{"name":"ha","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","ha's state:"],["Interpolate","local.state"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","hb"]]]],"kind":["Sticky"]}]]]},{"name":"hb","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","hb's state:"],["Interpolate","local.state"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","ha"]]]],"kind":["Sticky"]}]]]}]
+  [{"name":"ha","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","ha’s state:"],["Interpolate","local.state"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","hb"]]]],"kind":["Sticky"]}]]]},{"name":"hb","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","hb’s state:"],["Interpolate","local.state"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","ha"]]]],"kind":["Sticky"]}]]]}]
 
   $ compile ../programs/api-seen.md
   [{"name":"ha","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","a"]],"rest":[],"kind":["Consumable","c1"]},{"guard":["seen.a"],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]]]},{"name":"a","cmds":[["Para",[["Jump","ha"]]]]}]
