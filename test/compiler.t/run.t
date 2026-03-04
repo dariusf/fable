@@ -1,6 +1,9 @@
 
   $ . ../testing.sh
 
+  $ compile ../programs/empty-section.md
+  [{"name":"a","cmds":[]}]
+
   $ compile ../programs/emphasis.md
   [{"name":"prelude","cmds":[["Para",[["Emph",[["Text","text"]]],["Text","from"],["Emph",[["Text","Scene"]]],["Text","1"]]]]}]
 

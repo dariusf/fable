@@ -1,6 +1,8 @@
 
   $ . ../testing.sh
 
+  $ run ../programs/empty-section.md
+
   $ run ../programs/emphasis.md
   <div class="para fadein">
     <i><span>text</span></i

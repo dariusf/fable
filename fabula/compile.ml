@@ -312,12 +312,15 @@ let validate_scenes prog =
 
 let to_program doc =
   let doc = Preprocess.run doc in
+  (* Format.printf "html: %s@." (Cmarkit_html.of_doc ~safe:true doc); *)
   let acc = Acc.add ("prelude", Acc.empty) Acc.empty in
   let prog = Folder.fold_doc block_cmd_folder acc doc in
   let scenes =
     Acc.to_list prog
     |> List.filter_map (fun (name, cmds) ->
         let cmds = Acc.to_list cmds in
-        match cmds with [] -> None | _ -> Some { name; cmds })
+        match (name, cmds) with
+        | "prelude", [] -> None
+        | _, _ -> Some { name; cmds })
   in
   scenes |> expand_more |> validate |> validate_scenes
