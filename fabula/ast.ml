@@ -18,6 +18,7 @@ and cmd =
   | VerbatimBlock of string (* block *)
   | Verbatim of string (* inline *)
   | Text of string
+  | Emph of cmd list
   | Break
   | LinkCode of string * string (* for links like [text](!id) *)
   | LinkJump of string * string (* for links like [text](#id) *)

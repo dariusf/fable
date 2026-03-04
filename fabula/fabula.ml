@@ -5,7 +5,7 @@ exception InputError = Common.InputError
 
 let rec may_have_text s =
   match s with
-  | Para p -> List.exists may_have_text p
+  | Para p | Emph p -> List.exists may_have_text p
   | Verbatim t | VerbatimBlock t | Text t -> String.length (String.trim t) > 0
   | Break | LinkCode _ | LinkJump _ | Interpolate _ -> true
   | Choices (ms, cs) -> (not (List.is_empty ms)) || not (List.is_empty cs)
@@ -97,7 +97,7 @@ let program_graph
     | LinkCode (_, _)
     | Interpolate _ | Run _ | VerbatimBlock _ | Verbatim _ | Text _ | Break ->
       []
-    | Para p -> List.concat_map outgoing_scenes p
+    | Para p | Emph p -> List.concat_map outgoing_scenes p
     | JumpDynamic _ ->
       (* cannot tell *)
       []

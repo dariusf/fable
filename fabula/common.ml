@@ -73,7 +73,7 @@ let fail fmt = Format.kasprintf (fun a -> raise (InputError a)) fmt
 let inline_text_folder =
   let open Cmarkit in
   Folder.make
-    ~inline:(fun _f acc i ->
+    ~inline:(fun self acc i ->
       match i with
       | Inline.Text (s, _) when not (is_whitespace s) ->
         Folder.ret (Acc.add (String.trim s) acc)
@@ -81,7 +81,9 @@ let inline_text_folder =
       | Inline.Autolink (_, _) -> failwith "unimplemented Autolink"
       | Inline.Break (_, _) -> failwith "unimplemented Break"
       | Inline.Code_span (_, _) -> failwith "code span"
-      | Inline.Emphasis (_, _) -> failwith "unimplemented Emphasis"
+      | Inline.Emphasis (e, _) ->
+        let inl = Inline.Emphasis.inline e in
+        Folder.ret (Folder.fold_inline self acc inl)
       | Inline.Image (_, _) -> failwith "unimplemented Image"
       | Inline.Inlines (_is, _) -> Folder.default
       | Inline.Link (_, _) -> failwith "unimplemented Link"

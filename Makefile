@@ -3,7 +3,7 @@ export OCAMLRUNPARAM=b
 
 .PHONY: default
 default:
-	@echo 'note: this only runs unit tests; make test to run integration tests'
+	@echo 'note: this only runs unit tests; make test to run integration/runtime tests'
 	dune build ./fable.exe
 	dune build @compiler # cram tests
 	dune build @editor # build

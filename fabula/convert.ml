@@ -4,7 +4,7 @@ open Cmarkit
 
 let inline_cmd_folder section =
   let inline : (Inline.t, cmd Acc.t) Folder.folder =
-   fun _f acc i ->
+   fun self acc i ->
     match i with
     | Inline.Text (s, _) when not (is_whitespace s) ->
       Folder.ret (Acc.add (Text (String.trim s)) acc)
@@ -32,7 +32,11 @@ let inline_cmd_folder section =
         | _ -> Run (String.trim c)
       in
       Folder.ret (Acc.add r acc)
-    | Inline.Emphasis (_, _) -> failwith "unimplemented Emphasis"
+    | Inline.Emphasis (e, _) ->
+      let inl = Inline.Emphasis.inline e in
+      let r = Folder.fold_inline self Acc.empty inl in
+      let acc = acc |> Acc.add (Emph (Acc.to_list r)) in
+      Folder.ret acc
     | Inline.Image (_, _) -> failwith "unimplemented Image"
     | Inline.Inlines (_is, _) ->
       (* Format.printf "INLINES@.";

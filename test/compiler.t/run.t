@@ -1,6 +1,9 @@
 
   $ . ../testing.sh
 
+  $ compile ../programs/emphasis.md
+  [{"name":"prelude","cmds":[["Para",[["Emph",[["Text","text"]]],["Text","from"],["Emph",[["Text","Scene"]]],["Text","1"]]]]}]
+
   $ compile ../programs/comments.md
   [{"name":"prelude","cmds":[["Para",[["Text","inline comments"],["Verbatim","<i>don't</i>"],["Text","appear"]]]]}]
 

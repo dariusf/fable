@@ -1,6 +1,13 @@
 
   $ . ../testing.sh
 
+  $ run ../programs/emphasis.md
+  <div class="para fadein">
+    <i><span>text</span></i
+    ><span> </span><span>from</span><span> </span><i><span>Scene</span></i
+    ><span> </span><span>1</span>
+  </div>
+
   $ run ../programs/comments.md
   <div class="para fadein">
     <span>inline comments</span><span> </span><span><i>don't</i></span

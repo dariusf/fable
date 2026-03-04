@@ -317,7 +317,7 @@ function interpret_Interpolate(parent, code) {
   } catch (e) {
     surfaceError(
       `Interpolate: error when executing ${code}: ${e.toString()}`,
-      e
+      e,
     );
   }
   s.textContent = v + "";
@@ -349,7 +349,7 @@ function interpret_JumpDynamic(scene_name) {
   } catch (e) {
     surfaceError(
       `JumpDynamic: error when executing ${code}: ${e.toString()}`,
-      e
+      e,
     );
   }
   internal.on_scene_visit.forEach((f) => f(scene));
@@ -421,28 +421,40 @@ function interpret_MetaMetaBlock(parent, k, current, rest) {
   } catch (e) {
     surfaceError(
       `${kind}: error when executing ${metaText}: ${e.toString()}`,
-      e
+      e,
     );
   }
 }
 
 function interpret_Para(parent, k, current, rest) {
-  if (current[0].length > 0) {
-    let d;
-    if (Fable.mayHaveText(current)) {
-      // removes unneccessary divs
-      d = createPara();
-      addBlock(parent, d);
-    } else {
-      d = parent;
-    }
-    interpret(current[1], d, () => {
-      interpret(rest, parent, k);
-    });
-  } else {
+  const [hd, tl] = current;
+  if (hd.length === 0) {
     // optimization
-    interpret(rest, parent, k);
+    return interpret(rest, parent, k);
   }
+
+  let d;
+  if (Fable.mayHaveText(current)) {
+    // removes unneccessary divs
+    d = createPara();
+    addBlock(parent, d);
+  } else {
+    d = parent;
+  }
+  interpret(tl, d, () => {
+    interpret(rest, parent, k);
+  });
+}
+
+function interpret_Emph(parent, k, current, rest) {
+  // console.log("??");
+  // debugger;
+  let [_, children] = current;
+  let s = document.createElement("i");
+  interpret(children, s, () => {
+    addInline(parent, s);
+    interpret(rest, parent, k);
+  });
 }
 
 function interpret_Choices(parent, k, current, rest) {
@@ -651,6 +663,9 @@ function interpret(instrs, parent, k) {
     case "Para":
       interpret_Para(parent, k, current, rest);
       break;
+    case "Emph":
+      interpret_Emph(parent, k, current, rest);
+      break;
     case "Choices":
       interpret_Choices(parent, k, current, rest);
       break;
@@ -757,7 +772,7 @@ function xpath(xpath) {
     document,
     null,
     XPathResult.ORDERED_NODE_ITERATOR_TYPE,
-    null
+    null,
   );
   let res = [];
   try {
@@ -800,7 +815,7 @@ function user_globals() {
   return Object.keys(window)
     .filter((x) => typeof window[x] !== "function")
     .filter(
-      (x) => Object.getOwnPropertyDescriptor(window, x).value !== undefined
+      (x) => Object.getOwnPropertyDescriptor(window, x).value !== undefined,
     )
     .filter(
       (a) =>
@@ -813,7 +828,7 @@ function user_globals() {
           // ours
           "story",
           "Fable",
-        ].includes(a)
+        ].includes(a),
     );
 }
 
