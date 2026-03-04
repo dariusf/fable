@@ -8,10 +8,10 @@ type frontmatter = (string * string) list
 (** * Parsing *)
 
 (** May fail with an [InputError] *)
-val parse_md_file : string -> frontmatter * Ast.program
+val parse_md_file : string -> frontmatter * program
 
 (** May fail with an [InputError] *)
-val parse_str : string -> Ast.program
+val parse_str : string -> program
 
 val print_story_js : ?out:out_channel -> program -> unit
 
@@ -21,15 +21,10 @@ val print_story_js : ?out:out_channel -> program -> unit
 val may_have_text : cmd -> bool
 
 (** Pulls in choices recursively from a "more" scene *)
-val recursively_add_choices :
-  (string -> Ast.cmd list) -> Ast.more -> Ast.choice list
+val recursively_add_choices : (string -> cmd list) -> more -> choice list
 
 (* * Program graphs *)
-type renderer
-
-val graphviz_renderer : renderer
-val mermaid_renderer : renderer
-val program_graph : renderer -> scene list -> string
+module Graph = Graph
 
 (* * JSON *)
 val program_to_yojson : program -> Yojson.Safe.t
