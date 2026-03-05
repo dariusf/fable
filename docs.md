@@ -86,7 +86,7 @@ The block form of this uses the `meta` or `~` info-string after the language typ
     CODE
     ```
 
-See [the docs on the runtime](#runtime) for APIs and conventions.
+See [the docs on the runtime](#runtime) for more on its API.
 
 ### Jumps and Tunnels
 
@@ -105,27 +105,27 @@ A `tunnel` or `>->` prefix denotes a _tunnel_ to a named section, which returns 
 
 ### Choices
 
-Lists denote choices. Each choice item is minimally of the form ``TEXT `CODE` BODY``.
+Lists denote choices. Each choice item is typically of the form ``TEXT `CODE` BODY``.
 
-- TEXT will be shown to the player, as the text of that item.
-- CODE is some fragment of code that will be run when the choice is selected. Its result is not shown.
-- BODY is some unrestricted Fable fragment that will be shown. Indenting the body with 4 spaces Markdown-style allows it to contain other elements, allowing nested choices.
+- TEXT will be shown to the player, as the clickable text of that item.
+- CODE is some fragment of code that will be run when the choice is selected. Its result is not shown. It can be left empty, in which case it functions as a divider between what is shown before and on selection.
+- BODY is some Fable fragment that will be executed only if the item is chosen.
 
-The section continues after a choice, like Ink's [weave](https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md#the-weave-philosophy). This is the default, unlike in Ink.
+The section *continues* after a choice, like Ink's [weave](https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md#the-weave-philosophy). This is the default, unlike in Ink.
 
-**Preconditions.** Each choice item may have a _precondition_ `` `guard CODE` `` or `` `?CODE` ``. It will then only be shown if CODE evaluates to a truthy value.
+**Nested choices.** Indenting the body with 4 spaces (Markdown-style) allows it to contain other elements, allowing nested choices.
+
+**Preconditions.** Each choice item may have a _precondition_ `` `guard CODE` `` or `` `?CODE` ``, preceding the item text. The item will then be shown only if CODE evaluates to a truthy value.
 
 **Persistence.** By default, each item in the choice can only be selected once: after selecting an item, if control later returns to the section the choice was in, the item cannot be selected again.
-This can be overriden by including `` `sticky` `` somewhere in the body, making the choice _persistent_.
-Whether a choice is persistent is orthogonal to whether it has a precondition.
+This can be changed by starting the choice text with `` `sticky` ``, making the choice _persistent_.
+Whether a choice is persistent is independent of whether it has a precondition.
 
-<!-- interpolated/inlined choices -->
-
-**Interpolated choices.** A choice may have items consisting only of `` `more SECTION` ``, where SECTION is expected to have a single choice in it; the options of that choice will then be inlined transparently into the current choice.
+**Inlined choices.** A choice may have items consisting only of `` `more SECTION` ``, where SECTION is expected to have a single choice in it; the options of that choice will then be inlined transparently into the current choice.
 This may happen recursively.
-Such items may have preconditions, in which case they apply to every item inlined.
+Such items may have preconditions, in which case they apply to every inlined item.
 
-**Fallback.** A fallback choice can be given by including `` `otherwise` `` somewhere in the body. It will only be shown if no other choices are available.
+**Fallback.** A fallback choice can be given by starting the choice text with `` `otherwise` ``. It will then be shown only if no other choices are available.
 Persistent choices are incompatible with fallback choices, as then the fallback choices will never be taken.
 
 ### Breaks and Spaces
