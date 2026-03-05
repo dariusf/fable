@@ -21,4 +21,5 @@ graph() {
   fable -s $md -o $out/test
   # nop <
   cat $out/test/graph.dot
+  cat $out/test/graph.mmd
 }

@@ -104,6 +104,9 @@
   digraph G {
     "ha" -> "ha";
   }
+  %%{ init: { 'flowchart': {'defaultRenderer': 'elk' } } }%%
+  flowchart TD
+    ha --> ha;
   $ compile ../programs/error-unmatched-inline-closing.md
   error: unclosed tag a
 
