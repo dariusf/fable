@@ -5,9 +5,11 @@ let standalone = ref false
 let testing = ref false
 let input_files = ref []
 let output_file = ref None
+let show_word_count = ref false
 
 let arg_specs =
   [
+    ("-w", Arg.Set show_word_count, "Show word count");
     ("-s", Arg.Set standalone, "Create a standlone directory");
     ("-t", Arg.Set testing, "Generates a testing setup");
     ( "-o",
@@ -16,9 +18,10 @@ let arg_specs =
        instruction data in JSON" );
   ]
 
-let get_fm fm name default = List.assoc_opt name fm |> Option.value ~default
-
 let write_standalone dir frontmatter json =
+  let get_fm fm name default =
+    List.assoc_opt name fm |> Option.value ~default
+  in
   match Sys.file_exists dir with
   | true ->
     Format.printf "%s already exists@." dir;
@@ -46,6 +49,8 @@ let write_standalone dir frontmatter json =
       write_file (s "%s/dune" dir) "(cram (deps (glob_files *)))"
     end;
     (* done *)
+    if !show_word_count then
+      Format.printf "Words: %d@." (Fabula.count_words json);
     Out_channel.with_open_text (s "%s/story.js" dir) (fun out ->
         Fabula.print_story_js ~out json)
 
@@ -55,13 +60,11 @@ let () =
     "fable [-s] <file1> [<file2>] ... -o <output>";
   match !input_files with
   | [f] ->
-    (* let frontmatter, json = *)
     (match Fabula.parse_md_file f with
     | exception Fabula.InputError s ->
       Format.eprintf "error: %s@." s;
       exit 1
     | frontmatter, json ->
-      (* in *)
       (match !standalone with
       | true ->
         (match !output_file with

@@ -1,6 +1,7 @@
 open Common
-include Ast
+module Ast = Ast
 module Graph = Graph
+include Ast
 
 exception InputError = Common.InputError
 
@@ -132,3 +133,24 @@ let parse_str str =
   (* ~resolver:Compile.resolver  *)
   let doc = Cmarkit.Doc.of_string str in
   doc |> Compile.to_program
+
+let count_words (p : program) =
+  let count = ref 0 in
+  let add s =
+    let words = String.split_on_char ' ' s in
+    List.iter (fun w -> if String.trim w <> "" then incr count) words
+  in
+  let rec walk_cmd (c : cmd) =
+    match c with
+    | Text s -> add s
+    | Para cmds | Emph cmds -> List.iter walk_cmd cmds
+    | Choices (_, choices) ->
+      List.iter
+        (fun (ch : choice) ->
+          List.iter walk_cmd ch.initial;
+          List.iter walk_cmd ch.rest)
+        choices
+    | _ -> ()
+  in
+  List.iter (fun (s : scene) -> List.iter walk_cmd s.cmds) p;
+  !count

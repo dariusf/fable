@@ -1,6 +1,8 @@
 (** A library for working with Fable. Used by CLI tool, editor, and runtime. *)
 open Ast
 
+module Ast = Ast
+
 exception InputError of string
 
 type frontmatter = (string * string) list
@@ -16,6 +18,9 @@ val parse_str : string -> program
 val print_story_js : ?out:out_channel -> program -> unit
 
 (** * Processing *)
+
+(** Word count, excluding code *)
+val count_words : program -> int
 
 (** Overapproximate check for whether a command produces text *)
 val may_have_text : cmd -> bool
