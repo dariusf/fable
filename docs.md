@@ -1,6 +1,7 @@
 
 - [Fable User Guide](#fable-user-guide)
-  - [Syntax, and some design notes](#syntax-and-some-design-notes)
+  - [Workflows](#workflows)
+  - [Language Reference](#language-reference)
     - [Prose](#prose)
     - [Sections](#sections)
     - [Code](#code)
@@ -8,10 +9,13 @@
     - [Choices](#choices)
     - [Breaks and Spaces](#breaks-and-spaces)
     - [Links](#links)
-  - [Semantics](#semantics)
+    - [Semantics](#semantics)
   - [Runtime](#runtime)
+    - [Programming](#programming)
   - [CLI](#cli)
-    - [Exporting a standalone story](#exporting-a-standalone-story)
+    - [Exporting a standalone HTML page](#exporting-a-standalone-html-page)
+    - [Writing](#writing)
+    - [Visualising a story](#visualising-a-story)
     - [Expect tests](#expect-tests)
     - [Random testing](#random-testing)
   - [Related work](#related-work)
@@ -23,7 +27,17 @@
 
 # Fable User Guide
 
-## Syntax, and some design notes
+## Workflows
+
+Fable consists of a browser-based [editor](https://dariusf.github.io/fable/), a CLI tool, and a library (Fabula).
+
+- The editor is the most accessible way to get started. However, as it runs completely client-side, the only durable way to save your story is by encoding it in a URL. While works in theory[^url], you'll want to save longer stories manually. The editor also does not provide a way to package a story as a HTML file for deployment to e.g. itch.
+- To do that, you'll want at some point to write your story in a text editor, and use a build script to invoke the CLI tool.
+- The library, Fabula, is mostly intended for internal use in the above two frontends. Let me know your use cases for it.
+
+[^url]: The maximum length of a URL [varies a lot across browsers](https://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers), but modern browsers either do not limit it or have absurdly high limits. For comparison, The Lord of the Rings is 3MB of text, so you could in theory write that entirely on an iPhone in Safari.
+
+## Language Reference
 
 Fable is a Markdown dialect. Its design is guided by a number of desiderata:
 
@@ -54,7 +68,7 @@ Content before first section goes into an implicit section named "prelude".  The
 
 Code can be freely interleaved with prose in Fable.
 
-Inline code `` `CODE` `` is executed when encountered. Its output is hidden. Code blocks (with an optional language declaration) can be used for longer snippets.
+Inline code `` `CODE` `` is executed when encountered (see the [programming guide](#programming) for how). Its output is hidden. Code blocks (with an optional language declaration) can be used for longer snippets.
 
     ```js
     CODE
@@ -118,7 +132,7 @@ Persistent choices are incompatible with fallback choices, as then the fallback 
 
 Like in Markdown, double linebreaks delimit paragraphs, and single linebreaks are turned into spaces.
 
-Spaces between prose and other instructions are stripped, so they have to be readded if interpolation is used.
+For control, spaces between prose and other instructions are stripped, so they have to be readded if interpolation is used.
 
 ### Links
 
@@ -130,9 +144,9 @@ A `[TEXT](#SECTION)` link jumps to SECTION.
 
 A `[TEXT](!FN)` link causes the function FN to be executed.
 
-## Semantics
+### Semantics
 
-A Fable story can be given a (denotational) semantics by (rough) analogy to procedural programs.
+A Fable story can be given a (denotational) semantics as a procedural program.
 
 | Fable   | Program         |
 | ------- | --------------- |
@@ -173,19 +187,26 @@ Direct console access to its APIs is supported.
 - `jump(label)`, `tunnel(label)`: builders for Fable fragments which may help reduce the amount of quoting required
 - `randomly_test()`, `stop_testing()`: start and stop random testing
 
-All other APIs are considered unstable.
-
-By convention, user state should be maintained in `window.state`.
+All other parts of the runtime are considered unstable and not part of the API.
 
 <!-- TODO save and load -->
 
+### Programming
+
+Code is evaluated using [indirect `eval`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval), which means:
+
+- It runs in the global scope and cannot access local variables.
+- Local variables (from `let` and `const`) are effectively scoped to each code block or backticked span.
+- Any programming which involves story-wide state should be done with global variables, either by assigning to `window`, using `var`, or assigning to a variable without a prior declaration.
+    - This enables the use of the browser devtools to inspect or modify story state.
+    - By convention, user state is in `window.state`.
+
 ## CLI
 
-### Exporting a standalone story
+### Exporting a standalone HTML page
 
 ```sh
-# if fable is not on the $PATH
-dune exec ./fable.exe -- -s examples/crime.md -o _build
+fable -s examples/crime.md -o _build
 open _build/index.html
 
 # add other files to _build before deploying, e.g. to itch
@@ -193,38 +214,102 @@ cd _build
 zip -r game.zip *
 butler push game.zip $USER/$GAME:html5
 ```
+<!--
+### Compiling a Fable story
+
+```sh
+fable examples/crime.md > story.js
+```
+-->
+
+### Writing
+
+A script (call it `write.sh`) for a nice offline writing setup with live reloading.
+
+```sh
+#!/usr/bin/env bash
+
+build() {
+  fable -s story.md -o _build
+}
+
+if [ -z $1 ]; then
+  vite _build &
+
+  # kill child processes on interrupt
+  procs="$(jobs -p | tr '\n' ' ')"
+  trap "kill $procs" 2
+
+  git ls | entr -ccr ./write.sh build
+else
+  "$1"
+fi
+```
+
+### Visualising a story
+
+When building in standalone mode, `graph.dot` and `graph.mmd` are written to the build directory. They can be rendered using Graphviz and Mermaid.
+
+```sh
+# Most package managers have Graphviz
+dot -Tsvg -o _build/graph.svg _build/graph.dot
+
+# npm install -g @mermaid-js/mermaid-cli
+mmdc -i _build/graph.mmd -o _build/graph-mm.svg
+```
+
+Because of Fable's expressiveness and dynamic nature, it is not possible to show a perfectly accurate graph, so the output is a best-effort overapproximation. Dotted edges indicate dynamic edges, indicating that it *may be possible* to jump between the connected sections. Following these rules of thumb will help produce a more accurate graph:
+
+- If you only use `` `->SCENE` `` to jump, the output will be completely accurate.
+- If you jump dynamically, avoid dynamically constructing section names. Instead, invoke `jump` directly on constant section names, and put those in branches. That will produce accurate dotted edges.
 
 ### Expect tests
 
+When writing an extensive story, it's very useful to guard against regressions by recording the result of a playthrough and comparing it against what you get in subsequent versions.
+
+First, generate your story with tests.
+
 ```sh
 fable -s examples/crime.md -o _build -t
-cp tests.t _build # make tests available
+```
 
-# building blocks for your build script
+This will produce a minimal dune project in the build directory with [cram](https://dune.readthedocs.io/en/stable/reference/dune/cram.html) tests set up.
+
+Next, add your tests.
+
+```sh
+code tests.t # first time
+cp tests.t _build # subsequent times
+```
+
+`tests.t` should be a cram test file which invokes the `test.js` script, passing it a sequence of choices to execute against the story. Example:
+
+```cram
+  $ node test.js /abs/path/to/index.html 'Go to Scene 1' 'Apple'
+```
+
+Finally, invoke `dune test` in the build directory.
+
+```sh
+# npm i -g playwright
+# npm i -g @playwright/browser-chromium
 cd _build
-npm install
+npm link playwright
 dune test
+
+# if anything changes
 dune promote && cp tests.t ..
 ```
 
-This will produce a minimal dune project in the build directory with cram tests set up.
-tests.t should be a cram test file which invokes the test.js script, passing it a sequence of actions to execute against the page.
+This will play through your story headlessly using Playwright and output the raw HTML of the resulting page to the test file.
 
-```
-$ node test.js 'Go to Scene 1' 'Apple'
-```
+You can then `promote` the output out of the build directory, so you have a record of how the choices played out to compare against in future.
 
-test.js will run those actions using a headless browser and output the raw HTML of the resulting page.
-
-Some system dependencies and development tools are required:
-dune,
-node and npm,
-chromedriver/geckodriver on the `$PATH`,
-Firefox/Chrome.
+The simplest way to make Playwright available is to install it globally and link it into the build directory right before running the tests.
 
 ### Random testing
 
-Standalone stories can be tested randomly by evaluating `randomly_test()` in the console.
+Standalone stories can be tested randomly in the browser by evaluating `randomly_test()` in the console.
 
 The default oracle looks for unhandled exceptions.
 Custom testing oracles can be added by pushing functions which return `true` on error into `internal.bug_detectors`.

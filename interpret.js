@@ -243,9 +243,9 @@ function inlinePrecedingSpaceCondition(parent, elt) {
 }
 
 function execute(s) {
-  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval
   // indirect eval, which runs in the global scope
-  window.local = internal.section_state[internal.current_scene];
+  https: window.local = internal.section_state[internal.current_scene];
   return eval?.(s);
 
   // function constructor also runs in the global scope
