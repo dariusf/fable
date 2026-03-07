@@ -134,6 +134,10 @@ Like in Markdown, double linebreaks delimit paragraphs, and single linebreaks ar
 
 For control, spaces between prose and other instructions are stripped, so they have to be readded if interpolation is used.
 
+A minor extension is the double semicolon `;;`.
+This acts as a paragraph break wherever it appears, the equivalent of two newlines, followed by matching the indentation of the context.
+This is especially useful in lists to create nested choices.
+
 ### Links
 
 Links allow user input outside the usual flow of choices.

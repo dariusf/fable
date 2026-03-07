@@ -10,6 +10,9 @@
   $ compile ../programs/empty-section.md
   [{"name":"a","cmds":[]}]
 
+  $ compile ../programs/double-semicolon.md
+  [{"name":"prelude","cmds":[["Para",[["Text","a"]]],["Para",[["Text","b"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","c"]],"code":[["Run",""]],"rest":[["Para",[["Text","haha"]]],["Para",[["Text","b"],["Run",";;"],["Text","this should not be expanded"]]]],"kind":["Consumable","c0"]}]]]}]
+
   $ compile ../programs/emphasis.md
   [{"name":"prelude","cmds":[["Para",[["Emph",[["Text","text"]]],["Text","from"],["Emph",[["Text","Scene"]]],["Text","1"]]]]}]
 

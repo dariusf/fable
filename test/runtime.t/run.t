@@ -13,6 +13,14 @@
 
   $ run ../programs/empty-section.md
 
+  $ run ../programs/double-semicolon.md c
+  <div class="para fadein old"><span>a</span></div>
+  <div class="para fadein old"><span>b</span></div>
+  <div class="para fadein"><span>haha</span></div>
+  <div class="para fadein">
+    <span>b</span><span> </span><span>this should not be expanded</span>
+  </div>
+
   $ run ../programs/emphasis.md
   <div class="para fadein">
     <i><span>text</span></i
