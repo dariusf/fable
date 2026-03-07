@@ -67,7 +67,7 @@ let internal = defaultInternal();
 
 function defaultInternal() {
   return {
-    debug: false,
+    debug: false, // meant to be togged here
     // callbacks
     bug_detectors: [],
     // on_choice: [], // TODO unused?
@@ -98,7 +98,7 @@ function defaultInternal() {
     // choices taken by the user
     choice_history: [],
     // choices to immediately take when hot reloading
-    immediately_take: [],
+    immediately_take: shouldLoadGame() ? loadGame() : [],
     // whether or not to send parent events. for internal use
     system_made_choice: false,
   };
@@ -530,6 +530,7 @@ function interpret_Choices(parent, k, current, rest) {
       internal.choice_history.push(a.textContent);
       informEditorOfChoice(a.textContent);
       internal.on_interact.forEach((f) => f());
+      saveGame();
       if (choices_disappear) {
         parent.removeChild(ul);
       } else {
@@ -803,6 +804,13 @@ function isStandalone() {
   return !inIFrame() || location.host.indexOf("itch") > -1;
 }
 
+function isInDev() {
+  return (
+    location.host.indexOf("localhost") > -1 ||
+    location.host.indexOf("127.0.0.1") > -1
+  );
+}
+
 function inIFrame() {
   try {
     return window.self !== window.top;
@@ -830,7 +838,7 @@ function user_globals() {
           "chrome",
           // jsoo
           "jsoo_runtime",
-          "caml_fs_tmp",
+          "jsoo_fs_tmp",
           // ours
           "story",
           "Fable",
@@ -843,3 +851,56 @@ document.body.onkeydown = function (e) {
     document.querySelector(`a[idx="${+e.key}"]`)?.click();
   }
 };
+
+// back button
+window.onpopstate = function (_) {
+  if (!isInDev()) return false;
+  if (!isStandalone()) return false;
+  window.location.reload();
+  // it's also possible to rerun from the start
+};
+
+function shouldLoadGame() {
+  if (!isInDev()) return false;
+  if (!isStandalone()) return false;
+  const p = new URLSearchParams(window.location.search);
+  return !!p.get("choices");
+}
+
+function loadGame() {
+  const p = new URLSearchParams(window.location.search);
+  try {
+    return JSON.parse(base64ToString(p.get("choices")));
+  } catch (e) {
+    console.error("an error occurred loading choices, so starting over", e);
+    // restart the state, which seems better than crashing and the game being unplayable
+    const url = new URL(window.location);
+    url.searchParams.delete("choices");
+    window.history.pushState({}, "", url);
+    return [];
+  }
+}
+
+function saveGame() {
+  if (!isInDev()) return;
+  if (!isStandalone()) return;
+  const s = stringToBase64(JSON.stringify(internal.choice_history));
+  const url = new URL(window.location);
+  url.searchParams.set("choices", s);
+  window.history.pushState({}, "", url);
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa
+function base64ToString(base64) {
+  const binString = atob(base64);
+  return new TextDecoder().decode(
+    Uint8Array.from(binString, (m) => m.codePointAt(0)),
+  );
+}
+
+function stringToBase64(str) {
+  const binString = Array.from(new TextEncoder().encode(str), (byte) =>
+    String.fromCodePoint(byte),
+  ).join("");
+  return btoa(binString);
+}
