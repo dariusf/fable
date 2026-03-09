@@ -13,7 +13,7 @@
 
   $ run ../programs/empty-section.md
 
-  $ run ../programs/double-semicolon.md c
+  $ run ../programs/paragraph-break.md c
   <div class="para fadein old"><span>a</span></div>
   <div class="para fadein old"><span>b</span></div>
   <div class="para fadein"><span>haha</span></div>

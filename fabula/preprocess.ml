@@ -147,31 +147,75 @@ module SmartyPants = struct
 end
 
 module DoubleSemicolon = struct
-  let rec split_inlines (inls : Inline.t list) : Inline.t list list =
+  let split_inlines (inls : Inline.t list) : Inline.t list list =
     let rec loop current_para paras = function
       | [] -> List.rev (List.rev current_para :: paras)
       | inl :: rest ->
-        match inl with
+        (match inl with
         | Inline.Text (s, meta) ->
           let parts = Str.split_delim (Str.regexp_string ";;") s in
           (match parts with
           | [] -> loop current_para paras rest
           | [p] -> loop (Inline.Text (p, meta) :: current_para) paras rest
           | first :: others ->
-            let paras = List.rev (Inline.Text (first, meta) :: current_para) :: paras in
+            let paras =
+              List.rev (Inline.Text (first, meta) :: current_para) :: paras
+            in
             let rec fold_others paras = function
               | [] -> failwith "impossible"
               | [last] -> loop [Inline.Text (last, meta)] paras rest
-              | t :: ts -> fold_others (List.rev [Inline.Text (t, meta)] :: paras) ts
+              | t :: ts ->
+                fold_others (List.rev [Inline.Text (t, meta)] :: paras) ts
             in
             fold_others paras others)
-        | Inline.Inlines (ls, _meta) ->
-          loop current_para paras (ls @ rest)
-        | _ -> loop (inl :: current_para) paras rest
+        | Inline.Inlines (ls, _meta) -> loop current_para paras (ls @ rest)
+        | _ -> loop (inl :: current_para) paras rest)
     in
     loop [] [] inls
     |> List.map (fun inls ->
-         List.filter (function Inline.Text (s, _) when s = "" -> false | _ -> true) inls)
+        List.filter
+          (function Inline.Text (s, _) when s = "" -> false | _ -> true)
+          inls)
+    |> List.filter (function [] -> false | _ -> true)
+
+  let _block _ = function
+    | Block.Paragraph (p, m) ->
+      let inls = [Block.Paragraph.inline p] in
+      let splitted = split_inlines inls in
+      (match splitted with
+      | [] -> Mapper.default
+      | [one] ->
+        let p = Block.Paragraph.make (Inline.Inlines (one, Meta.none)) in
+        Mapper.ret (Block.Paragraph (p, m))
+      | many ->
+        let paras =
+          List.map
+            (fun inls ->
+              let inline = Inline.Inlines (inls, Meta.none) in
+              Block.Paragraph (Block.Paragraph.make inline, Meta.none))
+            many
+        in
+        Mapper.ret (Block.Blocks (paras, Meta.none)))
+    | _ -> Mapper.default
+end
+
+module SemicolonBreak = struct
+  let split_inlines (inls : Inline.t list) : Inline.t list list =
+    let rec loop current_para paras = function
+      | [] -> List.rev (List.rev current_para :: paras)
+      | inl :: rest ->
+        (match inl with
+        | Inline.Code_span (cs, _) when Inline.Code_span.code cs = ";" ->
+          loop [] (List.rev current_para :: paras) rest
+        | Inline.Inlines (ls, _meta) -> loop current_para paras (ls @ rest)
+        | _ -> loop (inl :: current_para) paras rest)
+    in
+    loop [] [] inls
+    |> List.map (fun inls ->
+        List.filter
+          (function
+            | Inline.Text (s, _) when String.trim s = "" -> false | _ -> true)
+          inls)
     |> List.filter (function [] -> false | _ -> true)
 
   let block _ = function
@@ -185,10 +229,11 @@ module DoubleSemicolon = struct
         Mapper.ret (Block.Paragraph (p, m))
       | many ->
         let paras =
-          List.map (fun inls ->
-            let inline = Inline.Inlines (inls, Meta.none) in
-            Block.Paragraph (Block.Paragraph.make inline, Meta.none)
-          ) many
+          List.map
+            (fun inls ->
+              let inline = Inline.Inlines (inls, Meta.none) in
+              Block.Paragraph (Block.Paragraph.make inline, Meta.none))
+            many
         in
         Mapper.ret (Block.Blocks (paras, Meta.none)))
     | _ -> Mapper.default
@@ -197,5 +242,6 @@ end
 let run doc =
   doc
   |> Mapper.map_doc (Mapper.make ~inline:SmartyPants.inline_mapper ())
-  |> Mapper.map_doc (Mapper.make ~block:DoubleSemicolon.block ())
+  |> Mapper.map_doc (Mapper.make ~block:SemicolonBreak.block ())
+  (* |> Mapper.map_doc (Mapper.make ~block:DoubleSemicolon.block ()) *)
   |> Mapper.map_doc (Mapper.make ~block:CollapseTags.block ())

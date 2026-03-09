@@ -134,9 +134,12 @@ Like in Markdown, double linebreaks delimit paragraphs, and single linebreaks ar
 
 For control, spaces between prose and other instructions are stripped, so they have to be readded if interpolation is used.
 
-A minor extension is the double semicolon `;;`.
-This acts as a paragraph break wherever it appears, the equivalent of two newlines, followed by matching the indentation of the context.
-This is especially useful in lists to create nested choices.
+A minor extension is the quoted semicolon `` `;` ``.
+This acts as a paragraph break wherever it appears, i.e. the equivalent of two newlines, followed by matching the indentation of the context.
+This is especially useful in places where paragraph breaks are frequent but cumbersome, e.g. dialogue inside a choice item, where paragraphs are used to signal new speakers.
+For block-level things like nested choices, indentation is preferable.
+
+The double semicolon is used for putting paragraph breaks between things like dialogue. For blocks, nested choices indent is better
 
 ### Links
 
