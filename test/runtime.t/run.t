@@ -45,6 +45,11 @@
   $ run ../programs/frontmatter.md
   <div class="para fadein"><span>hello</span></div>
 
+  $ run ../programs/choices-loose.md First
+  <div class="para fadein old"><span>Before</span></div>
+  <div class="para fadein"><span>Body</span></div>
+  <div class="para fadein"><span>After</span></div>
+
   $ run ../programs/choices-tweet-style.md a
   <div class="para fadein"><span>this is later cleared</span></div>
   <ul class="choice fadein">

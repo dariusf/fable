@@ -108,12 +108,18 @@ A `tunnel` or `>->` prefix denotes a _tunnel_ to a named section, which returns 
 Lists denote choices. Each choice item is typically of the form ``TEXT `CODE` BODY``.
 
 - TEXT will be shown to the player, as the clickable text of that item.
-- CODE is some fragment of code that will be run when the choice is selected. Its result is not shown. It can be left empty, in which case it functions as a divider between what is shown before and on selection.
+- CODE is some fragment of code that will be run when the choice is selected. Its result is not shown.
 - BODY is some Fable fragment that will be executed only if the item is chosen.
 
 The section *continues* after a choice, like Ink's [weave](https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md#the-weave-philosophy). This is the default, unlike in Ink.
 
-**Nested choices.** Indenting the body with 4 spaces (Markdown-style) allows it to contain other elements, allowing nested choices.
+**Loose lists.** Like in Markdown, lists can be loose, with blank lines between items. This is useful if items have a significant body.
+
+**No code.** CODE can be left empty `` ` ` ``, in which case it functions as a divider between what is shown before and on selection. It can also be replaced with a single line break.
+
+**Nested choices.** Indenting the body so that it lines up with the text of the bullet (Markdown-style) allows it to contain other elements, allowing nested choices.
+
+<!-- https://spec.commonmark.org/0.31.2/#list-items -->
 
 **Preconditions.** Each choice item may have a _precondition_ `` `guard CODE` `` or `` `?CODE` ``, preceding the item text. The item will then be shown only if CODE evaluates to a truthy value.
 
