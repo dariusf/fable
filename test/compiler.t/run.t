@@ -94,6 +94,9 @@
   $ compile ../programs/choices-otherwise.md
   [{"name":"h","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[],"rest":[],"kind":["Consumable","c1"]},{"guard":[],"otherwise":true,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]],["Para",[["Jump","h"]]]]}]
 
+  $ compile ../programs/choices-exhausted.md
+  [{"name":"prelude","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","prelude"]],"rest":[],"kind":["Consumable","c1"]},{"guard":[],"otherwise":true,"initial":[["Text","b"]],"code":[["Jump","prelude"]],"rest":[],"kind":["Consumable","c0"]}]],["Para",[["Text","c"]]]]}]
+
   $ compile ../programs/error-choices-sticky-otherwise.md
   error: sticky is incompatible with otherwise
 

@@ -135,6 +135,10 @@ Such items may have preconditions, in which case they apply to every inlined ite
 **Fallback.** A fallback choice can be given by starting the choice text with `` `otherwise` ``. It will then be shown only if no other choices are available.
 Persistent choices are incompatible with fallback choices, as then the fallback choices will never be taken.
 
+**Empty choices.**
+Empty choices may arise due to incomplete preconditions, or choices being exhausted without an `otherwise` clause.
+They get _get stuck_ rather than continuing with whatever is after.
+
 ### Breaks and Spaces
 
 Like in Markdown, double linebreaks delimit paragraphs, and single linebreaks are turned into spaces.

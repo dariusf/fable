@@ -566,14 +566,21 @@ function interpret_Choices(parent, k, current, rest) {
       idx++;
     }
   }
+  // TODO empty choices do not continue at the moment
+  // let otherwisesGenerated = 0;
   if (choicesGenerated === 0) {
     const otherwises = allChoiceItems.filter((i) => i.otherwise);
     console.assert(otherwises.length <= 1); // TODO compile time check
     for (const item of otherwises) {
-      generateChoice(item, idx);
-      idx++;
+      if (generateChoice(item, idx)) {
+        // otherwisesGenerated++;
+        idx++;
+      }
     }
   }
+  // if (choicesGenerated + otherwisesGenerated === 0) {
+  //   return interpret(rest, parent, k);
+  // }
 
   // possibly take choices for hot reloading
   if (internal.immediately_take.length > 0) {

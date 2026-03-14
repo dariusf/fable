@@ -223,6 +223,9 @@ This has to be checked dynamically because jumps may be produced by meta blocks.
     </li>
   </ul>
 
+  $ run ../programs/choices-exhausted.md a b
+  <ul class="choice fadein"></ul>
+
   $ run ../programs/api-local-state.md b a b a b
   <div class="para fadein old">
     <span>ha’s state:</span><span> </span><span>0</span>
