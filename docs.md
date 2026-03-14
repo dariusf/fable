@@ -20,6 +20,7 @@
     - [Random testing](#random-testing)
   - [Related work](#related-work)
 - [Development](#development)
+  - [Getting started](#getting-started)
   - [Compiler and Runtime](#compiler-and-runtime)
   - [Editor](#editor)
     - [Restarting](#restarting)
@@ -340,6 +341,13 @@ Ink is a scripting language: it is interpreted at runtime by a separate game eng
 - Fable's authoring language is simpler and smaller. It is a Markdown dialect, so e.g. inline HTML can be used to tag things, there is already syntax for images, etc. It relies _unquoting_ to JavaScript to dynamically generate bits of Fable, compared to having special syntax for e.g. conditionals.
 
 # Development
+
+## Getting started
+
+```sh
+opam install --deps-only .
+npm i -g playwright @playwright/browser-chromium prettier
+```
 
 ## Compiler and Runtime
 

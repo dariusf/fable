@@ -11,7 +11,8 @@ run() {
   shift
   out=$(mktemp -d)
   fable -s $md -o $out/test
-  node test.js $out/test/index.html "$@" | npx prettier --parser html
+  npm link playwright > /dev/null
+  node test.js $out/test/index.html "$@" | prettier --parser html
 }
 
 graph() {
