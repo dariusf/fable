@@ -29,7 +29,7 @@
   [{"name":"prelude","cmds":[["Para",[["Text","hello"]]]]}]
 
   $ compile ../programs/choices-loose.md First
-  [{"name":"prelude","cmds":[["Para",[["Text","Before"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","First"]],"code":[["Break"]],"rest":[["Para",[["Text","Body"]]]],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","Second"]],"code":[["Break"]],"rest":[["Para",[["Text","Body"]]]],"kind":["Consumable","c0"]}]],["Para",[["Text","After"]]]]}]
+  [{"name":"prelude","cmds":[["Para",[["Text","Before"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","First"]],"code":[["Break"]],"rest":[["Para",[["Text","Body"]]]],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","Second"]],"code":[],"rest":[["Para",[["Text","Body"]]]],"kind":["Consumable","c0"]}]],["Para",[["Text","After"]]]]}]
 
   $ compile ../programs/choices-tweet-style.md
   [{"name":"h","cmds":[["Run","tweet_style_choices = true;"],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Run","1"]],"rest":[["Para",[["Text","this is later cleared"],["Jump","h"]]]],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","c"]],"code":[["Run","1"]],"rest":[],"kind":["Consumable","c0"]}]],["Para",[["Text","after"]]]]}]
