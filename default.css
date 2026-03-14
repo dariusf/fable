@@ -1,0 +1,142 @@
+:root {
+  --main-bg-color: #f7f7f7;
+  --main-bg-color-lighter: #fafafa;
+  --main-fg-color: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --main-bg-color: #202124;
+    --main-bg-color-lighter: #4e5159;
+    --main-fg-color: #e8eaed;
+  }
+}
+
+/* prevent body from scrolling */
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  /* https://github.com/system-fonts/modern-font-stacks */
+  /* font-family: Charter, 'Bitstream Charter', 'Sitka Text', Cambria, serif; */
+  font-family: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, serif;
+  background-color: var(--main-bg-color);
+  color: var(--main-fg-color);
+  line-height: 1.4;
+  font-size: calc(15px + 0.390625vw);
+  /* font-size: 2.5vmin; */
+  /* font-size: 3.5vmin; */
+}
+
+#centred-container {
+  display: flex;
+  justify-content: center;
+  height: 100%;
+}
+
+/* this is so we don't rely on the page's scrollbars, which are buggy on ios/itch */
+#scroll-container {
+  max-height: 100%;
+  width: 90%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+#scroll-placeholder {
+  height: 20%;
+}
+
+/* hide the scrollbars of the contain container */
+#scroll-container {
+  overflow-y: scroll;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+}
+
+#scroll-container::-webkit-scrollbar { /* WebKit */
+  width: 0;
+  height: 0;
+}
+
+#content-container {
+  max-width: 640px;
+  margin-inline: auto;
+  padding: 30px;
+  padding-top: 50px;
+}
+
+
+/* for minimum margin */
+/* html {
+  padding: 20pt;
+} */
+
+/* fix relayout on scrollbars appearing */
+/* html {
+  overflow-y: hidden;
+} */
+
+a,
+a:visited {
+  color: var(--main-fg-color);
+}
+
+/* for paragraphs, maybe make more specific later */
+.para {
+  padding-bottom: 1em;
+}
+
+.choice {
+  margin-top: 0px;
+  margin-bottom: 1em;
+}
+
+.fadein {
+  animation: fadein 0.5s;
+}
+
+/* this is used to have the end of the page near the middle of the screen */
+/* #content {
+  height: 75%;
+  overflow-y: scroll;
+} */
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.old {
+  filter: brightness(0.65);
+  /* animation: darken 0.3s; */
+}
+
+/* @keyframes darken {
+  from {
+    filter: brightness(1);
+  }
+  to {
+    filter: brightness(0.65);
+  }
+} */
+
+* {
+  scrollbar-color: var(--main-bg-color-lighter) var(--main-bg-color);
+  scrollbar-width: thin;
+}
+
+select {
+	color: var(--main-fg-color);
+	background-color: var(--main-bg-color);
+	border: solid var(--main-fg-color) 1px;
+	border-radius: 5px;
+	font-family: inherit;
+	font-size: inherit;
+}
