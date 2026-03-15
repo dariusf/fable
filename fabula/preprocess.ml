@@ -12,9 +12,12 @@ module CollapseTags = struct
   let get_tag =
     let regexp = Str.regexp {|<\(/?\)\([a-z-]+\).*>|} in
     fun s ->
-      if Str.string_match regexp s 0 then
-        Some (String.length (Str.matched_group 1 s) = 0, Str.matched_group 2 s)
-      else None
+      match Str.string_match regexp s 0 with
+      | true ->
+        let is_opening = String.length (Str.matched_group 1 s) = 0 in
+        let name = Str.matched_group 2 s in
+        Some (is_opening, name)
+      | _ -> None
 
   let inline : t Folder.t =
     let inline _self (acc, curr_tag) inl =
@@ -27,6 +30,9 @@ module CollapseTags = struct
           (* Format.printf "no element, no block open@."; *)
           (* not an element, no block is open *)
           Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, [])
+        | Some (true, "br"), [] ->
+          (* some tags are exceptions *)
+          Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, curr_tag)
         | Some (true, t), [] ->
           (* Format.printf "start new block@."; *)
           (* start a new block *)

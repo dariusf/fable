@@ -10,6 +10,9 @@
   $ compile ../programs/empty-section.md
   [{"name":"a","cmds":[]}]
 
+  $ compile ../programs/breaks.md
+  [{"name":"prelude","cmds":[["Para",[["Text","a"],["Verbatim","<br>"],["Break"],["Text","b"],["Verbatim","<br/>"],["Break"],["Text","c"]]]]}]
+
   $ compile ../programs/paragraph-break.md
   [{"name":"prelude","cmds":[["Para",[["Text","a"]]],["Para",[["Text","b"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","c"]],"code":[["Run",""]],"rest":[["Para",[["Text","haha"]]],["Para",[["Text","b"],["Run",";;"],["Text","this should not be expanded"]]]],"kind":["Consumable","c0"]}]]]}]
 

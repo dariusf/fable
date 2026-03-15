@@ -13,6 +13,12 @@
 
   $ run ../programs/empty-section.md
 
+  $ run ../programs/breaks.md
+  <div class="para fadein">
+    <span>a</span><span><br /></span><span> </span><span>b</span
+    ><span><br /></span><span> </span><span>c</span>
+  </div>
+
   $ run ../programs/paragraph-break.md c
   <div class="para fadein old"><span>a</span></div>
   <div class="para fadein old"><span>b</span></div>
