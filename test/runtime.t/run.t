@@ -51,6 +51,13 @@
   $ run ../programs/frontmatter.md
   <div class="para fadein"><span>hello</span></div>
 
+  $ run ../programs/choices-precondition-seen.md a
+  <ul class="choice fadein">
+    <li>
+      <a idx="1" href="#" class="choice" draggable="false"><span>b</span></a>
+    </li>
+  </ul>
+
   $ run ../programs/choices-loose.md First
   <div class="para fadein old"><span>Before</span></div>
   <div class="para fadein"><span>Body</span></div>

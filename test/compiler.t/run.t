@@ -31,7 +31,10 @@
   $ compile ../programs/frontmatter.md
   [{"name":"prelude","cmds":[["Para",[["Text","hello"]]]]}]
 
-  $ compile ../programs/choices-loose.md First
+  $ compile ../programs/choices-precondition-seen.md
+  [{"name":"prelude","cmds":[["Choices",[],[{"guard":["true"],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","prelude"]],"rest":[],"kind":["Consumable","c2"]},{"guard":["false"],"otherwise":false,"initial":[["Text","c"]],"code":[["Jump","prelude"]],"rest":[],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]]]}]
+
+  $ compile ../programs/choices-loose.md
   [{"name":"prelude","cmds":[["Para",[["Text","Before"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","First"]],"code":[["Break"]],"rest":[["Para",[["Text","Body"]]]],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","Second"]],"code":[],"rest":[["Para",[["Text","Body"]]]],"kind":["Consumable","c0"]}]],["Para",[["Text","After"]]]]}]
 
   $ compile ../programs/choices-tweet-style.md
