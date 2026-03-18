@@ -166,6 +166,10 @@ function informParentDiverged(which) {
   window.parent.postMessage({ type: "DIVERGED", which }, "*");
 }
 
+function triggerOnInteract() {
+  internal.on_interact = internal.on_interact.filter((f) => !f());
+}
+
 function surfaceError(message, ...args) {
   console.error(message, args);
   let elt = createPara();
@@ -296,7 +300,7 @@ function interpret_LinkCodeJump(parent, kind0, text, dest) {
   let target = kind0 === "LinkCode" ? dest + "()" : dest;
   e.onclick = (ev) => {
     ev.preventDefault();
-    internal.on_interact.forEach((f) => f());
+    triggerOnInteract();
     if (kind === "Jump") {
       // ensure that it is not used
       interpret([[kind, target]], parent, null);
@@ -527,10 +531,10 @@ function interpret_Choices(parent, k, current, rest) {
       for (const old of document.querySelectorAll("#content > div:not(.old)")) {
         old.classList.add("old");
       }
+      triggerOnInteract(); // before updating choice history
       internal.choice_history.push(a.textContent);
       informEditorOfChoice(a.textContent);
-      internal.on_interact.forEach((f) => f());
-      saveGame();
+      saveGame(); // only do this after triggering interactions
       if (choices_disappear) {
         parent.removeChild(ul);
       } else {

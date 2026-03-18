@@ -191,8 +191,9 @@ Direct console access to its APIs is supported.
 - `seen[SECTION]`: the number of times SECTION has been seen; can be used in a truthy manner
 - `internal`: internal state of the runtime system
     - `internal.bug_detectors`: push oracles in here
-    - `internal.on_scene_visit`: push callbacks in here
-    - `internal.on_interact`: push callbacks in here
+    - Hooks: these are lists of callbacks, typically of type `() => void`; exceptions are noted
+      - `internal.on_scene_visit`
+      - `internal.on_interact`: return `true` to make a callback one-shot
 - `local`: section-local state, may be mutated; initialise its variables at the top of a section using
     ````markdown
     # My Section
