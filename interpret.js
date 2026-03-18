@@ -84,6 +84,8 @@ function defaultInternal() {
         internal.turns++;
       },
     ],
+    // internal use only
+    pre_take_choices: [],
     // story state
     turns: 0,
     seen_scenes: {},
@@ -588,6 +590,7 @@ function interpret_Choices(parent, k, current, rest) {
 
   // possibly take choices for hot reloading
   if (internal.immediately_take.length > 0) {
+    internal.pre_take_choices.forEach((f) => f()); // before the choice is taken (shifted)
     let something_taken = false;
     for (const a of links) {
       if (a.textContent === internal.immediately_take[0]) {
