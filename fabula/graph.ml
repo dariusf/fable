@@ -8,8 +8,8 @@ let graphviz_renderer : renderer =
   ( (* ~edge: *) (fun a b ~static ~both ->
       let attrs =
         match (static, both) with
-        | true, true -> " [dir=both]"
-        | false, true -> " [dir=both, style=dashed]"
+        | true, true -> {| [dir=both, color="black:black"]|}
+        | false, true -> {| [dir=both, style=dashed, color="black:black"]|}
         | true, false -> ""
         | false, false -> " [style=dashed]"
       in
