@@ -31,40 +31,44 @@ let mermaid_renderer : renderer =
 flowchart TD|}
       ^ "\n" ^ s )
 
-let rec merge_chains edges =
-  let out_degree = Hashtbl.create 16 in
-  let in_degree = Hashtbl.create 16 in
-  List.iter
-    (fun (u, v, _) ->
-      Hashtbl.replace out_degree u
-        (1 + Option.value (Hashtbl.find_opt out_degree u) ~default:0);
-      Hashtbl.replace in_degree v
-        (1 + Option.value (Hashtbl.find_opt in_degree v) ~default:0))
-    edges;
-  let can_merge =
-    List.find_opt
+(* TODO as we only track edges, if two nodes are merged and are not pointed to by anything else, the resulting node disappears. to fix this we need to track nodes *)
+let _merge_chains edges =
+  let rec loop edges =
+    let out_degree = Hashtbl.create 16 in
+    let in_degree = Hashtbl.create 16 in
+    List.iter
       (fun (u, v, _) ->
-        u <> v
-        && Option.value (Hashtbl.find_opt out_degree u) ~default:0 = 1
-        && Option.value (Hashtbl.find_opt in_degree v) ~default:0 = 1
-        && not (List.exists (fun (x, y, _) -> x = v && y = u) edges))
-      edges
-  in
-  match can_merge with
-  | None -> edges
-  | Some (u, v, _) ->
-    let merged = u ^ "\\n" ^ v in
-    let new_edges =
-      List.filter_map
-        (fun (src, dst, static) ->
-          if src = u && dst = v then None
-          else
-            let src = if src = u || src = v then merged else src in
-            let dst = if dst = u || dst = v then merged else dst in
-            Some (src, dst, static))
+        Hashtbl.replace out_degree u
+          (1 + Option.value (Hashtbl.find_opt out_degree u) ~default:0);
+        Hashtbl.replace in_degree v
+          (1 + Option.value (Hashtbl.find_opt in_degree v) ~default:0))
+      edges;
+    let can_merge =
+      List.find_opt
+        (fun (u, v, _) ->
+          u <> v
+          && Option.value (Hashtbl.find_opt out_degree u) ~default:0 = 1
+          && Option.value (Hashtbl.find_opt in_degree v) ~default:0 = 1
+          && not (List.exists (fun (x, y, _) -> x = v && y = u) edges))
         edges
     in
-    merge_chains (List.sort_uniq compare new_edges)
+    match can_merge with
+    | None -> (* base case *) edges
+    | Some (u, v, _) ->
+      let merged_node = u ^ "\\n" ^ v in
+      let new_edges =
+        List.filter_map
+          (fun (src, dst, static) ->
+            if src = u && dst = v then None
+            else
+              let src = if src = u || src = v then merged_node else src in
+              let dst = if dst = u || dst = v then merged_node else dst in
+              Some (src, dst, static))
+          edges
+      in
+      loop (List.sort_uniq compare new_edges)
+  in
+  loop edges
 
 let collapse_bidirectional edges =
   let rec aux acc = function
@@ -89,7 +93,7 @@ let program_graph
         let r =
           {|\(.\|
 \)*\(jump(['"]\|tunnel(['"]\|->\|jump \|>->\|tunnel \)|}
-          ^ c.name
+          ^ c.name ^ {|\b|}
         in
         (c.name, Str.regexp r))
       prog
@@ -133,7 +137,9 @@ let program_graph
   in
 
   let preprocessed_edges =
-    raw_edges |> merge_chains |> collapse_bidirectional
+    raw_edges
+    (* |> merge_chains *)
+    |> collapse_bidirectional
   in
 
   let edges_str =
