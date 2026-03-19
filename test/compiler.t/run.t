@@ -115,6 +115,14 @@
   $ compile ../programs/jump-to-current-section.md
   [{"name":"ha","cmds":[["Para",[["Text","hello"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","ha"]],"rest":[],"kind":["Consumable","c0"]}]]]}]
 
+  $ graph ../programs/section-prefixes.md
+  digraph G {
+    "prelude" -> "a1" [style=dashed];
+  }
+  %%{ init: { 'flowchart': {'defaultRenderer': 'elk' } } }%%
+  flowchart TD
+    prelude -.-> a1;
+
   $ graph ../programs/jump-to-current-section.md
   digraph G {
     "ha" -> "ha";
@@ -122,6 +130,7 @@
   %%{ init: { 'flowchart': {'defaultRenderer': 'elk' } } }%%
   flowchart TD
     ha --> ha;
+
   $ compile ../programs/error-unmatched-inline-closing.md
   error: unclosed tag a
 
