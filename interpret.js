@@ -439,8 +439,8 @@ function interpret_MetaMetaBlock(parent, k, current, rest) {
 }
 
 function interpret_Para(parent, k, current, rest) {
-  const [hd, tl] = current;
-  if (hd.length === 0) {
+  const [_, para] = current;
+  if (para.length === 0) {
     // optimization
     return interpret(rest, parent, k);
   }
@@ -453,7 +453,7 @@ function interpret_Para(parent, k, current, rest) {
   } else {
     d = parent;
   }
-  interpret(tl, d, () => {
+  interpret(para, d, () => {
     interpret(rest, parent, k);
   });
 }
