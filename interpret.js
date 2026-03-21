@@ -335,10 +335,12 @@ function interpret_Interpolate(parent, code) {
   // parent.appendChild(d);
 }
 
-function interpret_Tunnel(k, scene) {
+function interpret_Tunnel(parent, k, scene, rest) {
   // keep current k
   internal.on_scene_visit.forEach((f) => f(scene));
-  interpret(internal.scenes[scene], content, k);
+  interpret(internal.scenes[scene], content, () => {
+    interpret(rest, parent, k);
+  });
 }
 
 function interpret_Jump(scene_name) {
@@ -667,8 +669,7 @@ function interpret(instrs, parent, k) {
 
   switch (current[0]) {
     case "Tunnel":
-      interpret_Tunnel(k, current[1]);
-      // handling the rest is not needed because a tunnel is usually inside a para
+      interpret_Tunnel(parent, k, current[1], rest);
       return;
     case "Jump":
       // abandon current k and instructions
