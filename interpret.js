@@ -759,7 +759,7 @@ document.onkeydown = (e) => {
   }
 };
 
-const testing_freq = 30;
+const TESTING_FREQ = 30;
 function click_links() {
   let bug = bug_found();
   if (!isTesting()) {
@@ -782,7 +782,7 @@ function click_links() {
   let elt = elts[randomExcl(0, elts.length)];
   console.log("choice taken:", elt.textContent);
   elt.click();
-  setTimeout(click_links, testing_freq);
+  setTimeout(click_links, TESTING_FREQ);
 }
 setTimeout(click_links, testing_freq);
 
@@ -885,7 +885,9 @@ function shouldLoadGame() {
 function loadGame() {
   const p = new URLSearchParams(window.location.search);
   try {
-    return JSON.parse(base64ToString(p.get("choices")));
+    const to_load = base64ToJsonString(p.get("choices"));
+    // console.log("reloading", to_load);
+    return JSON.parse(to_load);
   } catch (e) {
     console.error("an error occurred loading choices, so starting over", e);
     // restart the state, which seems better than crashing and the game being unplayable
@@ -899,21 +901,21 @@ function loadGame() {
 function saveGame() {
   if (!isInDev()) return;
   if (!isStandalone()) return;
-  const s = stringToBase64(JSON.stringify(internal.choice_history));
+  const s = jsonStringToBase64(JSON.stringify(internal.choice_history));
   const url = new URL(window.location);
   url.searchParams.set("choices", s);
   window.history.pushState({}, "", url);
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa
-function base64ToString(base64) {
+function base64ToJsonString(base64) {
   const binString = atob(base64);
   return new TextDecoder().decode(
     Uint8Array.from(binString, (m) => m.codePointAt(0)),
   );
 }
 
-function stringToBase64(str) {
+function jsonStringToBase64(str) {
   const binString = Array.from(new TextEncoder().encode(str), (byte) =>
     String.fromCodePoint(byte),
   ).join("");
