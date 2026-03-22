@@ -84,8 +84,8 @@ function defaultInternal() {
         internal.turns++;
       },
     ],
-    // internal use only
-    pre_take_choices: [],
+    history_interpretations: [],
+    pre_push_history: [],
     // story state
     turns: 0,
     seen_scenes: {},
@@ -171,8 +171,8 @@ function informParentDiverged(which) {
   window.parent.postMessage({ type: "DIVERGED", which }, "*");
 }
 
-function triggerOnInteract() {
-  internal.on_interact = internal.on_interact.filter((f) => !f());
+function triggerOneShotCallback(name) {
+  internal[name] = internal[name].filter((f) => !f());
 }
 
 function surfaceError(message, ...args) {
@@ -305,7 +305,7 @@ function interpret_LinkCodeJump(parent, kind0, text, dest) {
   let target = kind0 === "LinkCode" ? dest + "()" : dest;
   e.onclick = (ev) => {
     ev.preventDefault();
-    triggerOnInteract();
+    triggerOneShotCallback("on_interact");
     if (kind === "Jump") {
       // ensure that it is not used
       interpret([[kind, target]], parent, null);
@@ -536,8 +536,9 @@ function interpret_Choices(parent, k, current, rest) {
       for (const old of document.querySelectorAll("#content > div:not(.old)")) {
         old.classList.add("old");
       }
-      triggerOnInteract(); // before updating choice history
+      triggerOneShotCallback("pre_push_history");
       internal.choice_history.push(a.textContent);
+      triggerOneShotCallback("on_interact");
       informEditorOfChoice(a.textContent);
       saveGame(); // only do this after triggering interactions
       if (choices_disappear) {
@@ -787,13 +788,23 @@ function clickByText(text, timeout = 100, interval = 10) {
   });
 }
 
+function interpretHistoryItem(text) {
+  for (const hi of internal.history_interpretations) {
+    if (hi(text)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // possibly take choices for hot reloading
 async function immediatelyTakeChoices() {
   while (internal.immediately_take.length > 0) {
-    internal.pre_take_choices.forEach((f) => f());
-    if (internal.immediately_take.length === 0) break;
-
     const to_take = internal.immediately_take.shift();
+    if (interpretHistoryItem(to_take)) {
+      continue;
+    }
+
     internal.system_made_choice = true;
     const clicked = await clickByText(to_take);
     internal.system_made_choice = false;
@@ -893,12 +904,16 @@ function shouldLoadGame() {
   return !!p.get("choices");
 }
 
-function loadGame() {
+function inspectChoiceUrl() {
   const p = new URLSearchParams(window.location.search);
+  return JSON.parse(base64ToJsonString(p.get("choices")));
+}
+
+function loadGame() {
   try {
-    const to_load = base64ToJsonString(p.get("choices"));
+    const to_load = inspectChoiceUrl();
     // console.log("reloading", to_load);
-    return JSON.parse(to_load);
+    return to_load;
   } catch (e) {
     console.error("an error occurred loading choices, so starting over", e);
     // restart the state, which seems better than crashing and the game being unplayable
@@ -931,4 +946,12 @@ function jsonStringToBase64(str) {
     String.fromCodePoint(byte),
   ).join("");
   return btoa(binString);
+}
+
+function automaticallyMakeChoicesUntil(text) {
+  if (document.body.innerText.includes(text)) {
+    return;
+  }
+  document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "1" }));
+  setTimeout(automaticallyMakeChoicesUntil, 1, text);
 }

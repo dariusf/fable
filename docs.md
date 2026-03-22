@@ -191,9 +191,11 @@ Direct console access to its APIs is supported.
 - `seen[SECTION]`: the number of times SECTION has been seen; can be used in a truthy manner
 - `internal`: internal state of the runtime system
     - `internal.bug_detectors`: push oracles in here
+    - `internal.history_interpretations`: push functions of type `(string) => boolean`. They should return true (and perform side effects) to indicate that an ad hoc history item is handled upon hot reload
     - Hooks: these are lists of callbacks, typically of type `() => void`; exceptions are noted
       - `internal.on_scene_visit`
-      - `internal.on_interact`: return `true` to make a callback one-shot
+      - `internal.on_interact`: called at some point when a choice is made
+      - `pre_push_history`: called before a choice history item is pushed; may be used to add ad hoc history items, whose meaning can then be defined using `history_interpretations`. Return `true` to make the callback one-shot.
 - `local`: section-local state, may be mutated; initialise its variables at the top of a section using
     ````markdown
     # My Section
