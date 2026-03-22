@@ -126,7 +126,10 @@ function start(story) {
   }
   let scene = story[0].name;
   internal.on_scene_visit.forEach((f) => f(scene));
-  interpret(internal.scenes[scene], content, () => {});
+  interpret(internal.scenes[scene], content, () => {
+    // we can't rely on this continuation being taken as a jump will abandon it
+  });
+  immediatelyTakeChoices(); // not awaited
 }
 
 // default standalone entry point: the content of the global `story` (expected to be the JSON output of the CLI) is interpreted into the div #content
@@ -461,8 +464,6 @@ function interpret_Para(parent, k, current, rest) {
 }
 
 function interpret_Emph(parent, k, current, rest) {
-  // console.log("??");
-  // debugger;
   let [_, children] = current;
   let s = document.createElement("i");
   interpret(children, s, () => {
@@ -589,27 +590,6 @@ function interpret_Choices(parent, k, current, rest) {
   // if (choicesGenerated + otherwisesGenerated === 0) {
   //   return interpret(rest, parent, k);
   // }
-
-  // possibly take choices for hot reloading
-  if (internal.immediately_take.length > 0) {
-    internal.pre_take_choices.forEach((f) => f()); // before the choice is taken (shifted)
-    let something_taken = false;
-    for (const a of links) {
-      if (a.textContent === internal.immediately_take[0]) {
-        internal.immediately_take.shift();
-        internal.system_made_choice = true;
-        a.click();
-        internal.system_made_choice = false;
-        something_taken = a;
-        break;
-      }
-    }
-    if (!something_taken) {
-      // there were choices we could have immediately taken, but nothing was chosen - we've diverged
-      informParentDiverged(internal.immediately_take[0]);
-      internal.immediately_take = [];
-    }
-  }
 }
 
 function interpret(instrs, parent, k) {
@@ -784,33 +764,64 @@ function click_links() {
   elt.click();
   setTimeout(click_links, TESTING_FREQ);
 }
-setTimeout(click_links, testing_freq);
+setTimeout(click_links, TESTING_FREQ);
+
+function clickByText(text, timeout = 100, interval = 10) {
+  return new Promise((resolve, _reject) => {
+    const startTime = Date.now();
+    function poll() {
+      const elements = choicesContainingText(text);
+      let targetElement = elements[0];
+      if (targetElement) {
+        targetElement.click();
+        resolve(true);
+        return;
+      }
+      if (Date.now() - startTime > timeout) {
+        resolve(false);
+        return;
+      }
+      setTimeout(poll, interval);
+    }
+    poll();
+  });
+}
+
+// possibly take choices for hot reloading
+async function immediatelyTakeChoices() {
+  while (internal.immediately_take.length > 0) {
+    internal.pre_take_choices.forEach((f) => f());
+    if (internal.immediately_take.length === 0) break;
+
+    const to_take = internal.immediately_take.shift();
+    internal.system_made_choice = true;
+    const clicked = await clickByText(to_take);
+    internal.system_made_choice = false;
+
+    if (clicked) {
+      // console.log("taking choice", to_take);
+    } else {
+      console.log(
+        "diverged at",
+        to_take,
+        document.querySelectorAll("a.choice"),
+      );
+      // there were choices we could have immediately taken, but nothing was chosen - we've diverged
+      informParentDiverged(to_take);
+      internal.immediately_take = [];
+      break;
+    }
+  }
+
+  // console.log("done immediately taking choices", internal.choice_history);
+}
 
 // UTILITY
 
-function xpath(xpath) {
-  let nodes = document.evaluate(
-    xpath,
-    document,
-    null,
-    XPathResult.ORDERED_NODE_ITERATOR_TYPE,
-    null,
+function choicesContainingText(text) {
+  return Array.from(document.querySelectorAll("a.choice")).filter(
+    (c) => c.innerText.trim() === text,
   );
-  let res = [];
-  try {
-    let node = nodes.iterateNext();
-    while (node) {
-      res.push(node);
-      node = nodes.iterateNext();
-    }
-  } catch (e) {
-    console.error(`Document tree modified during iteration: ${e}`);
-  }
-  return res;
-}
-
-function findContainingText(c) {
-  return xpath(`//*[contains(child::text(), "${c}")]`);
 }
 
 // true if we are running in a html page or on itch
