@@ -135,9 +135,12 @@ Such items may have preconditions, in which case they apply to every inlined ite
 **Fallback.** A fallback choice can be given by starting the choice text with `` `otherwise` ``. It will then be shown only if no other choices are available.
 Persistent choices are incompatible with fallback choices, as then the fallback choices will never be taken.
 
-**Empty choices.**
+**Empty choices and fallthrough.**
 Empty choices may arise due to incomplete preconditions, or choices being exhausted without an `otherwise` clause.
-They get _get stuck_ rather than continuing with whatever is after.
+<!-- By default, they are an error: since the reader has not selected anything, the natural thing to do would be to get stuck. -->
+They _get stuck_, rather than continuing with whatever is after.
+To instead continue with whatever is after the choice, add `` `fallthrough` `` in an item (which will otherwise be ignored).
+This is also incompatible with `` `otherwise` ``.
 
 ### Breaks and Spaces
 
@@ -154,7 +157,7 @@ The double semicolon is used for putting paragraph breaks between things like di
 
 ### Links
 
-Links allow user input outside the usual flow of choices.
+Links allow input outside the usual flow of choices.
 
 A `[TEXT](#SECTION)` link jumps to SECTION.
 

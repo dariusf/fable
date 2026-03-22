@@ -93,11 +93,88 @@ let check_no_sticky_and_otherwise choices =
   if has_sticky && has_otherwise then
     fail "sticky is incompatible with otherwise"
 
-let check_only_one_otherwise choices =
+let count_otherwises choices =
   let count =
     List.fold_right (fun c t -> if c.otherwise then 1 + t else t) choices 0
   in
-  if count > 1 then fail "more than one otherwise"
+  count
+
+let check_only_one_otherwise oc = if oc > 1 then fail "more than one otherwise"
+
+let check_no_fallthrough_and_otherwise fallthrough oc =
+  if fallthrough && oc > 0 then
+    fail "fallthrough is not compatible with otherwises"
+
+let list_item_to_choice_item self section i =
+  let bs =
+    Folder.fold_block self
+      (Acc.add (section, Acc.empty) Acc.empty)
+      (Block.List_item.block i)
+    |> Acc.to_list
+  in
+  (* show_block (Block.List_item.block i); *)
+  (* the first block is expected to be a paragraph *)
+  let para, after_first =
+    match bs with
+    | [(_, bs)] ->
+      (match Acc.to_list bs with
+      | Para b :: rest -> (b, rest)
+      | _ ->
+        show_block (Block.List_item.block i);
+        failwith "not a para followed by rest")
+    | _ -> failwith "not a singleton scene"
+  in
+  match (para, after_first) with
+  | [Run g; Run m], []
+    when String.starts_with ~prefix:"?" g
+         && String.starts_with ~prefix:"more " m ->
+    `More (strip_prefix 1 g, strip_prefix 5 m)
+  | [Run g; Run m], []
+    when String.starts_with ~prefix:"guard " g
+         && String.starts_with ~prefix:"more " m ->
+    `More (strip_prefix 6 g, strip_prefix 5 m)
+  | [Run m], [] when String.starts_with ~prefix:"more " m ->
+    (* js syntax is leaking through here, but this is the boolean true value in most languages... *)
+    `More ("true", strip_prefix 5 m)
+  | _ ->
+    (* only look for special syntax in the first paragraph *)
+    let sticky = ref false in
+    let otherwise = ref false in
+    let fallthrough = ref false in
+    let preconditions = ref Acc.empty in
+    let initial = ref Acc.empty in
+    let code = ref None in
+    let rest = ref Acc.empty in
+    para
+    |> List.iter (fun e ->
+        match (e, !code) with
+        (* special things encoded as Runs *)
+        | Run "sticky", _ -> sticky := true
+        | Run "otherwise", _ -> otherwise := true
+        | Run "fallthrough", _ -> fallthrough := true
+        | Run s, _ when String.starts_with ~prefix:"guard " s ->
+          preconditions := Acc.add (strip_prefix 6 s) !preconditions
+        | Run s, _ when String.starts_with ~prefix:"?" s ->
+          preconditions := Acc.add (strip_prefix 1 s) !preconditions
+        (* things to stop at *)
+        | (Break | Run _ | Jump _ | JumpDynamic _ | Tunnel _), None ->
+          code := Some e
+        (* the rest *)
+        | _, Some _ -> rest := Acc.add e !rest
+        | _, None -> initial := Acc.add e !initial);
+    if !fallthrough then `Fallthrough
+    else
+      `Choice
+        {
+          otherwise = !otherwise;
+          guard = Acc.to_list !preconditions;
+          initial = Acc.to_list !initial;
+          code = Option.to_list !code;
+          rest =
+            (let r = Acc.to_list !rest in
+             match r with [] -> after_first | _ -> Para r :: after_first);
+          kind = (if !sticky then Sticky else Consumable (fresh ~prefix:"c" ()));
+        }
 
 let block_cmd_folder =
   let block : (Block.t, (string * cmd Acc.t) Acc.t) Folder.folder =
@@ -171,83 +248,17 @@ let block_cmd_folder =
       failwith "unimplemented Link_reference_definition"
     | Block.List (l, _) ->
       let section, _ = Acc.last acc |> Option.get in
-      let list_item_to_choice i =
-        let bs =
-          Folder.fold_block self
-            (Acc.add (section, Acc.empty) Acc.empty)
-            (Block.List_item.block i)
-          |> Acc.to_list
-        in
-        (* show_block (Block.List_item.block i); *)
-        (* the first block is expected to be a paragraph *)
-        let para, after_first =
-          match bs with
-          | [(_, bs)] ->
-            (match Acc.to_list bs with
-            | Para b :: rest -> (b, rest)
-            | _ ->
-              show_block (Block.List_item.block i);
-              failwith "not a para followed by rest")
-          | _ -> failwith "not a singleton scene"
-        in
-        match (para, after_first) with
-        | [Run g; Run m], []
-          when String.starts_with ~prefix:"?" g
-               && String.starts_with ~prefix:"more " m ->
-          `More (strip_prefix 1 g, strip_prefix 5 m)
-        | [Run g; Run m], []
-          when String.starts_with ~prefix:"guard " g
-               && String.starts_with ~prefix:"more " m ->
-          `More (strip_prefix 6 g, strip_prefix 5 m)
-        | [Run m], [] when String.starts_with ~prefix:"more " m ->
-          (* some js leaked in here, but this is the boolean true value in most languages... *)
-          `More ("true", strip_prefix 5 m)
-        | _ ->
-          (* only look for special syntax in the first paragraph *)
-          let sticky = ref false in
-          let otherwise = ref false in
-          let preconditions = ref Acc.empty in
-          let initial = ref Acc.empty in
-          let code = ref None in
-          let rest = ref Acc.empty in
-          para
-          |> List.iter (fun e ->
-              match (e, !code) with
-              (* special things encoded as Runs *)
-              | Run "sticky", _ -> sticky := true
-              | Run "otherwise", _ -> otherwise := true
-              | Run s, _ when String.starts_with ~prefix:"guard " s ->
-                preconditions := Acc.add (strip_prefix 6 s) !preconditions
-              | Run s, _ when String.starts_with ~prefix:"?" s ->
-                preconditions := Acc.add (strip_prefix 1 s) !preconditions
-              (* things to stop at *)
-              | (Break | Run _ | Jump _ | JumpDynamic _ | Tunnel _), None ->
-                code := Some e
-              (* the rest *)
-              | _, Some _ -> rest := Acc.add e !rest
-              | _, None -> initial := Acc.add e !initial);
-          `Choice
-            {
-              otherwise = !otherwise;
-              guard = Acc.to_list !preconditions;
-              initial = Acc.to_list !initial;
-              code = Option.to_list !code;
-              rest =
-                (let r = Acc.to_list !rest in
-                 match r with [] -> after_first | _ -> Para r :: after_first);
-              kind =
-                (if !sticky then Sticky else Consumable (fresh ~prefix:"c" ()));
-            }
+      let more, choices, fallthrough =
+        ([], [], false)
+        |> List.fold_right
+             (fun (i, _meta) (more, cs, ft) ->
+               match list_item_to_choice_item self section i with
+               | `Choice c -> (more, c :: cs, ft)
+               | `Fallthrough -> (more, cs, true)
+               | `More (g, m) -> ((g, m) :: more, cs, ft))
+             (Block.List'.items l)
       in
-      let more, choices =
-        List.fold_right
-          (fun (i, _) (more, cs) ->
-            match list_item_to_choice i with
-            | `Choice c -> (more, c :: cs)
-            | `More (g, m) -> ((g, m) :: more, cs))
-          (Block.List'.items l) ([], [])
-      in
-      let choice = Choices (more, choices) in
+      let choice = Choice { more; items = choices; fallthrough } in
       Folder.ret
         (Acc.change_last (fun (name, cmds) -> (name, Acc.add choice cmds)) acc)
     | Block.Thematic_break (_, _) -> Folder.default
@@ -259,8 +270,8 @@ let rec recursively_add_choices f ss =
   List.concat_map
     (fun (g, s) ->
       match f s with
-      | [Choices (m, cs)] ->
-        cs @ recursively_add_choices f m
+      | [Choice c] ->
+        c.items @ recursively_add_choices f c.more
         |> List.map (fun c -> { c with guard = g :: c.guard })
       | _e ->
         (* Format.printf "%a@." pp_cmds e; *)
@@ -274,7 +285,7 @@ let expand_more p =
       inherit! [_] Ast.map_cmd
       inherit! [_] Ast.map_program
 
-      method! visit_Choices _env more ch =
+      method! visit_Choice _env { more; items; fallthrough } =
         let ch1 =
           recursively_add_choices
             (fun name ->
@@ -284,7 +295,7 @@ let expand_more p =
                 .cmds)
             more
         in
-        Choices ([], ch @ ch1)
+        Choice { more = []; items = items @ ch1; fallthrough }
     end
   in
   visitor#visit_program () p
@@ -296,10 +307,12 @@ let validate p =
       inherit! [_] Ast.map_cmd
       inherit! [_] Ast.map_program
 
-      method! visit_Choices _env more ch =
-        check_only_one_otherwise ch;
-        check_no_sticky_and_otherwise ch;
-        Choices (more, ch)
+      method! visit_Choice _env { more; items; fallthrough } =
+        let oc = count_otherwises items in
+        check_only_one_otherwise oc;
+        check_no_fallthrough_and_otherwise fallthrough oc;
+        check_no_sticky_and_otherwise items;
+        Choice { more; items; fallthrough }
     end
   in
   visitor#visit_program () p

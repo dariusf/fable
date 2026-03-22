@@ -101,7 +101,6 @@
     <span>Turns:</span><span> </span><span>1</span>
   </div>
   <div class="para fadein"><span>Turns:</span><span> </span><span>2</span></div>
-  <ul class="choice fadein"></ul>
 
   $ run ../programs/choices-continue.md 'continue'
   <div class="para fadein"><span>here</span></div>
@@ -125,7 +124,6 @@
     <span>Right before going back to Nested</span>
   </div>
   <div class="para fadein"><span>Right before going back to Nested</span></div>
-  <ul class="choice fadein"></ul>
 
   $ run ../programs/jump-dynamic.md
   <div class="para fadein"><span>Apple</span></div>
@@ -236,8 +234,10 @@ This has to be checked dynamically because jumps may be produced by meta blocks.
     </li>
   </ul>
 
+  $ run ../programs/choices-fallthrough.md 'a'
+  <div class="para fadein"><span>here</span></div>
+
   $ run ../programs/choices-exhausted.md a b
-  <ul class="choice fadein"></ul>
 
   $ run ../programs/api-local-state.md b a b a b
   <div class="para fadein old">
@@ -281,7 +281,6 @@ This has to be checked dynamically because jumps may be produced by meta blocks.
   $ run ../programs/jump-to-current-section.md a
   <div class="para fadein old"><span>hello</span></div>
   <div class="para fadein"><span>hello</span></div>
-  <ul class="choice fadein"></ul>
 
 more cannot reference other sections when used in a meta block, so essentially only static use is supported.
 

@@ -117,14 +117,14 @@ let program_graph
     | Meta b | MetaBlock b ->
       (* cannot tell in general *)
       found regexes b |> List.map (fun i -> (i, false))
-    | Choices (_, cs) ->
+    | Choice { items; _ } ->
       List.concat_map
         (fun c ->
           List.concat
             (List.map
                (List.concat_map outgoing_scenes)
                [c.initial; c.code; c.rest]))
-        cs
+        items
   in
   let raw_edges =
     prog

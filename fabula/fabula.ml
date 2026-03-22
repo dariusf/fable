@@ -10,7 +10,7 @@ let rec may_have_text s =
   | Para p | Emph p -> List.exists may_have_text p
   | Verbatim t | VerbatimBlock t | Text t -> String.length (String.trim t) > 0
   | Break | LinkCode _ | LinkJump _ | Interpolate _ -> true
-  | Choices (ms, cs) -> (not (List.is_empty ms)) || not (List.is_empty cs)
+  | Choice c -> (not (List.is_empty c.more)) || not (List.is_empty c.items)
   | Meta _ | MetaBlock _ ->
     (* overapproximation *)
     true
@@ -27,8 +27,8 @@ let rec may_have_text s =
    | Interpolate _ -> s
    | JumpDynamic i when List.mem_assoc i bs -> JumpDynamic (List.assoc i bs)
    | JumpDynamic _ -> s
-   | Choices (m, cs) ->
-     Choices
+   | Choice (m, cs) ->
+     Choice
        ( m,
          List.map
            (fun c ->
@@ -53,7 +53,7 @@ let recursively_add_choices = Compile.recursively_add_choices
      | Run _ | Interpolate _ ->
        false
      | Meta _ | MetaBlock _
-     | Choices (_, _) ->
+     | Choice (_, _) ->
        (* overapproximation *)
        true
    in
@@ -144,12 +144,12 @@ let count_words (p : program) =
     match c with
     | Text s -> add s
     | Para cmds | Emph cmds -> List.iter walk_cmd cmds
-    | Choices (_, choices) ->
+    | Choice { items; _ } ->
       List.iter
-        (fun (ch : choice) ->
+        (fun (ch : choice_item) ->
           List.iter walk_cmd ch.initial;
           List.iter walk_cmd ch.rest)
-        choices
+        items
     | _ -> ()
   in
   List.iter (fun (s : scene) -> List.iter walk_cmd s.cmds) p;

@@ -26,7 +26,7 @@ val count_words : program -> int
 val may_have_text : cmd -> bool
 
 (** Pulls in choices recursively from a "more" scene *)
-val recursively_add_choices : (string -> cmd list) -> more -> choice list
+val recursively_add_choices : (string -> cmd list) -> more -> choice_item list
 
 (* * Program graphs *)
 module Graph = Graph
@@ -34,6 +34,6 @@ module Graph = Graph
 (* * JSON *)
 val program_to_yojson : program -> Yojson.Safe.t
 val cmd_of_yojson : Yojson.Safe.t -> cmd Ppx_deriving_yojson_runtime.error_or
-val choices_to_yojson : choices -> Yojson.Safe.t
+val choice_items_to_yojson : choice_items -> Yojson.Safe.t
 val cmds_of_yojson : Yojson.Safe.t -> cmds Ppx_deriving_yojson_runtime.error_or
 val more_of_yojson : Yojson.Safe.t -> more Ppx_deriving_yojson_runtime.error_or

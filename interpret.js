@@ -472,14 +472,13 @@ function interpret_Emph(parent, k, current, rest) {
   });
 }
 
-function interpret_Choices(parent, k, current, rest) {
-  let [_, more, alts] = current;
+function interpret_Choice(parent, k, current, rest) {
+  let [_, { more, items, fallthrough }] = current;
   let ul = document.createElement("ul");
   ul.classList.add("choice");
   if (isStandalone()) {
     ul.classList.add("fadein");
   }
-  addBlock(parent, ul);
   let links = [];
   let indicate_clicked = (clicked) => {
     links.forEach((a) => {
@@ -569,28 +568,34 @@ function interpret_Choices(parent, k, current, rest) {
   // generate choices
   let idx = 1;
   let choicesGenerated = 0;
-  const allChoiceItems = alts.concat(extra);
+  const allChoiceItems = items.concat(extra);
   for (const item of allChoiceItems.filter((i) => !i.otherwise)) {
     if (generateChoice(item, idx)) {
       choicesGenerated++;
       idx++;
     }
   }
-  // TODO empty choices do not continue at the moment
-  // let otherwisesGenerated = 0;
+  let otherwisesGenerated = 0;
   if (choicesGenerated === 0) {
     const otherwises = allChoiceItems.filter((i) => i.otherwise);
     console.assert(otherwises.length <= 1); // TODO compile time check
     for (const item of otherwises) {
       if (generateChoice(item, idx)) {
-        // otherwisesGenerated++;
+        otherwisesGenerated++;
         idx++;
       }
     }
   }
-  // if (choicesGenerated + otherwisesGenerated === 0) {
-  //   return interpret(rest, parent, k);
-  // }
+  if (choicesGenerated + otherwisesGenerated === 0) {
+    if (fallthrough) {
+      return interpret(rest, parent, k);
+    } else {
+      // get stuck intentionally, for now
+      // surfaceError("empty choice");
+    }
+  } else {
+    addBlock(parent, ul);
+  }
 }
 
 function interpret(instrs, parent, k) {
@@ -669,8 +674,8 @@ function interpret(instrs, parent, k) {
     case "Emph":
       interpret_Emph(parent, k, current, rest);
       break;
-    case "Choices":
-      interpret_Choices(parent, k, current, rest);
+    case "Choice":
+      interpret_Choice(parent, k, current, rest);
       break;
     default:
       throw `unknown kind of instruction ${current[0]}`;

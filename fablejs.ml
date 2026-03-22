@@ -7,7 +7,7 @@
 
 let jv_to_ocaml f v =
   Brr.Json.encode v |> Jstr.to_string |> Yojson.Safe.from_string |> f
-  |> Result.get_ok
+  |> Result.get_ok'
 
 let ocaml_to_jv f v =
   f v
@@ -58,11 +58,11 @@ let () =
                   (jv_to_ocaml Fabula.cmds_of_yojson ss)
                 |> Jv.of_bool) ); *)
          ( "recursivelyAddChoices",
-           Jv.callback ~arity:2 (fun f ss ->
+           Jv.callback ~arity:2 (fun scenes_f more ->
                Fabula.recursively_add_choices
                  (fun s ->
-                   Jv.apply f [| Jv.of_string s |]
+                   Jv.apply scenes_f [| Jv.of_string s |]
                    |> jv_to_ocaml Fabula.cmds_of_yojson)
-                 (jv_to_ocaml Fabula.more_of_yojson ss)
-               |> ocaml_to_jv Fabula.choices_to_yojson) );
+                 (jv_to_ocaml Fabula.more_of_yojson more)
+               |> ocaml_to_jv Fabula.choice_items_to_yojson) );
        |])

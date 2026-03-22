@@ -1,4 +1,4 @@
-type choice = {
+type choice_item = {
   guard : string list;
   otherwise : bool;
   initial : cmd list;
@@ -12,6 +12,12 @@ and choice_kind =
   | Consumable of string
 
 and more = (string * string) list
+
+and choice = {
+  more : more;
+  fallthrough : bool;
+  items : choice_item list;
+}
 
 and cmd =
   | Para of cmd list
@@ -29,7 +35,7 @@ and cmd =
   | Jump of string
   | Tunnel of string
   | JumpDynamic of string
-  | Choices of more * choice list
+  | Choice of choice
 [@@deriving
   show { with_path = false },
   yojson,
@@ -53,6 +59,6 @@ type program = scene list
   visitors { variety = "map"; name = "map_program" }]
 
 type cmds = cmd list [@@deriving show { with_path = false }, yojson]
-type choices = choice list [@@deriving yojson]
+type choice_items = choice_item list [@@deriving yojson]
 
 let _ = pp_program

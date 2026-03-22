@@ -14,7 +14,7 @@
   [{"name":"prelude","cmds":[["Para",[["Text","a"],["Verbatim","<br>"],["Break"],["Text","b"],["Verbatim","<br/>"],["Break"],["Text","c"]]]]}]
 
   $ compile ../programs/paragraph-break.md
-  [{"name":"prelude","cmds":[["Para",[["Text","a"]]],["Para",[["Text","b"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","c"]],"code":[["Run",""]],"rest":[["Para",[["Text","haha"]]],["Para",[["Text","b"],["Run",";;"],["Text","this should not be expanded"]]]],"kind":["Consumable","c0"]}]]]}]
+  [{"name":"prelude","cmds":[["Para",[["Text","a"]]],["Para",[["Text","b"]]],["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","c"]],"code":[["Run",""]],"rest":[["Para",[["Text","haha"]]],["Para",[["Text","b"],["Run",";;"],["Text","this should not be expanded"]]]],"kind":["Consumable","c0"]}]}]]}]
 
   $ compile ../programs/emphasis.md
   [{"name":"prelude","cmds":[["Para",[["Emph",[["Text","text"]]],["Text","from"],["Emph",[["Text","Scene"]]],["Text","1"]]]]}]
@@ -32,13 +32,13 @@
   [{"name":"prelude","cmds":[["Para",[["Text","hello"]]]]}]
 
   $ compile ../programs/choices-precondition-seen.md
-  [{"name":"prelude","cmds":[["Choices",[],[{"guard":["true"],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","prelude"]],"rest":[],"kind":["Consumable","c2"]},{"guard":["false"],"otherwise":false,"initial":[["Text","c"]],"code":[["Jump","prelude"]],"rest":[],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]]]}]
+  [{"name":"prelude","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":["true"],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","prelude"]],"rest":[],"kind":["Consumable","c2"]},{"guard":["false"],"otherwise":false,"initial":[["Text","c"]],"code":[["Jump","prelude"]],"rest":[],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]}]]}]
 
   $ compile ../programs/choices-loose.md
-  [{"name":"prelude","cmds":[["Para",[["Text","Before"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","First"]],"code":[["Break"]],"rest":[["Para",[["Text","Body"]]]],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","Second"]],"code":[],"rest":[["Para",[["Text","Body"]]]],"kind":["Consumable","c0"]}]],["Para",[["Text","After"]]]]}]
+  [{"name":"prelude","cmds":[["Para",[["Text","Before"]]],["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","First"]],"code":[["Break"]],"rest":[["Para",[["Text","Body"]]]],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","Second"]],"code":[],"rest":[["Para",[["Text","Body"]]]],"kind":["Consumable","c0"]}]}],["Para",[["Text","After"]]]]}]
 
   $ compile ../programs/choices-tweet-style.md
-  [{"name":"h","cmds":[["Run","tweet_style_choices = true;"],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Run","1"]],"rest":[["Para",[["Text","this is later cleared"],["Jump","h"]]]],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","c"]],"code":[["Run","1"]],"rest":[],"kind":["Consumable","c0"]}]],["Para",[["Text","after"]]]]}]
+  [{"name":"h","cmds":[["Run","tweet_style_choices = true;"],["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Run","1"]],"rest":[["Para",[["Text","this is later cleared"],["Jump","h"]]]],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","c"]],"code":[["Run","1"]],"rest":[],"kind":["Consumable","c0"]}]}],["Para",[["Text","after"]]]]}]
 
   $ compile ../programs/error-non-string-meta.md
   [{"name":"prelude","cmds":[["Para",[["Meta","1"]]]]}]
@@ -47,22 +47,22 @@
   [{"name":"prelude","cmds":[["Run","var items = ['Apple', 'Banana', 'Carrot'];"],["Para",[["Text","text from Scene 1"]]],["MetaBlock","items.map(i => `- ${i}`).join('\\n') + `\n\n<details>\n  <summary>Click me</summary>\n  This was hidden\n</details>`"]]}]
 
   $ compile ../programs/interpolation.md
-  [{"name":"prelude","cmds":[["Para",[["Text","Turns:"],["Interpolate","internal.turns"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","b"]],"rest":[],"kind":["Consumable","c0"]}]]]},{"name":"b","cmds":[["Para",[["Text","Turns:"],["Interpolate","internal.turns"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","c"]],"code":[["Jump","b"]],"rest":[],"kind":["Consumable","c1"]}]]]}]
+  [{"name":"prelude","cmds":[["Para",[["Text","Turns:"],["Interpolate","internal.turns"]]],["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","b"]],"rest":[],"kind":["Consumable","c0"]}]}]]},{"name":"b","cmds":[["Para",[["Text","Turns:"],["Interpolate","internal.turns"]]],["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","c"]],"code":[["Jump","b"]],"rest":[],"kind":["Consumable","c1"]}]}]]}]
 
   $ compile ../programs/choices-continue.md
-  [{"name":"prelude","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","continue"]],"code":[],"rest":[],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","x"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]],["Para",[["Text","here"]]]]}]
+  [{"name":"prelude","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","continue"]],"code":[],"rest":[],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","x"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]}],["Para",[["Text","here"]]]]}]
 
   $ compile ../programs/choices-text.md
-  [{"name":"prelude","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","x"]],"code":[["Run","1"]],"rest":[["Para",[["Text","should show."],["Jump","a"]]]],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","y"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]]]},{"name":"a","cmds":[["Para",[["Text","2"]]]]}]
+  [{"name":"prelude","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","x"]],"code":[["Run","1"]],"rest":[["Para",[["Text","should show."],["Jump","a"]]]],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","y"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]}]]},{"name":"a","cmds":[["Para",[["Text","2"]]]]}]
 
   $ compile ../programs/choices-nested.md
-  [{"name":"Nested","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","Choice 1"]],"code":[["Run","1"]],"rest":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","Nested choice. Did you choose choice 1?"]],"code":[["Run","1"]],"rest":[],"kind":["Consumable","c4"]},{"guard":[],"otherwise":false,"initial":[["Text","Or not?"]],"code":[["Run","1"]],"rest":[],"kind":["Consumable","c3"]}]]],"kind":["Consumable","c5"]},{"guard":[],"otherwise":false,"initial":[["Text","Choice 2"]],"code":[["Run","1"]],"rest":[["Para",[["Text","after"],["Break"],["Text","break"]]]],"kind":["Consumable","c2"]},{"guard":[],"otherwise":false,"initial":[["Text","Choice 3"]],"code":[["Run","1"]],"rest":[["Para",[["Text","A paragraph"]]]],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","Choice 4"]],"code":[["Run","1"]],"rest":[["Run","console.log('you chose choice 4');"]],"kind":["Consumable","c0"]}]],["Para",[["Text","Right before going back to Nested"]]],["Para",[["Jump","Nested"]]]]}]
+  [{"name":"Nested","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","Choice 1"]],"code":[["Run","1"]],"rest":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","Nested choice. Did you choose choice 1?"]],"code":[["Run","1"]],"rest":[],"kind":["Consumable","c4"]},{"guard":[],"otherwise":false,"initial":[["Text","Or not?"]],"code":[["Run","1"]],"rest":[],"kind":["Consumable","c3"]}]}]],"kind":["Consumable","c5"]},{"guard":[],"otherwise":false,"initial":[["Text","Choice 2"]],"code":[["Run","1"]],"rest":[["Para",[["Text","after"],["Break"],["Text","break"]]]],"kind":["Consumable","c2"]},{"guard":[],"otherwise":false,"initial":[["Text","Choice 3"]],"code":[["Run","1"]],"rest":[["Para",[["Text","A paragraph"]]]],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","Choice 4"]],"code":[["Run","1"]],"rest":[["Run","console.log('you chose choice 4');"]],"kind":["Consumable","c0"]}]}],["Para",[["Text","Right before going back to Nested"]]],["Para",[["Jump","Nested"]]]]}]
 
   $ compile ../programs/jump-dynamic.md
   [{"name":"prelude","cmds":[["Run","var items = ['Apple', 'Banana', 'Carrot'];"],["Para",[["JumpDynamic","items[0]"]]]]},{"name":"Apple","cmds":[["Para",[["Text","Apple"]]]]}]
 
   $ compile ../programs/choices-more.md
-  [{"name":"prelude","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","Hi"]],"code":[],"rest":[],"kind":["Consumable","c0"]},{"guard":["true"],"otherwise":false,"initial":[["Text","a"]],"code":[],"rest":[],"kind":["Consumable","c2"]},{"guard":["true"],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c1"]}]]]},{"name":"Some choices","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[],"rest":[],"kind":["Consumable","c2"]},{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c1"]}]]]}]
+  [{"name":"prelude","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","Hi"]],"code":[],"rest":[],"kind":["Consumable","c0"]},{"guard":["true"],"otherwise":false,"initial":[["Text","a"]],"code":[],"rest":[],"kind":["Consumable","c2"]},{"guard":["true"],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c1"]}]}]]},{"name":"Some choices","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[],"rest":[],"kind":["Consumable","c2"]},{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c1"]}]}]]}]
 
   $ compile ../programs/choices-copy.md
   [{"name":"prelude","cmds":[["MetaBlock","internal.scenes['One']"]]},{"name":"One","cmds":[["Para",[["Text","text from Scene 1"]]]]}]
@@ -71,10 +71,10 @@
   [{"name":"prelude","cmds":[["Para",[["Tunnel","a"]]],["Para",[["Text","2"]]]]},{"name":"a","cmds":[["Para",[["Text","1"]]]]}]
 
   $ compile ../programs/tunnels-followed-by-jumps.md
-  [{"name":"prelude","cmds":[["Para",[["Text","before"]]],["Para",[["Tunnel","tunnel_test_a"]]],["Para",[["Text","after"]]]]},{"name":"tunnel_test_a","cmds":[["Para",[["Text","a"]]],["Para",[["Jump","tunnel_test_b"]]]]},{"name":"tunnel_test_b","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]]]}]
+  [{"name":"prelude","cmds":[["Para",[["Text","before"]]],["Para",[["Tunnel","tunnel_test_a"]]],["Para",[["Text","after"]]]]},{"name":"tunnel_test_a","cmds":[["Para",[["Text","a"]]],["Para",[["Jump","tunnel_test_b"]]]]},{"name":"tunnel_test_b","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]}]]}]
 
   $ compile ../programs/spaces.md
-  [{"name":"prelude","cmds":[["Choices",[],[{"guard":["true"],"otherwise":false,"initial":[["Text","choice text"]],"code":[["Run","1"]],"rest":[["Para",[["Text","code after"]]]],"kind":["Consumable","c0"]}]],["Para",[["Text","“Hi,"],["Interpolate","'A'"],["Text",",” he said."]]],["Para",[["Text","“"],["Interpolate","'Edge case'"],["Text","“ here"]]],["Para",[["Interpolate","'A'"],["Text","’s thing"]]]]}]
+  [{"name":"prelude","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":["true"],"otherwise":false,"initial":[["Text","choice text"]],"code":[["Run","1"]],"rest":[["Para",[["Text","code after"]]]],"kind":["Consumable","c0"]}]}],["Para",[["Text","“Hi,"],["Interpolate","'A'"],["Text",",” he said."]]],["Para",[["Text","“"],["Interpolate","'Edge case'"],["Text","“ here"]]],["Para",[["Interpolate","'A'"],["Text","’s thing"]]]]}]
 
   $ compile ../programs/inline-and-block-meta.md
   [{"name":"prelude","cmds":[["Para",[["Text","interpolation"],["Interpolate","'1'"]]],["Para",[["Text","inline meta"],["Meta","'1'"]]],["MetaBlock","'block meta'"]]}]
@@ -86,34 +86,40 @@
   [{"name":"prelude","cmds":[["MetaBlock","'1'"],["MetaBlock","if (true) {\n  '2 `->a`'\n}"],["Para",[["Text","should not show"]]]]},{"name":"a","cmds":[["Para",[["Text","3"]]]]}]
 
   $ compile ../programs/choices-break-delimiters.md
-  [{"name":"prelude","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","c1"]],"code":[["Break"]],"rest":[["Para",[["Text","selected"]]]],"kind":["Consumable","c0"]}]]]}]
+  [{"name":"prelude","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","c1"]],"code":[["Break"]],"rest":[["Para",[["Text","selected"]]]],"kind":["Consumable","c0"]}]}]]}]
 
   $ compile ../programs/error-nonexistent-section.md
-  [{"name":"prelude","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","Hello"]],"code":[["Jump","a"]],"rest":[],"kind":["Consumable","c0"]}]]]}]
+  [{"name":"prelude","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","Hello"]],"code":[["Jump","a"]],"rest":[],"kind":["Consumable","c0"]}]}]]}]
 
   $ compile ../programs/choices-consumable.md
-  [{"name":"b","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","c1"]],"code":[["Jump","c"]],"rest":[],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","c2"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]]]},{"name":"c","cmds":[["Para",[["Jump","b"]]]]}]
+  [{"name":"b","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","c1"]],"code":[["Jump","c"]],"rest":[],"kind":["Consumable","c1"]},{"guard":[],"otherwise":false,"initial":[["Text","c2"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]}]]},{"name":"c","cmds":[["Para",[["Jump","b"]]]]}]
 
   $ compile ../programs/choices-sticky.md
-  [{"name":"b","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","c1"]],"code":[["Jump","c"]],"rest":[],"kind":["Sticky"]},{"guard":[],"otherwise":false,"initial":[["Text","c2"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]]]},{"name":"c","cmds":[["Para",[["Jump","b"]]]]}]
+  [{"name":"b","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","c1"]],"code":[["Jump","c"]],"rest":[],"kind":["Sticky"]},{"guard":[],"otherwise":false,"initial":[["Text","c2"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]}]]},{"name":"c","cmds":[["Para",[["Jump","b"]]]]}]
 
   $ compile ../programs/choices-otherwise.md
-  [{"name":"h","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[],"rest":[],"kind":["Consumable","c1"]},{"guard":[],"otherwise":true,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]],["Para",[["Jump","h"]]]]}]
+  [{"name":"h","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[],"rest":[],"kind":["Consumable","c1"]},{"guard":[],"otherwise":true,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]}],["Para",[["Jump","h"]]]]}]
+
+  $ compile ../programs/choices-fallthrough.md
+  [{"name":"prelude","cmds":[["Choice",{"more":[],"fallthrough":true,"items":[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","prelude"]],"rest":[],"kind":["Consumable","c0"]}]}],["Para",[["Text","here"]]]]}]
 
   $ compile ../programs/choices-exhausted.md
-  [{"name":"prelude","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","prelude"]],"rest":[],"kind":["Consumable","c1"]},{"guard":[],"otherwise":true,"initial":[["Text","b"]],"code":[["Jump","prelude"]],"rest":[],"kind":["Consumable","c0"]}]],["Para",[["Text","c"]]]]}]
+  [{"name":"prelude","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","prelude"]],"rest":[],"kind":["Consumable","c1"]},{"guard":[],"otherwise":true,"initial":[["Text","b"]],"code":[["Jump","prelude"]],"rest":[],"kind":["Consumable","c0"]}]}],["Para",[["Text","c"]]]]}]
 
   $ compile ../programs/error-choices-sticky-otherwise.md
   error: sticky is incompatible with otherwise
 
+  $ compile ../programs/error-choices-fallthrough-otherwise.md
+  error: fallthrough is not compatible with otherwises
+
   $ compile ../programs/api-local-state.md
-  [{"name":"ha","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","ha’s state:"],["Interpolate","local.state"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","hb"]]]],"kind":["Sticky"]}]]]},{"name":"hb","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","hb’s state:"],["Interpolate","local.state"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","ha"]]]],"kind":["Sticky"]}]]]}]
+  [{"name":"ha","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","ha’s state:"],["Interpolate","local.state"]]],["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","hb"]]]],"kind":["Sticky"]}]}]]},{"name":"hb","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","hb’s state:"],["Interpolate","local.state"]]],["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","ha"]]]],"kind":["Sticky"]}]}]]}]
 
   $ compile ../programs/api-seen.md
-  [{"name":"ha","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","a"]],"rest":[],"kind":["Consumable","c1"]},{"guard":["seen.a"],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]]]},{"name":"a","cmds":[["Para",[["Jump","ha"]]]]}]
+  [{"name":"ha","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","a"]],"rest":[],"kind":["Consumable","c1"]},{"guard":["seen.a"],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]}]]},{"name":"a","cmds":[["Para",[["Jump","ha"]]]]}]
 
   $ compile ../programs/jump-to-current-section.md
-  [{"name":"ha","cmds":[["Para",[["Text","hello"]]],["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","ha"]],"rest":[],"kind":["Consumable","c0"]}]]]}]
+  [{"name":"ha","cmds":[["Para",[["Text","hello"]]],["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","ha"]],"rest":[],"kind":["Consumable","c0"]}]}]]}]
 
   $ graph ../programs/section-prefixes.md
   digraph G {
@@ -148,10 +154,10 @@ more is mostly checked statically.
 An empty more is just a run.
 
   $ compile ../programs/error-empty-more.md
-  [{"name":"prelude","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[],"code":[["Run","more"]],"rest":[],"kind":["Consumable","c0"]}]]]}]
+  [{"name":"prelude","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[],"code":[["Run","more"]],"rest":[],"kind":["Consumable","c0"]}]}]]}]
 
   $ compile ../programs/dynamic-more.md
-  [{"name":"prelude","cmds":[["MetaBlock","'- `more x`'"]]},{"name":"x","cmds":[["Choices",[],[{"guard":[],"otherwise":false,"initial":[["Text","hello"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]]]}]
+  [{"name":"prelude","cmds":[["MetaBlock","'- `more x`'"]]},{"name":"x","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","hello"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]}]]}]
 
   $ compile ../programs/dynamic-section.md
   [{"name":"prelude","cmds":[["MetaBlock","`# a\n\nhello`"],["Para",[["Jump","a"]]]]}]
