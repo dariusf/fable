@@ -2,19 +2,29 @@
 
 const { chromium } = require("playwright");
 const path = require("path");
+const { existsSync } = require("fs");
 
 (async function main() {
   let browser = await chromium.launch({
+    // headless: true,
+    // headless: false,
     headless: !process.env.DEBUG,
   });
   const page = await browser.newPage(); // new tab
 
   const args = process.argv.slice(2);
-  const inputFileName = args[0];
+  const input = args[0];
   const elements = args.slice(1);
 
-  const fileUrl = `file://${path.resolve(process.cwd(), inputFileName)}`;
-  await page.goto(fileUrl, { waitUntil: "domcontentloaded" });
+  const filePath = path.resolve(process.cwd(), input);
+  if (existsSync(filePath)) {
+    await page.goto(`file://${filePath}`, { waitUntil: "domcontentloaded" });
+  } else {
+    // interpret as url
+    await page.goto(input, { waitUntil: "domcontentloaded" });
+  }
+
+  // await page.waitForTimeout(500000);
 
   async function testOne() {
     for (const item of elements) {
