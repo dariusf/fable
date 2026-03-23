@@ -911,7 +911,7 @@ function shouldLoadGame() {
 
 function inspectChoiceUrl() {
   const p = new URLSearchParams(window.location.search);
-  return JSON.parse(base64ToJsonString(p.get("choices")));
+  return decodeChoices(p.get("choices"));
 }
 
 function debounce(fn, delay) {
@@ -946,10 +946,20 @@ function loadGame() {
 function saveGame() {
   if (!isInDev()) return;
   if (!isStandalone()) return;
-  const s = jsonStringToBase64(JSON.stringify(internal.choice_history));
+  const s = encodeChoices(internal.choice_history);
   const url = new URL(window.location);
   url.searchParams.set("choices", s);
   pushUrl(url);
+}
+
+function decodeChoices(str) {
+  // return JSON.parse(base64ToJsonString(str));
+  return str.split("|");
+}
+
+function encodeChoices(hist) {
+  // return jsonStringToBase64(JSON.stringify(hist));
+  return hist.join("|");
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa
