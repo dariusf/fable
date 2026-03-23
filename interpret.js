@@ -914,6 +914,20 @@ function inspectChoiceUrl() {
   return JSON.parse(base64ToJsonString(p.get("choices")));
 }
 
+function debounce(fn, delay) {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+}
+
+const pushUrl = // debounce(
+  (url) => {
+    window.history.pushState({}, "", url);
+    // navigation.navigate(url); // no await
+  }; // }, 100);
+
 function loadGame() {
   try {
     const to_load = inspectChoiceUrl();
@@ -924,7 +938,7 @@ function loadGame() {
     // restart the state, which seems better than crashing and the game being unplayable
     const url = new URL(window.location);
     url.searchParams.delete("choices");
-    window.history.pushState({}, "", url);
+    pushUrl(url);
     return [];
   }
 }
@@ -935,7 +949,7 @@ function saveGame() {
   const s = jsonStringToBase64(JSON.stringify(internal.choice_history));
   const url = new URL(window.location);
   url.searchParams.set("choices", s);
-  window.history.pushState({}, "", url);
+  pushUrl(url);
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa
