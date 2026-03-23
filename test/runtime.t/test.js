@@ -17,8 +17,13 @@ const path = require("path");
   await page.goto(fileUrl, { waitUntil: "domcontentloaded" });
 
   async function testOne() {
-    for (const text of elements) {
-      await page.getByRole("link", { name: text }).click({ timeout: 1000 });
+    for (const item of elements) {
+      if (item.startsWith("select:")) {
+        const [_, sid, val] = item.split(":");
+        await page.locator(`#${sid}`).selectOption(val);
+      } else {
+        await page.getByRole("link", { name: item }).click({ timeout: 1000 });
+      }
     }
 
     const res = await page.locator("#content").innerHTML();
