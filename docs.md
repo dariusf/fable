@@ -60,6 +60,7 @@ Meta elements which have imperative effects are called _instructions_.
 ### Sections
 
 A Fable _story_ consists of named _sections_, which contain paragraphs of prose and instructions.
+<!-- why not call them scenes? a scene is a reader-level concept that may span multiple sections (an author-level concept). jumping between sections is completely transparent and does not necessarily map to a change of scene -->
 
 Sections are named using headings, and are shown until they end or are interrupted (e.g., by a jump or choice), which may later either continue the section or move to another. A section may thus never be shown in its entirety.
 
