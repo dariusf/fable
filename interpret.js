@@ -636,12 +636,25 @@ function interpret(instrs, parent, k) {
   // i is the index of a recursive instr, or the end of the instr list
   if (i >= instrs.length) {
     k();
-    container.scrollTo({
-      top: container.scrollHeight,
-      // window.scrollTo({
-      // top: document.body.scrollHeight,
-      behavior: "smooth",
-    });
+    // an interaction has concluded
+
+    // scroll the last .old paragraph to the top of the screen
+    const old = document.querySelectorAll(".old");
+    if (old.length > 0) {
+      const lastOld = old[old.length - 1];
+      container.scrollTo({
+        top: lastOld.offsetTop,
+        behavior: "smooth",
+      });
+    } else {
+      // previous scrolling logic: go unconditionally to the bottom
+      container.scrollTo({
+        top: container.scrollHeight,
+        // window.scrollTo({
+        // top: document.body.scrollHeight,
+        behavior: "smooth",
+      });
+    }
     return;
   }
   let current = instrs[i];
