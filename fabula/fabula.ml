@@ -88,8 +88,8 @@ let extract_frontmatter : string -> frontmatter * string =
   let fm_regex =
     Str.regexp "[ \n\t]*---\n[ \n\t]*\\([ -~\n]+\\)---\n\\([ -~\n]*\\)\n*"
   in
-  let simple_kvp = Str.regexp "\\([a-z]+\\): \\([ -~]+\\)" in
-  let multiline_kvp = Str.regexp "\\([a-z]+\\): |\n\\(\\( +[ -~]+\n\\)+\\)" in
+  let simple_kvp = Str.regexp "\\([a-z_]+\\): \\([ -~]+\\)" in
+  let multiline_kvp = Str.regexp "\\([a-z_]+\\): |\n\\(\\( +[ -~]+\n\\)+\\)" in
   fun str ->
     let exception Fail in
     try

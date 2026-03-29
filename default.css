@@ -1,14 +1,14 @@
 :root {
-  --main-bg-color: #f7f7f7;
-  --main-bg-color-lighter: #fafafa;
-  --main-fg-color: #000000;
+  --main-bg-color: {{light_bg}};
+  --main-bg-color-lighter: {{light_bg_lighter}};
+  --main-fg-color: {{light_fg}};
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --main-bg-color: #202124;
-    --main-bg-color-lighter: #4e5159;
-    --main-fg-color: #e8eaed;
+    --main-bg-color: {{dark_bg}};
+    --main-bg-color-lighter: {{dark_bg_lighter}};
+    --main-fg-color: {{dark_fg}};
   }
 }
 

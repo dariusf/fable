@@ -10,10 +10,10 @@
  (action
    (with-stdout-to embedded.ml
      (progn
-       (echo "let index title extra = Format.asprintf {|")
+       (echo "let index = {|")
        ; (cat story.html)
        (run sed s@_build/default/fablejs.bc.js@runtime.js@ story.html)
-       (echo "|} title extra\n")
+       (echo "|}")
        (echo "let default_css = {|")
        (cat default.css)
        (echo "|}")
