@@ -114,7 +114,11 @@ a:visited {
 }
 
 .old {
-  filter: brightness(0.65);
+  /* this only works in dark */
+  /* filter: brightness(0.65); */
+
+  opacity: 0.55;
+
   /* animation: darken 0.3s; */
 }
 
