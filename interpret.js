@@ -647,13 +647,14 @@ function interpret(instrs, parent, k) {
         behavior: "smooth",
       });
     } else {
+      // there is no greyed-out text, which only happens right at the beginning, so do nothing, assuming that it fits within the viewport
       // previous scrolling logic: go unconditionally to the bottom
-      container.scrollTo({
-        top: container.scrollHeight,
-        // window.scrollTo({
-        // top: document.body.scrollHeight,
-        behavior: "smooth",
-      });
+      // container.scrollTo({
+      //   top: container.scrollHeight,
+      //   // window.scrollTo({
+      //   // top: document.body.scrollHeight,
+      //   behavior: "smooth",
+      // });
     }
     return;
   }
