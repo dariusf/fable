@@ -39,14 +39,16 @@ body {
 
 /* this is so we don't rely on the page's scrollbars, which are buggy on ios/itch */
 #scroll-container {
-  max-height: 100%;
+  max-height: 100%; /* it's the height of the viewport */
   width: 90%;
   overflow-y: auto;
   box-sizing: border-box;
 }
 
 #scroll-placeholder {
-  height: 20%;
+  height: 20vh;
+  /* same as % because parent (scroll-container) is height of viewport */
+  /* height: 20%; */
 }
 
 /* hide the scrollbars of the contain container */
