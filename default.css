@@ -46,7 +46,10 @@ body {
 }
 
 #scroll-placeholder {
-  height: 20vh;
+  /* give full scrolloff */
+  height: 90vh;
+
+  /* height: 20vh; */
   /* same as % because parent (scroll-container) is height of viewport */
   /* height: 20%; */
 }
