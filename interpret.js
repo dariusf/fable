@@ -960,6 +960,7 @@ function loadGame() {
 function saveGame() {
   if (!isInDev()) return;
   if (!isStandalone()) return;
+  if (internal.system_made_choice) return;
   const s = encodeChoices(internal.choice_history);
   const url = new URL(window.location);
   url.searchParams.set("choices", s);
