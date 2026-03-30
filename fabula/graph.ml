@@ -83,9 +83,7 @@ let collapse_bidirectional edges =
   in
   aux Acc.empty edges
 
-let program_graph
-    (* (~edge:render_edge, ~overall) *)
-      ((render_edge, overall) : renderer) prog =
+let raw_edges (prog : program) =
   let regexes prog =
     List.map
       (fun c ->
@@ -135,9 +133,13 @@ let program_graph
         in
         List.map (fun (s, static) -> (name, s, static)) scenes_to)
   in
+  raw_edges
 
+let program_graph
+    (* (~edge:render_edge, ~overall) *)
+      ((render_edge, overall) : renderer) (prog : program) =
   let preprocessed_edges =
-    raw_edges
+    raw_edges prog
     (* |> merge_chains *)
     |> collapse_bidirectional
   in

@@ -134,23 +134,34 @@ let parse_str str =
   let doc = Cmarkit.Doc.of_string str in
   doc |> Compile.to_program
 
-let count_words (p : program) =
-  let count = ref 0 in
-  let add s =
-    let words = String.split_on_char ' ' s in
-    List.iter (fun w -> if String.trim w <> "" then incr count) words
+let collate_stats (p : program) =
+  let words = ref 0 in
+  let loc = ref 0 in
+  let choices = ref 0 in
+  let add_words s =
+    let ws = String.split_on_char ' ' s in
+    List.iter (fun w -> if String.trim w <> "" then incr words) ws
+  in
+  let add_loc s =
+    let s = String.trim s in
+    let nonblank =
+      String.split_on_char '\n' s |> List.filter (fun l -> String.trim l <> "")
+    in
+    if s <> "" then loc := !loc + List.length nonblank
   in
   let rec walk_cmd (c : cmd) =
     match c with
-    | Text s -> add s
+    | Text s -> add_words s
     | Para cmds | Emph cmds -> List.iter walk_cmd cmds
+    | Run s | Interpolate s | Meta s | MetaBlock s -> add_loc s
+    | LinkJump _ | LinkCode _ | Verbatim _ | VerbatimBlock _ | Break -> ()
+    | Jump _ | Tunnel _ | JumpDynamic _ -> ()
     | Choice { items; _ } ->
-      List.iter
-        (fun (ch : choice_item) ->
-          List.iter walk_cmd ch.initial;
-          List.iter walk_cmd ch.rest)
-        items
-    | _ -> ()
+      incr choices;
+      List.iter (fun (ch : choice_item) -> List.iter walk_cmd ch.rest) items
   in
   List.iter (fun (s : scene) -> List.iter walk_cmd s.cmds) p;
-  !count
+  let sections = List.length p in
+  let jumps = List.length (Graph.raw_edges p) in
+  Format.asprintf "Words: %d\nSections: %d\nJumps: %d\nChoices: %d\nLoC: %d"
+    !words sections jumps !choices !loc

@@ -5,11 +5,11 @@ let standalone = ref false
 let testing = ref false
 let input_files = ref []
 let output_file = ref None
-let show_word_count = ref false
+let show_stats = ref false
 
 let arg_specs =
   [
-    ("-w", Arg.Set show_word_count, "Show word count");
+    ("--stats", Arg.Set show_stats, "Show stats");
     ("-s", Arg.Set standalone, "Create a standlone directory");
     ("-t", Arg.Set testing, "Generates a testing setup");
     ( "-o",
@@ -71,8 +71,7 @@ let write_standalone dir frontmatter json =
       write_file (s "%s/dune" dir) "(cram (deps (glob_files *)))"
     end;
     (* done *)
-    if !show_word_count then
-      Format.printf "Words: %d@." (Fabula.count_words json);
+    if !show_stats then Format.printf "%s@." (Fabula.collate_stats json);
     Out_channel.with_open_text (s "%s/story.js" dir) (fun out ->
         Fabula.print_story_js ~out json)
 

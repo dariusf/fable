@@ -19,8 +19,7 @@ val print_story_js : ?out:out_channel -> program -> unit
 
 (** * Processing *)
 
-(** Word count, excluding code *)
-val count_words : program -> int
+val collate_stats : program -> string
 
 (** Overapproximate check for whether a command produces text *)
 val may_have_text : cmd -> bool
