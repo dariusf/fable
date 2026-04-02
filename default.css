@@ -92,6 +92,8 @@ a:visited {
 /* for paragraphs, maybe make more specific later */
 .para {
   padding-bottom: 1em;
+  text-align: justify;
+  hyphens: auto;
 }
 
 ul.choice {
@@ -173,4 +175,9 @@ select {
   -ms-appearance: none;
   -o-appearance: none;
   appearance: none;
+}
+
+.disable-justify-hyphenation {
+  text-align: left;
+  hyphens: none;
 }
