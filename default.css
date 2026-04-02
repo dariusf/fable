@@ -94,9 +94,27 @@ a:visited {
   padding-bottom: 1em;
 }
 
-.choice {
-  margin-top: 0px;
-  margin-bottom: 1em;
+ul.choice {
+  /* margin-top: 0px; */
+  /* margin-bottom: 1em; */
+
+  /* remove bullets */
+  list-style-type: none;
+
+  /* remove default indentation */
+  padding: 0;
+  margin: 0;
+
+  display: flex;
+
+  /* stack items vertically */
+  flex-direction: column;
+
+  /* center horizontally */
+  /* align-items: center; */
+
+  /* space out. em is the current line height */
+  gap: 0.5em;
 }
 
 .fadein {
