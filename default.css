@@ -122,42 +122,14 @@ ul.choice {
   opacity: 0.8;
 }
 
-.fadein {
-  animation: fadein 0.5s;
+.para.old {
+  animation: fadeout 0.5s ease forwards;
 }
 
-/* this is used to have the end of the page near the middle of the screen */
-/* #content {
-  height: 75%;
-  overflow-y: scroll;
-} */
-
-@keyframes fadein {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+@keyframes fadeout {
+  from { opacity: 1; }
+  to   { opacity: 0.5; }
 }
-
-.old {
-  /* this only works in dark */
-  /* filter: brightness(0.65); */
-
-  opacity: 0.55;
-
-  /* animation: darken 0.3s; */
-}
-
-/* @keyframes darken {
-  from {
-    filter: brightness(1);
-  }
-  to {
-    filter: brightness(0.65);
-  }
-} */
 
 * {
   scrollbar-color: var(--main-bg-color-lighter) var(--main-bg-color);

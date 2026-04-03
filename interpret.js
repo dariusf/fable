@@ -188,9 +188,6 @@ function surfaceError(message, ...args) {
 function createPara() {
   let d = document.createElement("div");
   d.classList.add("para");
-  if (isStandalone() && !isTesting()) {
-    d.classList.add("fadein");
-  }
   return d;
 }
 
