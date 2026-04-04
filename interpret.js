@@ -811,6 +811,19 @@ function clickByText(text, timeout = 100, interval = 10) {
   });
 }
 
+async function clickAll(...items) {
+  for (const item of items) {
+    await clickByText(item);
+  }
+}
+
+function putValueInSelect(id, val) {
+  const selectElt = document.getElementById(id);
+  if (selectElt) {
+    selectElt.value = val;
+  }
+}
+
 function interpretHistoryItem(text) {
   for (const hi of internal.history_interpretations) {
     if (hi(text)) {
@@ -1013,12 +1026,24 @@ function decodeChoices(str) {
 //   return btoa(binString);
 // }
 
-function automaticallyMakeChoicesUntil(text) {
-  if (document.body.innerText.includes(text)) {
-    return;
+// function automaticallyMakeChoicesUntil(text) {
+//   if (document.body.innerText.includes(text)) {
+//     return;
+//   }
+//   document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "1" }));
+//   setTimeout(automaticallyMakeChoicesUntil, 1, text);
+// }
+
+async function automaticallyMakeChoicesUntil(text) {
+  function found(s) {
+    // return document.body.innerText.includes(s);
+    const notOld = Array.from(document.querySelectorAll(".para:not(.old)"));
+    return notOld.some((e) => e.innerText.includes(s));
   }
-  document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "1" }));
-  setTimeout(automaticallyMakeChoicesUntil, 1, text);
+  while (!found(text)) {
+    document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "1" }));
+    await new Promise((resolve) => setTimeout(resolve, 1));
+  }
 }
 
 function removeUrlParam() {
