@@ -100,9 +100,14 @@ function defaultInternal() {
     // choices taken by the user
     choice_history: [],
     // choices to immediately take when hot reloading
-    immediately_take: shouldLoadGame() ? loadGame() : [],
+    immediately_take: [],
     // whether or not to send parent events. for internal use
     system_made_choice: false,
+    // saving and loading
+    local_storage_key: "fable",
+    local_storage_version: 1,
+    on_game_load: [],
+    on_game_save: () => null,
   };
 }
 
@@ -126,6 +131,9 @@ function start(story) {
   }
   let scene = story[0].name;
   internal.on_scene_visit.forEach((f) => f(scene));
+
+  loadInitialData();
+
   interpret(internal.scenes[scene], content, () => {
     // we can't rely on this continuation being taken as a jump will abandon it
   });
@@ -536,7 +544,7 @@ function interpret_Choice(parent, k, current, rest) {
       internal.choice_history.push(a.textContent);
       triggerOneShotCallback("on_interact");
       informEditorOfChoice(a.textContent);
-      saveGame(); // only do this after triggering interactions
+      saveGameOnInteract(); // only do this after triggering interactions
       if (choices_disappear) {
         parent.removeChild(ul);
       } else {
@@ -906,24 +914,23 @@ document.body.onkeydown = function (e) {
 };
 
 // back button
+// note that we have to push dummy entries to history to enable this
 window.onpopstate = function (_) {
-  if (!isInDev()) return false;
-  if (!isStandalone()) return false;
-  window.location.reload();
-  // it's also possible to rerun from the start
+  if (!isInDev()) return;
+  if (!isStandalone()) return;
+
+  // persist a modified history
+  internal.choice_history.pop();
+  saveGameToLocalStorage();
+
+  // rerun the game from the start
+  resetInternals();
+  content.textContent = "";
+  start(story);
+
+  // it's also possible to reload the page
+  // window.location.reload();
 };
-
-function shouldLoadGame() {
-  if (!isInDev()) return false;
-  if (!isStandalone()) return false;
-  const p = new URLSearchParams(window.location.search);
-  return !!p.get("choices");
-}
-
-function inspectChoiceUrl() {
-  const p = new URLSearchParams(window.location.search);
-  return decodeChoices(p.get("choices"));
-}
 
 function debounce(fn, delay) {
   let timeoutId;
@@ -933,61 +940,79 @@ function debounce(fn, delay) {
   };
 }
 
-const pushUrl = // debounce(
-  (url) => {
-    window.history.pushState({}, "", url);
-    // navigation.navigate(url); // no await
-  }; // }, 100);
+// const pushUrlToHistory = // debounce(
+//   (url) => {
+//     window.history.pushState({}, "", url);
+//     // navigation.navigate(url); // no await
+//   }; // }, 100);
 
-function loadGame() {
+function loadGameFromUrl() {
+  function inspectChoiceUrl() {
+    const p = new URLSearchParams(window.location.search);
+    return decodeChoices(p.get("choices"));
+  }
+
+  let to_load;
   try {
-    const to_load = inspectChoiceUrl();
+    to_load = inspectChoiceUrl();
     // console.log("reloading", to_load);
-    return to_load;
   } catch (e) {
     console.error("an error occurred loading choices, so starting over", e);
     // restart the state, which seems better than crashing and the game being unplayable
-    const url = new URL(window.location);
-    url.searchParams.delete("choices");
-    pushUrl(url);
-    return [];
+    to_load = [];
   }
+  // const url = new URL(window.location);
+  // url.searchParams.delete("choices");
+  // pushUrlToHistory(url);
+  return to_load;
 }
 
-function saveGame() {
+function saveGameOnInteract() {
+  // saveGameToUrl();
+  // pushUrlToHistory(url);
+  saveGameToLocalStorage();
+
   if (!isInDev()) return;
   if (!isStandalone()) return;
-  if (internal.system_made_choice) return;
-  const s = encodeChoices(internal.choice_history);
-  const url = new URL(window.location);
-  url.searchParams.set("choices", s);
-  pushUrl(url);
+
+  // push something, so we can press back
+  window.history.pushState({}, "");
 }
+
+// function saveGameToUrl() {
+//   if (!isInDev()) return;
+//   if (!isStandalone()) return;
+//   if (internal.system_made_choice) return;
+//   const s = encodeChoices(internal.choice_history);
+//   const url = new URL(window.location);
+//   url.searchParams.set("choices", s);
+//   // pushUrlToHistory(url);
+// }
 
 function decodeChoices(str) {
   // return JSON.parse(base64ToJsonString(str));
   return str.split("|");
 }
 
-function encodeChoices(hist) {
-  // return jsonStringToBase64(JSON.stringify(hist));
-  return hist.join("|");
-}
+// function encodeChoices(hist) {
+//   // return jsonStringToBase64(JSON.stringify(hist));
+//   return hist.join("|");
+// }
 
-// https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa
-function base64ToJsonString(base64) {
-  const binString = atob(base64);
-  return new TextDecoder().decode(
-    Uint8Array.from(binString, (m) => m.codePointAt(0)),
-  );
-}
+// // https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa
+// function base64ToJsonString(base64) {
+//   const binString = atob(base64);
+//   return new TextDecoder().decode(
+//     Uint8Array.from(binString, (m) => m.codePointAt(0)),
+//   );
+// }
 
-function jsonStringToBase64(str) {
-  const binString = Array.from(new TextEncoder().encode(str), (byte) =>
-    String.fromCodePoint(byte),
-  ).join("");
-  return btoa(binString);
-}
+// function jsonStringToBase64(str) {
+//   const binString = Array.from(new TextEncoder().encode(str), (byte) =>
+//     String.fromCodePoint(byte),
+//   ).join("");
+//   return btoa(binString);
+// }
 
 function automaticallyMakeChoicesUntil(text) {
   if (document.body.innerText.includes(text)) {
@@ -995,4 +1020,80 @@ function automaticallyMakeChoicesUntil(text) {
   }
   document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "1" }));
   setTimeout(automaticallyMakeChoicesUntil, 1, text);
+}
+
+function removeUrlParam() {
+  const url = new URL(window.location);
+  url.searchParams.delete("reset");
+  window.history.replaceState({}, "", url);
+}
+
+function clearLocalStorage() {
+  localStorage.removeItem(internal.local_storage_key);
+}
+
+function hasLocalStorageSave() {
+  return !!localStorage.getItem(internal.local_storage_key);
+}
+
+function saveToLocalStorage(data) {
+  const save = {
+    version: internal.local_storage_version,
+    choices: internal.choice_history,
+    data, // choice state is persisted independently of user data
+  };
+  localStorage.setItem(internal.local_storage_key, JSON.stringify(save));
+}
+
+function loadFromLocalStorage() {
+  try {
+    const save = JSON.parse(localStorage.getItem(internal.local_storage_key));
+    internal.immediately_take = save.choices;
+    internal.on_game_load.forEach((f) => f(save.data, save.version));
+    return save;
+  } catch (e) {
+    console.error("error loading game", e);
+    return null;
+  }
+}
+
+function saveGameToLocalStorage() {
+  saveToLocalStorage(internal.on_game_save());
+}
+
+function loadInitialData() {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get("reset") === "1") {
+    clearLocalStorage();
+    removeUrlParam("reset");
+  } else if (!!params.get("choices")) {
+    internal.immediately_take = loadGameFromUrl();
+    // note that the url is only a means of input (for testing).
+    // also, we don't save anything to local storage, as we don't have the user data at this point.
+    // the url is a lossy means of persisting game state in any case.
+    removeUrlParam("choices");
+  } else if (hasLocalStorageSave()) {
+    loadFromLocalStorage();
+  }
+}
+
+function enableResetDetector(element) {
+  const REQUIRED_TAPS = 5;
+  const TIME_WINDOW_MS = 2000;
+
+  let taps = [];
+
+  element.addEventListener("click", () => {
+    const now = performance.now();
+    taps.push(now);
+    taps = taps.filter((t) => now - t < TIME_WINDOW_MS);
+    if (taps.length >= REQUIRED_TAPS) {
+      taps = [];
+      if (confirm("Start over?")) {
+        clearLocalStorage();
+        window.location.reload();
+      }
+    }
+  });
 }

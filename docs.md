@@ -12,6 +12,7 @@
     - [Semantics](#semantics)
   - [Runtime](#runtime)
     - [Programming](#programming)
+    - [Saving and loading](#saving-and-loading)
   - [CLI](#cli)
     - [Exporting a standalone HTML page](#exporting-a-standalone-html-page)
     - [Writing](#writing)
@@ -214,8 +215,6 @@ Direct console access to its APIs is supported.
 
 All other parts of the runtime are considered unstable and not part of the API.
 
-<!-- TODO save and load -->
-
 ### Programming
 
 Code is evaluated using [indirect `eval`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval), which means:
@@ -225,6 +224,75 @@ Code is evaluated using [indirect `eval`](https://developer.mozilla.org/en-US/do
 - Any programming which involves story-wide state should be done with global variables, either by assigning to `window`, using `var`, or assigning to a variable without a prior declaration.
     - This enables the use of the browser devtools to inspect or modify story state.
     - By convention, user state is in `window.state`.
+
+### Saving and loading
+
+By default, Fable persists reader choices in local storage.
+In short, if you don't do anything, your game will behave reasonably when the page is reloaded.
+Caveats below.
+
+It's advisable to at least set `local_storage_key`, so multiple games don't clobber each other's data.
+
+```js
+// define this on window, as it must run before the game is started;
+// Fable calls it automatically
+function beforeGameLoad() {
+  internal.local_storage_key += ".your-game"; // advised
+
+  // optional
+  internal.local_storage_version = 1; // the default
+  internal.on_game_load.push((data, _version) => {
+    state.your_data = data.your_data ?? 0;
+  });
+  internal.on_game_save = () => ({ your_data: do_something() });
+}
+```
+
+<!-- TODO note that Fable's own data (choice-history) is not versioned -->
+
+The rest is for persisting user-defined data.
+
+- Save data can optionally be versioned, to give the option of invalidating or migrating old save data.
+- When Fable wants to save data, it will call `on_game_save`, where you can supply what data should be saved.
+- When Fable wants to load data, it will call all the functions in `on_game_load`, passing the data you saved, as well as the version.
+
+Caveats:
+
+- **Race conditions** If your game is open in multiple tabs, the last one the user takes an action in will have its data saved
+- **When does saving/loading occur?** You generally shouldn't rely on this, but in case, saving currently happens after interactions, and loading happens before the game starts or when the back button is pressed. If the user closes the tab or switches app and never returns, nothing will saved.
+- **Escape hatches** In case something goes wrong with the save data (data corruption, bug), the game could become unable to start, depending on how you're handling it. To mitigate this, there are two escape hatches:
+  1. The query parameter `?reset=1` can be appended to the URL. This is your means of ensuring a reader's game has its state reset.
+  2. An escape hatch can be placed on text in the game like this:
+
+    ```html
+    <span class="reset-button">some text</span>
+    ```
+
+    ```js
+    enableResetDetector(document.querySelector(".reset-button"))
+    ```
+
+    Tapping it 5 times in 2 seconds will prompt the user for confirmation on whether they want to reset.
+
+- **Divergence** Persisting the reader's game state *just works* by saving their history of choices and playing through the entire sequence on reload. However, what happens if you remove or reword some of those choices? This is called *divergence* from the previous history; when it happens, the game will just stop at the point of divergence. This is a reasonable, best-effort default, in that it seems better than starting over completely. It also goes through the hot reloading flow so it's well-tested. The tradeoff is that it may leave the player somewhere odd, so it may appear like a glitch. However, it will be at a point they reached through their own choices.
+- the save file will not be versioned. if it's invalid, i'll just throw it away and not attempt to migrate it. or write code to migrate and never break old fields.
+- **Guarantees on persistence** Unfortunately there are no guarantees on how long saved data will be persisted; it varies a lot across browsers, platforms, settings, and **time**. It is best to assume that the saved data is transient: it survives refreshes, but you probably shouldn't rely on it surviving beyond a few days. As of the time of writing, it works this way on itch in mobile and desktop browsers.
+  - It has historically not worked at all on mobile Safari and itch
+  - It appears to work now, but I've seen reports that the data is cleared after 7 days, as well as upon killing the browser app
+  -
+
+- different browsers remove the save at different times. safari apparently does it when the app is killed, or in 7 days. who knows
+-
+
+<!--
+Apr 2026 ios safari itch loses save data on quit
+https://intfiction.org/t/local-storage-clears-on-mobile-browsers-deleting-saved-games/74647/5
+https://intfiction.org/t/playing-bee-itch-io-on-iphone-browser-game-progress-lost-w-autorefresh/74407/3
+
+how twine sugarcube works. 1-7 days, depends on settings
+https://old.reddit.com/r/twinegames/comments/pmh9d7/itchio_wont_retain_save_data_twine_sugarcube/
+-->
+
 
 ## CLI
 
