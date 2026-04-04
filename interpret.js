@@ -115,13 +115,12 @@ function resetInternals() {
   internal = defaultInternal();
 }
 
-// function seen(scene) {
-//   // truthiness supported for this, 0 is false, nonzero is true
-//   return internal.seen_scenes[scene];
-// }
 window.seen = internal.seen_scenes;
 
 function start(story) {
+  // re-run side effects
+  window.beforeGameLoad?.();
+
   if (story.length === 0) {
     return;
   }
