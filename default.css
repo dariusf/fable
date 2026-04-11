@@ -1,14 +1,23 @@
 :root {
-  --main-bg-color: {{light_bg}};
-  --main-bg-color-lighter: {{light_bg_lighter}};
-  --main-fg-color: {{light_fg}};
+  /* menat to be overridden */
+  --fable-light-bg: #f7f7f7;
+  --fable-light-bg-lighter: #fafafa;
+  --fable-light-fg: #000000;
+  --fable-dark-bg: #202124;
+  --fable-dark-bg-lighter: #4e5159;
+  --fable-dark-fg: #e8eaed;
+
+  /* meant for use */
+  --main-bg-color: var(--fable-light-bg);
+  --main-bg-color-lighter: var(--fable-light-bg-lighter);
+  --main-fg-color: var(--fable-light-fg);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --main-bg-color: {{dark_bg}};
-    --main-bg-color-lighter: {{dark_bg_lighter}};
-    --main-fg-color: {{dark_fg}};
+    --main-bg-color: var(--fable-dark-bg);
+    --main-bg-color-lighter: var(--fable-dark-bg-lighter);
+    --main-fg-color: var(--fable-dark-fg);
   }
 }
 

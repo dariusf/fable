@@ -25,6 +25,34 @@ let substitute_vars vars content =
       Str.global_replace r v acc)
     content vars
 
+(* This makes default.css standard, without template variables.
+  We use a style block to override the default colours the user specifies. *)
+let produce_style_override =
+  let css_vars =
+    [
+      ("light_bg", "--fable-light-bg");
+      ("light_bg_lighter", "--fable-light-bg-lighter");
+      ("light_fg", "--fable-light-fg");
+      ("dark_bg", "--fable-dark-bg");
+      ("dark_bg_lighter", "--fable-dark-bg-lighter");
+      ("dark_fg", "--fable-dark-fg");
+    ]
+  in
+  fun frontmatter ->
+    let overrides =
+      List.filter_map
+        (fun (fm_name, css_name) ->
+          match List.assoc_opt fm_name frontmatter with
+          | Some v -> Some (Format.asprintf "%s: %s;" css_name v)
+          | None -> None)
+        css_vars
+    in
+    match overrides with
+    | [] -> ""
+    | _ ->
+      Format.asprintf "<style>:root { %s }</style>"
+        (String.concat " " overrides)
+
 let write_standalone dir frontmatter json =
   let get_fm fm name default =
     List.assoc_opt name fm |> Option.value ~default
@@ -36,28 +64,19 @@ let write_standalone dir frontmatter json =
   | false ->
     Sys.mkdir dir 0o777;
     let s = Format.asprintf in
+    let style_override = produce_style_override frontmatter in
     write_file (s "%s/index.html" dir)
       begin
         substitute_vars
           [
             ("title", get_fm frontmatter "title" "Fable");
-            ("extra", get_fm frontmatter "extra" "");
+            ( "extra",
+              (* this relies on extra being at the end of <head>, after default.css *)
+              style_override ^ get_fm frontmatter "extra" "" );
           ]
           Embedded.index
       end;
-    write_file (s "%s/default.css" dir)
-      begin
-        substitute_vars
-          [
-            ("light_bg", get_fm frontmatter "light_bg" "#f7f7f7");
-            ("light_bg_lighter", get_fm frontmatter "light_bg_lighter" "#fafafa");
-            ("light_fg", get_fm frontmatter "light_fg" "#000000");
-            ("dark_bg", get_fm frontmatter "dark_bg" "#202124");
-            ("dark_bg_lighter", get_fm frontmatter "dark_bg_lighter" "#4e5159");
-            ("dark_fg", get_fm frontmatter "dark_fg" "#e8eaed");
-          ]
-          Embedded.default_css
-      end;
+    write_file (s "%s/default.css" dir) Embedded.default_css;
     write_file (s "%s/interpret.js" dir) Embedded.interpret;
     write_file (s "%s/runtime.js" dir) Embedded.runtime;
     write_file (s "%s/graph.dot" dir)
