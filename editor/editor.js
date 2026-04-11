@@ -14,6 +14,17 @@ const debounce = (callback, wait) => {
   };
 };
 
+function updateTheme() {
+  if (
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  ) {
+    editor.setTheme("ace/theme/one_dark");
+  } else {
+    editor.setTheme("ace/theme/chrome");
+  }
+}
+
 function setupEditor() {
   // https://ace.c9.io/tool/mode_creator.html
 
@@ -21,7 +32,13 @@ function setupEditor() {
   // see https://ace.c9.io/build/kitchen-sink.html for theme list,
   // https://cdnjs.com/libraries/ace for theme name
   // editor.setTheme("ace/theme/xcode");
-  editor.setTheme("ace/theme/one_dark");
+  updateTheme();
+
+  // React to system theme changes dynamically
+  window
+    .matchMedia("(prefers-color-scheme: dark)")
+    .addEventListener("change", updateTheme);
+
   editor.setShowPrintMargin(false);
   editor.renderer.setShowGutter(false);
   editor.setHighlightActiveLine(false);
