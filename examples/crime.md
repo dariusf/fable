@@ -2,6 +2,11 @@
 # beginning
 
 ```js
+function findContainingText(s) {
+    const notOld = Array.from(document.querySelectorAll(".para"));
+    return notOld.filter((e) => e.innerText.includes(s));
+}
+
 internal.bug_detectors.push(() => {
   let not_ended = !findContainingText("THE END").length;
   let no_options = !document.querySelectorAll('.choice').length

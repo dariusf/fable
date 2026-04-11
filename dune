@@ -54,7 +54,7 @@
     (run ../editor/examples.sh ../editor/editor.html))
    ; (copy ../story.html story.html)
    (with-stdout-to story.html
-    (run sed -e s/%s// -e s@_build/default/fablejs.bc.js@fablejs.bc.js@ ../story.html))
+    (run sed -e s/%s// -e s@_build/default/fablejs.bc.js@fablejs.bc.js@ -e s@{{extra}}@@ ../story.html))
    (write-file story.js "var story = [];")
    (copy ../interpret.js interpret.js)
    (copy ../default.css default.css)))))

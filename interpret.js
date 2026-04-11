@@ -980,12 +980,14 @@ function loadGameFromUrl() {
 }
 
 function saveGameOnInteract() {
+  // editor cannot use local storage
+  if (!isStandalone()) return;
+
   // saveGameToUrl();
   // pushUrlToHistory(url);
   saveGameToLocalStorage();
 
   if (!isInDev()) return;
-  if (!isStandalone()) return;
 
   // push something, so we can press back
   window.history.pushState({}, "");
@@ -1057,6 +1059,9 @@ function clearLocalStorage() {
 }
 
 function hasLocalStorageSave() {
+  // editor does not allow use of local storage
+  if (!isStandalone()) return false;
+
   return !!localStorage.getItem(internal.local_storage_key);
 }
 
