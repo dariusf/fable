@@ -183,7 +183,7 @@
     <script>
       const queryParams = new URLSearchParams(window.location.search);
       if (queryParams.get("story") !== null) {
-        editorSet(window.atob(queryParams.get("story")));
+        editorSet(base64ToString(queryParams.get("story")));
       } else {
         editorSet(current_example_text());
       }

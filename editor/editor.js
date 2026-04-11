@@ -142,7 +142,7 @@ function triggerEdited() {
   try {
     iframe.contentWindow.postMessage(
       { type: "EDITED", md: editorGet(), history: choice_history },
-      "*"
+      "*",
     );
   } catch (e) {}
 }
@@ -219,10 +219,25 @@ function saveFile() {
 
 function share() {
   const url = new URL(window.location);
-  url.search = new URLSearchParams({ story: window.btoa(editorGet()) });
+  url.search = new URLSearchParams({ story: stringToBase64(editorGet()) });
   // this navigates away
   // window.location = url.toString();
   history.pushState({}, "Shared Code URL", url.toString());
 }
 
 setupEditor();
+
+// https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa
+function base64ToString(base64) {
+  const binString = atob(base64);
+  return new TextDecoder().decode(
+    Uint8Array.from(binString, (m) => m.codePointAt(0)),
+  );
+}
+
+function stringToBase64(str) {
+  const binString = Array.from(new TextEncoder().encode(str), (byte) =>
+    String.fromCodePoint(byte),
+  ).join("");
+  return btoa(binString);
+}
