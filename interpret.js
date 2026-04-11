@@ -79,6 +79,7 @@ function defaultInternal() {
         internal.last_visited_turn[s] = internal.turns;
       },
     ],
+    on_quiescent: [],
     on_interact: [
       () => {
         internal.turns++;
@@ -599,6 +600,7 @@ function interpret_Choice(parent, k, current, rest) {
     }
   } else {
     addBlock(parent, ul);
+    triggerOneShotCallback("on_quiescent");
   }
 }
 
@@ -641,6 +643,8 @@ function interpret(instrs, parent, k) {
   if (i >= instrs.length) {
     k();
     // an interaction has concluded
+
+    triggerOneShotCallback("on_quiescent");
 
     // scroll the last .old paragraph to the top of the screen
     const old = document.querySelectorAll(".old");
@@ -793,16 +797,26 @@ setTimeout(click_links, TESTING_FREQ);
 function clickByText(text, timeout = 100, interval = 10) {
   return new Promise((resolve, _reject) => {
     const startTime = Date.now();
+    let done = false;
     function poll() {
       const elements = choicesContainingText(text);
       let targetElement = elements[0];
       if (targetElement) {
+        internal.on_quiescent.push(() => {
+          if (!done) {
+            done = true;
+            resolve(true);
+          }
+          return true;
+        });
         targetElement.click();
-        resolve(true);
         return;
       }
       if (Date.now() - startTime > timeout) {
-        resolve(false);
+        if (!done) {
+          done = true;
+          resolve(false);
+        }
         return;
       }
       setTimeout(poll, interval);
@@ -813,6 +827,7 @@ function clickByText(text, timeout = 100, interval = 10) {
 
 async function clickAll(...items) {
   for (const item of items) {
+    // ignores return value?
     await clickByText(item);
   }
 }
@@ -1043,8 +1058,16 @@ async function automaticallyMakeChoicesUntil(text) {
     return notOld.some((e) => e.innerText.includes(s));
   }
   while (!found(text)) {
-    document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "1" }));
-    await new Promise((resolve) => setTimeout(resolve, 1));
+    await new Promise(
+      (resolve) => {
+        internal.on_quiescent.push(() => {
+          resolve(true);
+          return true;
+        });
+        document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "1" }));
+      },
+      // setTimeout(resolve, 1)
+    );
   }
 }
 
