@@ -1,3 +1,4 @@
+(** This writes over files which already exist *)
 let write_file name content =
   Out_channel.with_open_text name (fun oc -> Printf.fprintf oc "%s\n" content)
 
@@ -57,42 +58,37 @@ let write_standalone dir frontmatter json =
   let get_fm fm name default =
     List.assoc_opt name fm |> Option.value ~default
   in
-  match Sys.file_exists dir with
-  | true ->
-    Format.printf "%s already exists@." dir;
-    exit 1
-  | false ->
-    Sys.mkdir dir 0o777;
-    let s = Format.asprintf in
-    let style_override = produce_style_override frontmatter in
-    write_file (s "%s/index.html" dir)
-      begin
-        substitute_vars
-          [
-            ("title", get_fm frontmatter "title" "Fable");
-            ( "extra",
-              (* this relies on extra being at the end of <head>, after default.css *)
-              style_override ^ get_fm frontmatter "extra" "" );
-          ]
-          Embedded.index
-      end;
-    write_file (s "%s/default.css" dir) Embedded.default_css;
-    write_file (s "%s/interpret.js" dir) Embedded.interpret;
-    write_file (s "%s/runtime.js" dir) Embedded.runtime;
-    write_file (s "%s/graph.dot" dir)
-      (Fabula.Graph.(program_graph graphviz_renderer) json);
-    write_file (s "%s/graph.mmd" dir)
-      (Fabula.Graph.(program_graph mermaid_renderer) json);
-    (* testing *)
-    if !testing then begin
-      write_file (s "%s/test.js" dir) Embedded.test;
-      write_file (s "%s/dune-project" dir) "(lang dune 3.15)";
-      write_file (s "%s/dune" dir) "(cram (deps (glob_files *)))"
+  if not (Sys.file_exists dir) then Sys.mkdir dir 0o777;
+  let fmt = Format.asprintf in
+  let style_override = produce_style_override frontmatter in
+  write_file (fmt "%s/index.html" dir)
+    begin
+      substitute_vars
+        [
+          ("title", get_fm frontmatter "title" "Fable");
+          ( "extra",
+            (* this relies on extra being at the end of <head>, after default.css *)
+            style_override ^ get_fm frontmatter "extra" "" );
+        ]
+        Embedded.index
     end;
-    (* done *)
-    if !show_stats then Format.printf "%s@." (Fabula.collate_stats json);
-    Out_channel.with_open_text (s "%s/story.js" dir) (fun out ->
-        Fabula.print_story_js ~out json)
+  write_file (fmt "%s/default.css" dir) Embedded.default_css;
+  write_file (fmt "%s/interpret.js" dir) Embedded.interpret;
+  write_file (fmt "%s/runtime.js" dir) Embedded.runtime;
+  write_file (fmt "%s/graph.dot" dir)
+    (Fabula.Graph.(program_graph graphviz_renderer) json);
+  write_file (fmt "%s/graph.mmd" dir)
+    (Fabula.Graph.(program_graph mermaid_renderer) json);
+  (* testing *)
+  if !testing then begin
+    write_file (fmt "%s/test.js" dir) Embedded.test;
+    write_file (fmt "%s/dune-project" dir) "(lang dune 3.15)";
+    write_file (fmt "%s/dune" dir) "(cram (deps (glob_files *)))"
+  end;
+  (* done *)
+  if !show_stats then Format.printf "%s@." (Fabula.collate_stats json);
+  Out_channel.with_open_text (fmt "%s/story.js" dir) (fun out ->
+      Fabula.print_story_js ~out json)
 
 let () =
   Arg.parse arg_specs
