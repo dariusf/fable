@@ -132,6 +132,17 @@ function fullReload() {
 }
 
 let onEdit = debounce(() => {
+  const currentText = editorGet();
+  const examplesSelect = document.querySelector("#examples");
+  const selectedOption = examplesSelect.options[examplesSelect.selectedIndex];
+
+  if (
+    selectedOption.value !== "custom" &&
+    selectedOption.dataset.text?.trim() !== currentText.trim()
+  ) {
+    examplesSelect.value = "custom";
+  }
+
   // refreshEditor();
   triggerEdited();
 }, 250);
@@ -267,6 +278,7 @@ function current_example_text() {
 function load_selected_example() {
   choice_history = [];
   fileHandle = null;
+  setDirty(false);
   editorSet(current_example_text());
 }
 
@@ -287,8 +299,16 @@ function reload() {
   fullReload();
 }
 
+let isDirty = false;
+
+function setDirty(dirty) {
+  isDirty = dirty;
+}
+
 window.onbeforeunload = function () {
-  return "prevent closing without saving";
+  if (isDirty) {
+    return "You have unsaved changes. Are you sure you want to leave?";
+  }
 };
 
 let fileHandle = null;
@@ -308,6 +328,7 @@ async function openFile() {
       const file = await handle.getFile();
       const text = await file.text();
       choice_history = [];
+      setDirty(true);
       editorSet(text);
     } catch (e) {
       console.error(e);
@@ -321,6 +342,7 @@ async function openFile() {
       if (file) {
         const text = await file.text();
         choice_history = [];
+        setDirty(true);
         editorSet(text);
       }
     };
@@ -344,6 +366,7 @@ async function saveFileNative(markdown) {
     const writable = await fileHandle.createWritable();
     await writable.write(markdown);
     await writable.close();
+    setDirty(false);
   } catch (e) {
     console.error(e);
   }
@@ -365,6 +388,7 @@ function downloadBlob(blob, filename) {
 function saveFileFallback(markdown) {
   const file = new File([markdown], "story.md", { type: "text/markdown" });
   downloadBlob(file, file.name);
+  setDirty(false);
 }
 
 async function save() {
