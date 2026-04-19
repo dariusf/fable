@@ -204,6 +204,11 @@ window.addEventListener("message", function (e) {
         "*",
       );
     }
+  } else if (e.data.type === "GET_STORY_JSON") {
+    window.parent.postMessage(
+      { type: "STORY_JSON_RESPONSE", json: story },
+      "*",
+    );
   }
 });
 

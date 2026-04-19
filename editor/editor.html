@@ -3,9 +3,6 @@
   <head>
     <meta charset="utf-8" />
 
-    <!-- <script src="fablejs.bc.js"></script> -->
-    <!-- <link href="default.css" rel="stylesheet" /> -->
-
     <!-- stop google thinking this page is in spanish -->
     <!-- <meta name="google" content="notranslate" /> -->
 
@@ -109,9 +106,9 @@
         gap: 8px;
       }
 
-      #toolbar button {
-        /* margin-right: 5px; */
-      }
+      /* #toolbar button { */
+      /* margin-right: 5px; */
+      /* } */
 
       #output {
         font-family:
@@ -154,22 +151,17 @@
         </select>
         <button class="btn" id="back-btn" onclick="back()">Back</button>
         <button class="btn" onclick="restart()">Restart</button>
+        <button class="btn" onclick="graph()">Graph</button>
         <!-- <button class="btn" onclick="reload()">Reload</button> -->
         <a
           href="https://github.com/dariusf/fable/blob/master/docs.md"
           target="_blank"
           >Docs</a
         >
-        <!-- <button onclick="saveFile()">Save</button> -->
-        <!-- <label for="upload">Load</label>
-        <input
-          name="upload"
-          type="file"
-          accept=".md"
-          onchange="loadFile(this)"
-        /> -->
+        <button class="btn" onclick="openFile()">Open</button>
+        <button class="btn" onclick="save()">Save</button>
+        <button class="btn" onclick="publish()">Publish</button>
         <button class="btn" onclick="share()">Share</button>
-        <button class="btn" onclick="graph()">Graph</button>
         <!-- prevent the checkbox and label from wrapping separately -->
         <!-- <span style="display: inline-block">
           <input
@@ -196,9 +188,12 @@
     <!-- bundle.js/main.js requires ocaml_ready (hipjs) and enable_buttons (page) to be defined -->
     <!-- <script type="text/javascript" src="bundle.js"></script> -->
     <script type="text/javascript" src="editor.js"></script>
+
     <!-- <script type="text/javascript" src="story.js"></script> -->
     <!-- <script type="text/javascript" src="interpret.js"></script> -->
     <script>
+      main();
+
       const queryParams = new URLSearchParams(window.location.search);
       if (queryParams.get("story") !== null) {
         editorSet(base64ToString(queryParams.get("story")));

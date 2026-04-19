@@ -1,7 +1,5 @@
 let editor;
 const iframe = document.querySelector("iframe");
-const fastReload = document.querySelector("#fastreload");
-const backBtn = document.querySelector("#back-btn");
 let choice_history = [];
 
 // https://www.joshwcomeau.com/snippets/javascript/debounce/
@@ -81,6 +79,28 @@ function setupEditor() {
   editor.focus();
 }
 
+function setupDragAndDrop() {
+  const editorDiv = document.getElementById("editor");
+  editorDiv.addEventListener("dragover", (e) => {
+    e.preventDefault();
+  });
+  editorDiv.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+
+    if (file.name.endsWith(".md")) {
+      const text = await file.text();
+      choice_history = [];
+      editorSet(text);
+    } else if (file.name.endsWith(".html")) {
+      alert(
+        "This is a published story file. Open the original .md file to edit.",
+      );
+    }
+  });
+}
+
 function editorSet(s) {
   // inp.value = s;
   editor.setValue(s, -1);
@@ -98,10 +118,6 @@ function disableVim() {
 function vim() {
   editor.setKeyboardHandler("ace/keyboard/vim");
 }
-
-// function usingFastReload() {
-//   return fastReload.checked;
-// }
 
 function refreshEditor() {
   // if (true || usingFastReload()) {
@@ -149,6 +165,11 @@ window.addEventListener("message", (e) => {
       pendingGraphWindow = null;
     }
     alert("Error generating graph: " + e.data.error);
+  } else if (e.data.type === "STORY_JSON_RESPONSE") {
+    if (pendingPublishResolve) {
+      pendingPublishResolve(e.data.json);
+      pendingPublishResolve = null;
+    }
   } else {
     throw `unknown message ${e.data.type}`;
   }
@@ -160,8 +181,9 @@ function populateGraphWindow(win, mermaidSource) {
     window.matchMedia("(prefers-color-scheme: dark)").matches;
   const themeCSS = getThemeCSS();
 
+  win.document.open();
   win.document.write(`
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
   <title>Fable Graph</title>
@@ -244,6 +266,7 @@ function current_example_text() {
 
 function load_selected_example() {
   choice_history = [];
+  fileHandle = null;
   editorSet(current_example_text());
 }
 
@@ -268,28 +291,146 @@ window.onbeforeunload = function () {
   return "prevent closing without saving";
 };
 
-// https://www.stefanjudis.com/snippets/how-trigger-file-downloads-with-javascript/
-function downloadFile(file) {
-  // Create a link and set the URL using `createObjectURL`
+let fileHandle = null;
+
+async function openFile() {
+  if ("showOpenFilePicker" in window) {
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        types: [
+          {
+            description: "Fable story",
+            accept: { "text/markdown": [".md"] },
+          },
+        ],
+      });
+      fileHandle = handle;
+      const file = await handle.getFile();
+      const text = await file.text();
+      choice_history = [];
+      editorSet(text);
+    } catch (e) {
+      console.error(e);
+    }
+  } else {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".md";
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const text = await file.text();
+        choice_history = [];
+        editorSet(text);
+      }
+    };
+    input.click();
+  }
+}
+
+async function saveFileNative(markdown) {
+  try {
+    if (!fileHandle) {
+      fileHandle = await window.showSaveFilePicker({
+        suggestedName: "story.md",
+        types: [
+          {
+            description: "Fable story",
+            accept: { "text/markdown": [".md"] },
+          },
+        ],
+      });
+    }
+    const writable = await fileHandle.createWritable();
+    await writable.write(markdown);
+    await writable.close();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function saveFileFallback(markdown) {
+  const file = new File([markdown], "story.md", { type: "text/markdown" });
   const link = document.createElement("a");
   link.style.display = "none";
   link.href = URL.createObjectURL(file);
   link.download = file.name;
-
-  // It needs to be added to the DOM so it can be clicked
   document.body.appendChild(link);
   link.click();
-
-  // To make this work on Firefox we need to wait
-  // a little while before removing it.
   setTimeout(() => {
     URL.revokeObjectURL(link.href);
     link.parentNode.removeChild(link);
   }, 0);
 }
 
-function saveFile() {
-  downloadFile(new File([editorGet()], "story.md"));
+async function save() {
+  const markdown = editorGet();
+  if ("showSaveFilePicker" in window) {
+    await saveFileNative(markdown);
+  } else {
+    saveFileFallback(markdown);
+  }
+}
+
+// Prefetch assets for standalone HTML assembly
+const assetPromises = {
+  runtime: fetch("fablejs.bc.js").then((r) => r.text()),
+  interpret: fetch("interpret.js").then((r) => r.text()),
+  css: fetch("default.css").then((r) => r.text()),
+};
+
+let pendingPublishResolve = null;
+
+async function publish() {
+  const [runtime, interpret, css] = await Promise.all([
+    assetPromises.runtime,
+    assetPromises.interpret,
+    assetPromises.css,
+  ]);
+
+  const storyJson = await new Promise((resolve) => {
+    pendingPublishResolve = resolve;
+    iframe.contentWindow.postMessage({ type: "GET_STORY_JSON" }, "*");
+  });
+
+  const storyJs = "var story = " + JSON.stringify(storyJson) + ";";
+
+  const html = `
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fable Story</title>
+    <style>${css}</style>
+  </head>
+  <body>
+    <div id="centred-container">
+      <div id="scroll-container">
+        <div id="content-container">
+          <div id="content"></div>
+        </div>
+        <div id="scroll-placeholder"></div>
+      </div>
+    </div>
+    <script>${runtime}</script>
+    <script>${storyJs}</script>
+    <script>${interpret}</script>
+    <script>main();</script>
+  </body>
+</html>`;
+
+  const file = new File([html], "story.html", { type: "text/html" });
+  const link = document.createElement("a");
+  link.style.display = "none";
+  link.href = URL.createObjectURL(file);
+  link.download = file.name;
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(link.href);
+    link.parentNode.removeChild(link);
+  }, 0);
 }
 
 function share() {
@@ -318,7 +459,10 @@ function getThemeCSS() {
     .join("\n");
 }
 
-setupEditor();
+function main() {
+  setupEditor();
+  setupDragAndDrop();
+}
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa
 function base64ToString(base64) {
