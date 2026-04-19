@@ -349,18 +349,22 @@ async function saveFileNative(markdown) {
   }
 }
 
-function saveFileFallback(markdown) {
-  const file = new File([markdown], "story.md", { type: "text/markdown" });
+function downloadBlob(blob, filename) {
   const link = document.createElement("a");
   link.style.display = "none";
-  link.href = URL.createObjectURL(file);
-  link.download = file.name;
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
   document.body.appendChild(link);
   link.click();
   setTimeout(() => {
     URL.revokeObjectURL(link.href);
     link.parentNode.removeChild(link);
   }, 0);
+}
+
+function saveFileFallback(markdown) {
+  const file = new File([markdown], "story.md", { type: "text/markdown" });
+  downloadBlob(file, file.name);
 }
 
 async function save() {
@@ -421,16 +425,7 @@ async function publish() {
 </html>`;
 
   const file = new File([html], "story.html", { type: "text/html" });
-  const link = document.createElement("a");
-  link.style.display = "none";
-  link.href = URL.createObjectURL(file);
-  link.download = file.name;
-  document.body.appendChild(link);
-  link.click();
-  setTimeout(() => {
-    URL.revokeObjectURL(link.href);
-    link.parentNode.removeChild(link);
-  }, 0);
+  downloadBlob(file, file.name);
 }
 
 function share() {
