@@ -1,6 +1,7 @@
 let editor;
 const iframe = document.querySelector("iframe");
 const fastReload = document.querySelector("#fastreload");
+const backBtn = document.querySelector("#back-btn");
 let choice_history = [];
 
 // https://www.joshwcomeau.com/snippets/javascript/debounce/
@@ -164,6 +165,13 @@ function current_example_text() {
 function load_selected_example() {
   choice_history = [];
   editorSet(current_example_text());
+}
+
+function back() {
+  if (choice_history.length > 0) {
+    choice_history.pop();
+    triggerEdited();
+  }
 }
 
 function restart() {

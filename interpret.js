@@ -642,7 +642,9 @@ function scrollToLastOld(behavior = "smooth") {
       behavior: behavior,
     });
   } else {
-    // there is no greyed-out text, which only happens right at the beginning, so do nothing, assuming that it fits within the viewport
+    // there is no greyed-out text, which only happens right at the beginning,
+    // so scroll to the top, assuming that it fits within the viewport
+    container.scrollTo(0, 0);
     // previous scrolling logic: go unconditionally to the bottom
     // container.scrollTo({
     //   top: container.scrollHeight,
