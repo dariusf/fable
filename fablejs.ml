@@ -65,4 +65,12 @@ let () =
                    |> jv_to_ocaml Fabula.cmds_of_yojson)
                  (jv_to_ocaml Fabula.more_of_yojson more)
                |> ocaml_to_jv Fabula.choice_items_to_yojson) );
+         ( "graph",
+           Jv.callback ~arity:1 (fun s ->
+               try
+                 Fabula.parse_str (Jv.to_string s)
+                 |> Fabula.Graph.program_graph Fabula.Graph.mermaid_renderer
+                 |> Jv.of_string
+               with Fabula.InputError s ->
+                 Jv.throw (Jstr.of_string ("graph: " ^ s))) );
        |])

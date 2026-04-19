@@ -194,6 +194,16 @@ window.addEventListener("message", function (e) {
     start(story); // no await
   } else if (e.data.type === "RESET") {
     resetStory(e.data.md);
+  } else if (e.data.type === "GET_GRAPH") {
+    try {
+      const source = Fable.graph(e.data.md);
+      window.parent.postMessage({ type: "GRAPH_RESPONSE", source }, "*");
+    } catch (err) {
+      window.parent.postMessage(
+        { type: "GRAPH_ERROR", error: err.toString() },
+        "*",
+      );
+    }
   }
 });
 

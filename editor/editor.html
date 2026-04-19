@@ -169,6 +169,7 @@
           onchange="loadFile(this)"
         /> -->
         <button class="btn" onclick="share()">Share</button>
+        <button class="btn" onclick="graph()">Graph</button>
         <!-- prevent the checkbox and label from wrapping separately -->
         <!-- <span style="display: inline-block">
           <input
@@ -182,6 +183,7 @@
         </span> -->
       </div>
       <div id="content"></div>
+      <!-- https://web.dev/articles/sandboxed-iframes#safely_sandboxing_eval -->
       <iframe
         sandbox="allow-scripts"
         src="story.html"

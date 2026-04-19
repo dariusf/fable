@@ -120,6 +120,8 @@ let onEdit = debounce(() => {
   triggerEdited();
 }, 250);
 
+let pendingGraphWindow = null;
+
 window.addEventListener("message", (e) => {
   if (e.data.type === "PAGE_LOADED") {
     onPageLoad();
@@ -136,10 +138,88 @@ window.addEventListener("message", (e) => {
       choice_history = choice_history.slice(0, idx);
     }
     onPageLoad();
+  } else if (e.data.type === "GRAPH_RESPONSE") {
+    if (pendingGraphWindow) {
+      populateGraphWindow(pendingGraphWindow, e.data.source);
+      pendingGraphWindow = null;
+    }
+  } else if (e.data.type === "GRAPH_ERROR") {
+    if (pendingGraphWindow) {
+      pendingGraphWindow.close();
+      pendingGraphWindow = null;
+    }
+    alert("Error generating graph: " + e.data.error);
   } else {
     throw `unknown message ${e.data.type}`;
   }
 });
+
+function populateGraphWindow(win, mermaidSource) {
+  const isDarkMode =
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const themeCSS = getThemeCSS();
+
+  win.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fable Graph</title>
+  <style>
+    ${themeCSS}
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: var(--main-bg-color);
+      color: var(--main-fg-color);
+      font-family: sans-serif;
+    }
+    #graph-container {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="graph-container"></div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    import elkLayouts from 'https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk/dist/mermaid-layout-elk.esm.min.mjs';
+
+    (async () => {
+      const source = ${JSON.stringify(mermaidSource)};
+      const container = document.getElementById('graph-container');
+      const isDarkMode = ${isDarkMode};
+
+      try {
+        mermaid.registerLayoutLoaders(elkLayouts);
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: isDarkMode ? 'dark' : 'default',
+        });
+
+        const { svg } = await mermaid.render('fable-graph', source);
+        container.innerHTML = svg;
+      } catch (e) {
+        container.innerHTML = '<pre style="color: red; padding: 20px;">' + e + '</pre>';
+        console.error(e);
+      }
+    })();
+  </script>
+</body>
+</html>
+`);
+  win.document.close();
+}
+
+function graph() {
+  pendingGraphWindow = window.open();
+  pendingGraphWindow.document.write("Loading graph...");
+  iframe.contentWindow.postMessage({ type: "GET_GRAPH", md: editorGet() }, "*");
+}
 
 function triggerEdited() {
   try {
@@ -212,27 +292,30 @@ function saveFile() {
   downloadFile(new File([editorGet()], "story.md"));
 }
 
-// function loadFile(e) {
-//   const selectedFile = e.target.files[0];
-//   const reader = new FileReader();
-//   new Promise((resolve, reject) => {
-//     reader.onload = (event) => resolve(event.target.result);
-//     reader.onerror = (error) => reject(error);
-//     reader.readAsText(selectedFile);
-//   })
-//     .then((content) => {
-//       editorSet(content);
-//       refreshEditor();
-//     })
-//     .catch((error) => console.log(error));
-// }
-
 function share() {
   const url = new URL(window.location);
   url.search = new URLSearchParams({ story: stringToBase64(editorGet()) });
   // this navigates away
   // window.location = url.toString();
   history.pushState({}, "Shared Code URL", url.toString());
+}
+
+function getThemeCSS() {
+  return Array.from(document.styleSheets)
+    .flatMap((sheet) => {
+      try {
+        return Array.from(sheet.cssRules);
+      } catch (e) {
+        return [];
+      }
+    })
+    .filter(
+      (rule) =>
+        rule.selectorText === ":root" ||
+        (rule.media && rule.media.mediaText.includes("prefers-color-scheme")),
+    )
+    .map((rule) => rule.cssText)
+    .join("\n");
 }
 
 setupEditor();
