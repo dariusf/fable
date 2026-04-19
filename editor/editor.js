@@ -39,6 +39,8 @@ function setupEditor() {
     .matchMedia("(prefers-color-scheme: dark)")
     .addEventListener("change", updateTheme);
 
+  editor.renderer.setPadding(30);
+  editor.renderer.setScrollMargin(30, 30, 0, 0);
   editor.setShowPrintMargin(false);
   editor.renderer.setShowGutter(false);
   editor.setHighlightActiveLine(false);
@@ -53,7 +55,7 @@ function setupEditor() {
     useSoftTabs: true,
     scrollPastEnd: 0.8,
   });
-  editor.setFontSize("12px");
+  editor.setFontSize("14px");
   // editor.commands.addCommand({
   //   name: "Run",
   //   bindKey: { win: "Ctrl-Enter", mac: "Command-Enter" },
