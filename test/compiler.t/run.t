@@ -123,19 +123,27 @@
 
   $ graph ../programs/section-prefixes.md
   digraph G {
-    "prelude" -> "a1" [style=dashed];
+    n0 [label="a"];
+    n1 [label="a1"];
+    n2 [label="prelude"];
+    n2 -> n1 [style=dashed];
   }
   %%{ init: { 'flowchart': {'defaultRenderer': 'elk' } } }%%
   flowchart TD
-    prelude -.-> a1;
+    n0["a"];
+    n1["a1"];
+    n2["prelude"];
+    n2 -.-> n1;
 
   $ graph ../programs/jump-to-current-section.md
   digraph G {
-    "ha" -> "ha";
+    n0 [label="ha"];
+    n0 -> n0;
   }
   %%{ init: { 'flowchart': {'defaultRenderer': 'elk' } } }%%
   flowchart TD
-    ha --> ha;
+    n0["ha"];
+    n0 --> n0;
 
   $ compile ../programs/error-unmatched-inline-closing.md
   error: unclosed tag a

@@ -1,35 +1,47 @@
 open Ast
 open Common
 
-type renderer =
-  (string -> string -> static:bool -> both:bool -> string) * (string -> string)
+type renderer = {
+  node : string -> string -> string;
+  edge : string -> string -> static:bool -> both:bool -> string;
+  overall : string -> string;
+}
 
 let graphviz_renderer : renderer =
-  ( (* ~edge: *) (fun a b ~static ~both ->
-      let attrs =
-        match (static, both) with
-        | true, true -> {| [dir=both, color="black:black"]|}
-        | false, true -> {| [dir=both, style=dashed, color="black:black"]|}
-        | true, false -> ""
-        | false, false -> " [style=dashed]"
-      in
-      Format.asprintf {|  "%s" -> "%s"%s;|} a b attrs),
-    (* ~overall: *) fun s -> Format.asprintf "digraph G {\n%s\n}" s )
+  {
+    node = (fun id label -> Format.asprintf {|  %s [label="%s"];|} id label);
+    edge =
+      (fun a b ~static ~both ->
+        let attrs =
+          match (static, both) with
+          | true, true -> {| [dir=both, color="black:black"]|}
+          | false, true -> {| [dir=both, style=dashed, color="black:black"]|}
+          | true, false -> ""
+          | false, false -> " [style=dashed]"
+        in
+        Format.asprintf {|  %s -> %s%s;|} a b attrs);
+    overall = (fun s -> Format.asprintf "digraph G {\n%s\n}" s);
+  }
 
 let mermaid_renderer : renderer =
-  ( (* ~edge: *) (fun a b ~static ~both ->
-      let link =
-        match (static, both) with
-        | true, false -> "-->"
-        | true, true -> "<-->"
-        | false, false -> "-.->"
-        | false, true -> "<-.->"
-      in
-      Format.asprintf {|  %s %s %s;|} a link b),
-    (* ~overall: *) fun s ->
-      {|%%{ init: { 'flowchart': {'defaultRenderer': 'elk' } } }%%
+  {
+    node = (fun id label -> Format.asprintf {|  %s["%s"];|} id label);
+    edge =
+      (fun a b ~static ~both ->
+        let link =
+          match (static, both) with
+          | true, false -> "-->"
+          | true, true -> "<-->"
+          | false, false -> "-.->"
+          | false, true -> "<-.->"
+        in
+        Format.asprintf {|  %s %s %s;|} a link b);
+    overall =
+      (fun s ->
+        {|%%{ init: { 'flowchart': {'defaultRenderer': 'elk' } } }%%
 flowchart TD|}
-      ^ "\n" ^ s )
+        ^ "\n" ^ s);
+  }
 
 (* TODO as we only track edges, if two nodes are merged and are not pointed to by anything else, the resulting node disappears. to fix this we need to track nodes *)
 let _merge_chains edges =
@@ -135,19 +147,37 @@ let raw_edges (prog : program) =
   in
   raw_edges
 
-let program_graph
-    (* (~edge:render_edge, ~overall) *)
-      ((render_edge, overall) : renderer) (prog : program) =
+let program_graph (r : renderer) (prog : program) =
   let preprocessed_edges =
     raw_edges prog
     (* |> merge_chains *)
     |> collapse_bidirectional
   in
 
-  let edges_str =
-    preprocessed_edges
-    |> List.map (fun (u, v, static, both) -> render_edge u v ~static ~both)
+  let all_nodes =
+    let from_edges =
+      List.concat_map (fun (u, v, _, _) -> [u; v]) preprocessed_edges
+    in
+    let from_prog = List.map (fun (sc : scene) -> sc.name) prog in
+    from_edges @ from_prog |> List.sort_uniq compare
+  in
+
+  let node_map = Hashtbl.create (List.length all_nodes) in
+  List.iteri
+    (fun i name -> Hashtbl.add node_map name (Printf.sprintf "n%d" i))
+    all_nodes;
+
+  let node_defs =
+    all_nodes
+    |> List.map (fun name -> r.node (Hashtbl.find node_map name) name)
     |> String.concat "\n"
   in
-  overall edges_str
+
+  let edges_str =
+    preprocessed_edges
+    |> List.map (fun (u, v, static, both) ->
+        r.edge (Hashtbl.find node_map u) (Hashtbl.find node_map v) ~static ~both)
+    |> String.concat "\n"
+  in
+  r.overall (node_defs ^ "\n" ^ edges_str)
 (* Format.asprintf "digraph G {\n%s\n}" edges *)
