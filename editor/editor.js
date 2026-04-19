@@ -141,6 +141,7 @@ let onEdit = debounce(() => {
     selectedOption.dataset.text?.trim() !== currentText.trim()
   ) {
     examplesSelect.value = "custom";
+    setDirty(true);
   }
 
   // refreshEditor();
