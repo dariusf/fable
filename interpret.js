@@ -154,6 +154,7 @@ window.onload = function () {
 function resetStory(s) {
   resetInternals();
   content.textContent = "";
+  container.scrollTo(0, 0);
   let s1 = s ? Fable.parse(s) : story;
   start(s1);
 }
