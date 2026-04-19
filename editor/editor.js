@@ -150,7 +150,7 @@ function triggerEdited() {
 }
 
 function onPageLoad() {
-  triggerEdited();
+  // triggerEdited();
 }
 
 const examples = document.querySelector("#examples");

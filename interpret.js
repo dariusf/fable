@@ -109,6 +109,7 @@ function defaultInternal() {
     local_storage_version: 1,
     on_game_load: [],
     on_game_save: () => null,
+    is_replaying: false,
   };
 }
 
@@ -118,8 +119,9 @@ function resetInternals() {
 
 window.seen = internal.seen_scenes;
 
-function start(story) {
-  // re-run side effects
+async function start(story) {
+  // this occurs before the story is interpreted,
+  // and can be used to re-run side effects
   window.beforeGameLoad?.();
 
   if (story.length === 0) {
@@ -134,16 +136,42 @@ function start(story) {
 
   loadInitialData();
 
-  interpret(internal.scenes[scene], content, () => {
-    // we can't rely on this continuation being taken as a jump will abandon it
+  internal.is_replaying = true;
+  doubleBuffer(async () => {
+    content.textContent = ""; // in case this is called to restart
+    interpret(internal.scenes[scene], content, () => {
+      // we can't rely on this continuation being taken as a jump will abandon it
+    });
+    await immediatelyTakeChoices();
+    internal.is_replaying = false;
+    scrollToLastOld("auto");
   });
-  immediatelyTakeChoices(); // not awaited
+}
+
+// "double buffer", so the work that has to be done before a hot reload is completed before we show anything
+async function doubleBuffer(f) {
+  // content.style.display = "none";
+  content.style.opacity = 0;
+
+  await f();
+
+  // setTimeout(() => {
+  //   // content.style.display = "block";
+  //   content.style.opacity = 1;
+  // }, 100);
+
+  content.style.opacity = 1;
+
+  // content.animate([{ opacity: 0 }, { opacity: 1 }], {
+  //   duration: 500,
+  //   fill: "forwards",
+  // });
 }
 
 // default standalone entry point: the content of the global `story` (expected to be the JSON output of the CLI) is interpreted into the div #content
-function main() {
+async function main() {
   if (isStandalone()) {
-    start(story);
+    await start(story);
   }
 }
 
@@ -161,10 +189,9 @@ function resetStory(s) {
 
 window.addEventListener("message", function (e) {
   if (e.data.type === "EDITED") {
-    content.textContent = "";
     internal.immediately_take = e.data.history;
     story = Fable.parse(e.data.md);
-    start(story);
+    start(story); // no await
   } else if (e.data.type === "RESET") {
     resetStory(e.data.md);
   }
@@ -605,6 +632,27 @@ function interpret_Choice(parent, k, current, rest) {
   }
 }
 
+// scroll the last .old paragraph to the top of the screen
+function scrollToLastOld(behavior = "smooth") {
+  const old = document.querySelectorAll(".old");
+  if (old.length > 0) {
+    const lastOld = old[old.length - 1];
+    container.scrollTo({
+      top: lastOld.offsetTop,
+      behavior: behavior,
+    });
+  } else {
+    // there is no greyed-out text, which only happens right at the beginning, so do nothing, assuming that it fits within the viewport
+    // previous scrolling logic: go unconditionally to the bottom
+    // container.scrollTo({
+    //   top: container.scrollHeight,
+    //   // window.scrollTo({
+    //   // top: document.body.scrollHeight,
+    //   behavior: "smooth",
+    // });
+  }
+}
+
 function interpret(instrs, parent, k) {
   loop: for (var i = 0; i < instrs.length; i++) {
     const instr = instrs[i];
@@ -647,23 +695,8 @@ function interpret(instrs, parent, k) {
 
     triggerOneShotCallback("on_quiescent");
 
-    // scroll the last .old paragraph to the top of the screen
-    const old = document.querySelectorAll(".old");
-    if (old.length > 0) {
-      const lastOld = old[old.length - 1];
-      container.scrollTo({
-        top: lastOld.offsetTop,
-        behavior: "smooth",
-      });
-    } else {
-      // there is no greyed-out text, which only happens right at the beginning, so do nothing, assuming that it fits within the viewport
-      // previous scrolling logic: go unconditionally to the bottom
-      // container.scrollTo({
-      //   top: container.scrollHeight,
-      //   // window.scrollTo({
-      //   // top: document.body.scrollHeight,
-      //   behavior: "smooth",
-      // });
+    if (!internal.is_replaying) {
+      scrollToLastOld("smooth");
     }
     return;
   }
