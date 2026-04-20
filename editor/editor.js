@@ -22,6 +22,9 @@ function updateTheme() {
   } else {
     editor.setTheme("ace/theme/chrome");
   }
+  editor.renderer.once("themeLoaded", () => {
+    document.getElementById("editor").style.visibility = "visible";
+  });
 }
 
 function setupEditor() {
