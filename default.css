@@ -165,3 +165,17 @@ select {
   text-align: left;
   hyphens: none;
 }
+
+pre, ul, h1, h2, h3, h4, h5, h6 {
+  margin: 0 0;
+}
+
+pre {
+  white-space: pre-wrap;
+  text-align: revert;
+  hyphens: revert;
+}
+
+pre, code {
+  font-size: 0.9rem;
+}
