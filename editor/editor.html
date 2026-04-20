@@ -195,14 +195,6 @@
     <!-- <script type="text/javascript" src="interpret.js"></script> -->
     <script>
       main();
-
-      const queryParams = new URLSearchParams(window.location.search);
-      if (queryParams.get("story") !== null) {
-        editorSet(base64ToString(queryParams.get("story")));
-      } else {
-        editorSet(current_example_text());
-      }
-      onPageLoad();
     </script>
   </body>
 </html>

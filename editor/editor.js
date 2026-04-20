@@ -267,8 +267,22 @@ function triggerEdited() {
   } catch (e) {}
 }
 
+let isInitialized = false;
+// this is called multiple times, so this state prevents repeated initialization
 function onPageLoad() {
-  // triggerEdited();
+  if (!isInitialized) {
+    isInitialized = true;
+    const queryParams = new URLSearchParams(window.location.search);
+    if (queryParams.get("story") !== null) {
+      editorSet(base64ToString(queryParams.get("story")));
+    } else {
+      editorSet(current_example_text());
+    }
+    // The editorSet above triggers onEdit, which will call triggerEdited
+    // after its 250ms debounce. We don't call it here to avoid a double-send.
+    return;
+  }
+  triggerEdited();
 }
 
 const examples = document.querySelector("#examples");
@@ -483,6 +497,7 @@ function getThemeCSS() {
 }
 
 function main() {
+  // the editor is created immediately, but other things are deferred to when the iframe finishes loading, in onPageLoad
   setupEditor();
   setupDragAndDrop();
 }
