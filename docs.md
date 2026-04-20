@@ -444,6 +444,51 @@ The editor can be used to share Fable stories, so it [sandboxes JS evaluation us
 
 It simulates[^1] hot reloading on edit by _restarting_ and replaying choices made since the last restart, stopping short if a choice can no longer be taken in a new version.
 
+<details>
+
+<summary>Communication</summary>
+
+```mermaid
+sequenceDiagram
+    participant E as Editor (editor.js)
+    participant S as Story (interpret.js)
+
+    Note over E, S: Init
+    S->>E: { type: "PAGE_LOADED" }
+    Note right of E: Occurs on window.onload
+
+    Note over E, S: Editing
+    E->>S: { type: "EDITED", md, history }
+    Note right of S: Re-parses MD and replays choice history
+
+    E->>S: { type: "RESET", md }
+    Note right of S: Full reset of story state
+
+    Note over E, S: Choices
+    S->>E: { type: "CHOICE_MADE", choice }
+    Note right of E: Appends choice to local history
+
+    S->>E: { type: "DIVERGED", which }
+    Note right of E: Truncates history to match story state
+
+    Note over E, S: Editor Features
+
+        Note right of E: Graph Generation
+        E->>S: { type: "GET_GRAPH", md }
+        alt Success
+            S->>E: { type: "GRAPH_RESPONSE", source }
+        else Failure
+            S->>E: { type: "GRAPH_ERROR", error }
+        end
+
+
+        Note right of E: Publishing/Saving
+        E->>S: { type: "GET_STORY_JSON" }
+        S->>E: { type: "STORY_JSON_RESPONSE", json }
+```
+
+</details>
+
 ### Restarting
 
 How does a restart work, given that stories may have arbitrary, user-defined global state in the `window`?
