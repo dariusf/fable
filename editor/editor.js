@@ -452,7 +452,7 @@ async function publish() {
   </body>
 </html>`;
 
-  const file = new File([html], "story.html", { type: "text/html" });
+  const file = new File([html], "index.html", { type: "text/html" });
   downloadBlob(file, file.name);
 }
 
