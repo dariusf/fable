@@ -15,8 +15,15 @@ example: default
 	python -m http.server 8005 --directory  _build/story
 
 .PHONY: test
-test:
+test: playwright
 	dune test
+
+.PHONY: playwright
+playwright:
+	npx playwright test
+#	npx playwright test -g filter --ui
+#	--headed
+# 	npx playwright codegen localhost:8005
 
 .PHONY: release
 release:
