@@ -3,7 +3,7 @@ It is itself a Fable story.
 
 It may help to read the source in the left panel as you play along on the right, to see how something is done.
 
-These topics are best read in order, but feel free jump around as you please. `->topics`
+These topics are best read in order, but feel free to jump around as you please. `->topics`
 
 # topics
 
@@ -56,7 +56,7 @@ Let's see... which of these best describes you?
   It is appropriate for quickly writing IF without having to worry about the engine --- there is almost no scaffolding, and you can write the entire game in a single text file, directly interacting with the web page using native browser APIs.
   All the tools you know will work.
 
-  (If you looking for a narrative scripting language to embedded within a larger game engine, you will probably be better served by Ink.)
+  (If you are looking for a narrative scripting language to be embedded within a larger game engine, you will probably be better served by Ink.)
 
   Fable also has a pleasant, minimal, and consistent language design --- there is a clear delineation between prose and code, and the usual IF programming needs are met using metaprogramming rather than bespoke syntax. It has a well-defined semantics, and tools for (automatically) testing your stories and finding bugs in them.
 
@@ -184,7 +184,7 @@ We use backticks again to signal that we're doing something _meta_, outside the 
 The tilde <code>~</code> tells Fable to evaluate some code and have the result be part of the surrounding prose.
 Here, the code uses the JavaScript function <code>randomFrom</code>, which samples words from our word lists.
 
-Now you'll then get fresh insults every time you play!
+Now you'll get fresh insults every time you play!
 
 - Get some fresh insults `->insult`
 
@@ -350,7 +350,7 @@ You've already been using the editor to both read and play through this tutorial
   Always click the Save button after a long writing section!
   A best-effort attempt is made to preserve your writing across reloads of the tab, but it's best not to rely on it. `->`
 - Publish and Share
-  The Publish button will download your story as a HTML file, ready for publishing.
+  The Publish button will download your story as an HTML file, ready for publishing.
 
   The Share button will create a link you can send to a friend to share your work.
   For longer stories, the link can get very long and may not work, so it is better to Publish and send them the file. `->`
