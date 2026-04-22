@@ -23,7 +23,7 @@ playwright:
 	npx playwright test
 #	npx playwright test -g filter --ui
 #	--headed
-# 	npx playwright codegen localhost:8005
+# npx playwright codegen localhost:8005
 
 .PHONY: release
 release:

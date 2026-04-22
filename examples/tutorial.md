@@ -7,18 +7,18 @@ These topics are best read in order, but feel free jump around as you please. `-
 
 # topics
 
-- Is Fable for me? `->fable_for_me`
-- Sections, jumps, and choices `->sections_jumps_choices`
-- Publishing your story `->publishing`
-- Exploring the editor `->editor`
-- Saving the game `->saving`
-- Ever-changing prose `->dynamic`
+- Is Fable for me? `->is_fable_for_me`
+- Getting started `->getting_started`
+- Publishing your story `->publishing_your_story`
+- Exploring the editor `->exploring_the_editor`
+- Saving the game `->saving_the_game`
+- Ever-changing prose `->ever_changing_prose`
 - Guarded choices `->guarded_choices`
 - Dialogue loops `->dialogue_loops`
-- Keeping score `->score`
-- Taking inventory `->inventory`
+- Keeping score `->keeping_score`
+- Taking inventory `->taking_inventory`
 
-# fable_for_me
+# is_fable_for_me
 
 <h1>Is Fable for me?</h1>
 
@@ -72,9 +72,9 @@ Let's see... which of these best describes you?
 
 `->topics`
 
-# sections_jumps_choices
+# getting_started
 
-<h1>Sections, jumps, and choices</h1>
+<h1>Getting started</h1>
 
 To get started with Fable, all you need are three fundamental concepts: _sections_, _jumps_, and _choices_.
 
@@ -146,7 +146,7 @@ You now know enough Fable to be dangerous!
 
 `->topics`
 
-# dynamic
+# ever_changing_prose
 
 <h1>Ever-changing prose</h1>
 
@@ -201,7 +201,7 @@ Thou `~randomFrom(adjective1)`, `~randomFrom(adjective2)` `~randomFrom(noun)`!
 
 `->topics`
 
-# score
+# keeping_score
 
 <h1>Keeping score</h1>
 
@@ -252,7 +252,7 @@ Number of clues found: `~score`
 
 `->topics`
 
-# inventory
+# taking_inventory
 
 <h1>Taking inventory</h1>
 
@@ -300,7 +300,7 @@ You got: `~inventory.join(", ")`
 
 `->topics`
 
-# publishing
+# publishing_your_story
 
 <h1>Publishing your story</h1>
 
@@ -321,7 +321,7 @@ And you're done!
 
 `->topics`
 
-# editor
+# exploring_the_editor
 
 <h1>Exploring the editor</h1>
 
@@ -360,7 +360,7 @@ You've already been using the editor to both read and play through this tutorial
 
 `->topics`
 
-# saving
+# saving_the_game
 
 <h1>Saving the game</h1>
 
