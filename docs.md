@@ -465,6 +465,9 @@ sequenceDiagram
     Note right of S: Full reset of story state
 
     Note over E, S: Choices
+    E->>S: { type: "CHOICE_SHORTCUT", key }
+    Note right of S: Delegates to the existing number-key choice handler
+
     S->>E: { type: "CHOICE_MADE", choice }
     Note right of E: Appends choice to local history
 

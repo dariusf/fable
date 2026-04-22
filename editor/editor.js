@@ -180,14 +180,7 @@ function setupEditor() {
   Completion.setupTriggerOnIntentToJump(editor);
 
   editor.setFontSize("14px");
-  // editor.commands.addCommand({
-  //   name: "Run",
-  //   bindKey: { win: "Ctrl-Enter", mac: "Command-Enter" },
-  //   exec: function (_editor) {
-  //     run();
-  //   },
-  //   // scrollIntoView: "cursor",
-  // });
+  registerHotkeys();
   editor.on("change", onEdit);
 
   // vim mode has to be enabled to configure some things,
@@ -204,6 +197,51 @@ function setupEditor() {
   disableVim();
 
   editor.focus();
+}
+
+function registerHotkeys() {
+  window.addEventListener(
+    "keydown",
+    (event) => {
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+
+      const key = event.key.toLowerCase();
+
+      if (key === "o") {
+        event.preventDefault();
+        event.stopPropagation();
+        openFile();
+      } else if (key === "s") {
+        event.preventDefault();
+        event.stopPropagation();
+        save();
+      } else if (key === "b") {
+        event.preventDefault();
+        event.stopPropagation();
+        back();
+      } else if (key === "r") {
+        event.preventDefault();
+        event.stopPropagation();
+        restart();
+      } else if (key === "g") {
+        // keep this on the raw key event to minimise popup blocking
+        event.preventDefault();
+        event.stopPropagation();
+        graph();
+      } else if (/^Digit[0-9]$/.test(event.code)) {
+        event.preventDefault();
+        event.stopPropagation();
+        const digitKey = event.code.replace("Digit", "");
+        if (iframe.contentWindow) {
+          iframe.contentWindow.postMessage(
+            { type: "CHOICE_SHORTCUT", key: digitKey },
+            "*",
+          );
+        }
+      }
+    },
+    true, // run first, during capture (top-down) phase
+  );
 }
 
 function setupDragAndDrop() {

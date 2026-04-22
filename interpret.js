@@ -194,6 +194,8 @@ window.addEventListener("message", function (e) {
     start(story); // no await
   } else if (e.data.type === "RESET") {
     resetStory(e.data.md);
+  } else if (e.data.type === "CHOICE_SHORTCUT") {
+    handleChoiceShortcutKey(e.data.key);
   } else if (e.data.type === "GET_GRAPH") {
     try {
       const source = Fable.graph(e.data.md);
@@ -985,10 +987,14 @@ function user_globals() {
     );
 }
 
-document.body.onkeydown = function (e) {
-  if (e.key >= 1 && e.key <= 9) {
-    document.querySelector(`a[idx="${+e.key}"]`)?.click();
+function handleChoiceShortcutKey(key) {
+  if (key >= 1 && key <= 9) {
+    document.querySelector(`a[idx="${+key}"]`)?.click();
   }
+}
+
+document.body.onkeydown = function (e) {
+  handleChoiceShortcutKey(e.key);
 };
 
 // back button
