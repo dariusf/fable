@@ -15,7 +15,8 @@
         --main-bg-color: #f7f7f7;
         --main-bg-color-lighter: #fafafa;
         --main-fg-color: #000000;
-        --divider-color: gray;
+        --divider-color: var(--main-bg-color-lighter);
+        --control-border-color: var(--main-bg-color-lighter);
       }
 
       @media (prefers-color-scheme: dark) {
@@ -24,6 +25,17 @@
           --main-bg-color-lighter: #4e5159;
           --main-fg-color: #e8eaed;
           --divider-color: var(--main-bg-color);
+          --control-border-color: var(--main-bg-color-lighter);
+        }
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --control-border-color: color-mix(
+            in srgb,
+            var(--main-bg-color) 75%,
+            var(--main-fg-color) 25%
+          );
         }
       }
 
@@ -63,7 +75,7 @@
       select {
         background-color: var(--main-bg-color);
         color: var(--main-fg-color);
-        border: 1px solid var(--main-bg-color-lighter);
+        border: 1px solid var(--control-border-color);
         border-radius: 4px;
         padding: 4px 8px;
         cursor: pointer;
@@ -96,10 +108,6 @@
 
         display: flex;
         flex-flow: column;
-
-        /* this size causes no resizing of the output div when the output lines get long. */
-        /* an alternative is break-all, see below */
-        /* max-width: 37%; */
       }
 
       #toolbar {
@@ -108,40 +116,158 @@
         gap: 8px;
       }
 
-      /* #toolbar button { */
-      /* margin-right: 5px; */
-      /* } */
-
-      #output {
-        font-family:
-          ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas,
-          "DejaVu Sans Mono", monospace;
-        margin-top: 10px;
-        flex-grow: 1;
-        white-space: pre-wrap;
-        overflow-y: scroll;
+      /* Ace overlay UIs ship separate extension CSS and do not fully inherit the editor theme. Bridge them to the page theme with a small shared layer. */
+      :root {
+        --ace-ui-bg: var(--main-bg-color);
+        --ace-ui-fg: var(--main-fg-color);
+        --ace-ui-border: var(--main-bg-color-lighter);
+        --ace-ui-surface: var(--main-bg-color-lighter);
+        --ace-ui-selected-border: var(--main-fg-color);
       }
 
-      .output-line {
-        overflow-wrap: anywhere;
-        /* overflow-wrap: break-word; */
-        /* background: white; */
-        min-height: 1em;
-        line-height: 1;
+      @media (prefers-color-scheme: light) {
+        :root {
+          --ace-ui-border: color-mix(
+            in srgb,
+            var(--main-bg-color) 75%,
+            var(--main-fg-color) 25%
+          );
+          --ace-ui-selected-border: color-mix(
+            in srgb,
+            var(--main-bg-color) 20%,
+            var(--main-fg-color) 80%
+          );
+        }
       }
 
-      /* .output-line:hover {
-        background: lightblue;
-      } */
+      #ace_settingsmenu,
+      #kbshortcutmenu,
+      .ace_search {
+        background: var(--ace-ui-bg) !important;
+        color: var(--ace-ui-fg) !important;
+        border-color: var(--ace-ui-border) !important;
+        opacity: 1 !important;
+      }
+
+      #ace_settingsmenu,
+      #kbshortcutmenu {
+        border-left: 1px solid var(--ace-ui-border) !important;
+        box-shadow: -16px 0 32px rgba(0, 0, 0, 0.35) !important;
+      }
+
+      #ace_settingsmenu table,
+      #ace_settingsmenu tr,
+      #ace_settingsmenu td,
+      #ace_settingsmenu label,
+      #ace_settingsmenu span,
+      #ace_settingsmenu div,
+      #kbshortcutmenu table,
+      #kbshortcutmenu tr,
+      #kbshortcutmenu td,
+      #kbshortcutmenu label,
+      #kbshortcutmenu span,
+      #kbshortcutmenu div,
+      .ace_search_form,
+      .ace_replace_form,
+      .ace_search_options,
+      .ace_search_counter,
+      .ace_button {
+        color: var(--ace-ui-fg) !important;
+        background: transparent !important;
+        border-color: var(--ace-ui-border) !important;
+      }
+
+      #ace_settingsmenu .ace_optionsMenuEntry:hover,
+      #kbshortcutmenu .ace_optionsMenuEntry:hover {
+        background: transparent !important;
+        transition: none !important;
+      }
+
+      #ace_settingsmenu .ace_optionsMenuKey,
+      #ace_settingsmenu .ace_optionsMenuCommand,
+      #kbshortcutmenu .ace_optionsMenuKey,
+      #kbshortcutmenu .ace_optionsMenuCommand {
+        color: var(--ace-ui-fg) !important;
+      }
+
+      #ace_settingsmenu .ace_closeButton,
+      #kbshortcutmenu .ace_closeButton,
+      #ace_settingsmenu input,
+      #ace_settingsmenu select,
+      #ace_settingsmenu button,
+      #kbshortcutmenu input,
+      #kbshortcutmenu select,
+      #kbshortcutmenu button,
+      .ace_search_field,
+      .ace_searchbtn {
+        background: var(--ace-ui-bg) !important;
+        color: var(--ace-ui-fg) !important;
+        border: 1px solid var(--ace-ui-border) !important;
+        box-shadow: none !important;
+        font-weight: normal !important;
+      }
+
+      #ace_settingsmenu button[ace_selected_button="true"],
+      #kbshortcutmenu button[ace_selected_button="true"] {
+        border-color: var(--ace-ui-selected-border) !important;
+        color: var(--ace-ui-fg) !important;
+        background: var(--ace-ui-bg) !important;
+        box-shadow: none !important;
+      }
+
+      #ace_settingsmenu button:hover,
+      #ace_settingsmenu select:hover,
+      #ace_settingsmenu input:hover,
+      #kbshortcutmenu button:hover,
+      #kbshortcutmenu select:hover,
+      #kbshortcutmenu input:hover,
+      .ace_searchbtn:hover,
+      .ace_searchbtn:focus {
+        background: var(--ace-ui-surface) !important;
+      }
+
+      #ace_settingsmenu button:focus,
+      #ace_settingsmenu select:focus,
+      #ace_settingsmenu input:focus,
+      #kbshortcutmenu button:focus,
+      #kbshortcutmenu select:focus,
+      #kbshortcutmenu input:focus,
+      .ace_search_field:focus,
+      .ace_searchbtn:focus {
+        outline: 1px solid var(--ace-ui-fg) !important;
+        outline-offset: 1px;
+      }
+
+      #ace_settingsmenu button[ace_selected_button="true"]:focus,
+      #kbshortcutmenu button[ace_selected_button="true"]:focus {
+        outline: none !important;
+      }
+
+      .ace_search_field {
+        border-color: var(--ace-ui-border) !important;
+      }
+
+      .ace_searchbtn.prev:after,
+      .ace_searchbtn.next:after {
+        border-color: var(--ace-ui-fg) !important;
+      }
+
+      .ace_searchbtn_close {
+        filter: invert(0.85) !important;
+      }
+
+      .ace_button:hover,
+      .ace_button:focus,
+      .ace_button:active,
+      .ace_button.checked {
+        background: var(--ace-ui-surface) !important;
+        color: var(--ace-ui-fg) !important;
+      }
     </style>
   </head>
 
   <body>
     <div id="editor"></div>
-    <!-- <div id="editor">
-      <textarea id="input" spellcheck="false"></textarea>
-    </div> -->
-    <!-- Built: $BUILD_DATE -->
     <div id="panel">
       <div id="toolbar">
         <select

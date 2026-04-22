@@ -122,10 +122,14 @@ function debounce(callback, wait) {
 }
 
 function updateTheme() {
-  if (
+  const isDarkMode =
     window.matchMedia &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches
-  ) {
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  // Ace extension UIs change their styling based on whether an ancestor with .ace_dark is present
+  document.body.classList.toggle("ace_dark", isDarkMode);
+
+  if (isDarkMode) {
     editor.setTheme("ace/theme/one_dark");
   } else {
     editor.setTheme("ace/theme/chrome");
