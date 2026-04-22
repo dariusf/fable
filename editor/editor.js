@@ -74,8 +74,10 @@ function setupEditor() {
   vim();
   // https://github.com/ajaxorg/ace/blob/master/src/keyboard/vim.js
   ace.config.loadModule("ace/keyboard/vim", function (module) {
-    module.Vim.map("j", "gj", "normal");
-    module.Vim.map("k", "gk", "normal");
+    module.Vim.noremap("j", "gj", "normal");
+    module.Vim.noremap("k", "gk", "normal");
+    module.Vim.noremap("j", "gj", "visual");
+    module.Vim.noremap("k", "gk", "visual");
   });
   disableVim();
 
