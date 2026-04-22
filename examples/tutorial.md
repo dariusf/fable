@@ -331,18 +331,20 @@ You've already been using the editor to both read and play through this tutorial
 
 # editor0
 
+- Navigate the story
+  <kbd>⌘</kbd><kbd>1</kbd>-<kbd>9</kbd> will choose the corresponding story option on the right. `->`
 - Back and forth
-  The Back and Restart buttons help you conveniently navigate your work.
+  The Back (<kbd>⌘</kbd><kbd>B</kbd>) and Restart (<kbd>⌘</kbd><kbd>R</kbd>) buttons help you conveniently navigate your work.
 
   The Back button is disabled in published stories, so your readers' choices matter. `->`
 - Graph
-  The Graph button visualises your story.
+  The Graph button (<kbd>⌘</kbd><kbd>G</kbd>) visualises your story.
   It's great for understanding its structure and spotting what Ink calls _loose ends_: dangling narrative threads.
   Click it now to try visualising this one! `->`
 - Docs
   For the details on Fable, the language reference is available at the Docs link. `->`
 - Open and Save
-  The Open and Save buttons allow you to save your work and resume a writing session another day.
+  The Open (<kbd>⌘</kbd><kbd>O</kbd>) and Save (<kbd>⌘</kbd><kbd>S</kbd>) buttons allow you to save your work and resume a writing session another day.
   You can also drag and drop a markdown file into the editor to open it.
 
   Always click the Save button after a long writing section!
