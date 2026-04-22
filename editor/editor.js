@@ -2,8 +2,116 @@ let editor;
 const iframe = document.querySelector("iframe");
 let choice_history = [];
 
+const Completion = (function () {
+  let headingCache = [];
+
+  function collectHeadings(session) {
+    const headings = [];
+    const seen = new Set();
+
+    for (const line of session.getDocument().getAllLines()) {
+      const match = line.match(/^\s*#\s+(.+?)\s*$/);
+      if (!match) continue;
+
+      const heading = match[1].trim();
+      if (!heading || seen.has(heading)) continue;
+
+      seen.add(heading);
+      headings.push({
+        caption: heading,
+        value: heading,
+        meta: "heading",
+        score: 1000,
+      });
+    }
+
+    return headings;
+  }
+
+  const refreshHeadingCache = debounce(() => {
+    headingCache = collectHeadings(editor.session);
+  }, 100);
+
+  function findBoundaryStart(text, boundaryRegex) {
+    for (let i = text.length - 1; i >= 0; i--) {
+      if (boundaryRegex.test(text[i])) {
+        return i + 1;
+      }
+    }
+
+    return 0;
+  }
+
+  function findBoundaryEnd(text, boundaryRegex) {
+    for (let i = 0; i < text.length; i++) {
+      if (boundaryRegex.test(text[i])) {
+        return i;
+      }
+    }
+
+    return text.length;
+  }
+
+  function getCursorBoundedText(session, pos, boundaryRegex = /[\s()[\]]/) {
+    const line = session.getLine(pos.row);
+    const beforeCursor = line.slice(0, pos.column);
+    const afterCursor = line.slice(pos.column);
+    const startOfChunk = findBoundaryStart(beforeCursor, boundaryRegex);
+    const endOfChunk = pos.column + findBoundaryEnd(afterCursor, boundaryRegex);
+
+    return {
+      line,
+      beforeCursor,
+      afterCursor,
+      startOfChunk,
+      endOfChunk,
+      chunk: line.slice(startOfChunk, endOfChunk),
+      chunkBeforeCursor: line.slice(startOfChunk, pos.column),
+      chunkAfterCursor: line.slice(pos.column, endOfChunk),
+    };
+  }
+
+  function isHeadingAnchorContext(session, pos, prefix) {
+    const { chunkBeforeCursor, chunkAfterCursor } = getCursorBoundedText(
+      session,
+      pos,
+    );
+
+    return chunkBeforeCursor.startsWith("`->"); //&& chunkAfterCursor === "`";
+  }
+
+  const headingCompleter = {
+    getCompletions(editor, session, pos, prefix, callback) {
+      if (!isHeadingAnchorContext(session, pos, prefix)) {
+        callback(null, []);
+        return;
+      }
+
+      callback(null, headingCache);
+    },
+  };
+
+  function setupTriggerOnIntentToJump(editor) {
+    editor.commands.on("afterExec", (e) => {
+      if (e.command.name !== "insertstring" || e.args !== ">") {
+        return;
+      }
+      const pos = editor.getCursorPosition();
+      if (isHeadingAnchorContext(editor.session, pos, "")) {
+        editor.execCommand("startAutocomplete");
+      }
+    });
+  }
+
+  return {
+    headingCompleter,
+    refreshHeadingCache,
+    setupTriggerOnIntentToJump,
+  };
+})();
+
 // https://www.joshwcomeau.com/snippets/javascript/debounce/
-const debounce = (callback, wait) => {
+function debounce(callback, wait) {
   let timeoutId = null;
   return (...args) => {
     window.clearTimeout(timeoutId);
@@ -11,7 +119,7 @@ const debounce = (callback, wait) => {
       callback(...args);
     }, wait);
   };
-};
+}
 
 function updateTheme() {
   if (
@@ -56,7 +164,17 @@ function setupEditor() {
     tabSize: 4,
     useSoftTabs: true,
     scrollPastEnd: 0.8,
+    enableBasicAutocompletion: true, // both have to be enabled
+    enableLiveAutocompletion: true,
   });
+
+  // completion
+  editor.session.on("change", Completion.refreshHeadingCache);
+  // remove basic completers for words and such
+  // editor.completers = [...(editor.completers || []), headingCompleter];
+  editor.completers = [Completion.headingCompleter];
+  Completion.setupTriggerOnIntentToJump(editor);
+
   editor.setFontSize("14px");
   // editor.commands.addCommand({
   //   name: "Run",
