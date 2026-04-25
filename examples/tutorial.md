@@ -12,61 +12,85 @@ These topics are best read in order, but feel free to jump around as you please.
 - Publishing your story `->publishing_your_story`
 - Exploring the editor `->exploring_the_editor`
 - Saving the game `->saving_the_game`
-- Ever-changing prose `->ever_changing_prose`
-- Guarded choices `->guarded_choices`
-- Dialogue loops `->dialogue_loops`
-- Keeping score `->keeping_score`
-- Taking inventory `->taking_inventory`
+- Recipe: Ever-changing prose `->ever_changing_prose`
+- Recipe: Guarded choices `->guarded_choices`
+- Recipe: Dialogue loops `->dialogue_loops`
+- Recipe: Keeping score `->keeping_score`
+- Recipe: Taking inventory `->taking_inventory`
 
 # is_fable_for_me
 
 <h1>Is Fable for me?</h1>
 
-Let's see... which of these best describes you?
+`->is_fable_for_me_loop`
 
-- I am new to writing interactive fiction
-  <b>New to writing IF</b>
+# is_fable_for_me_loop
 
-  Fable is a great way to get started with interactive fiction --- all you have to do is start writing, here, in the editor!
+- How easy is it to get started?
+  <b>How easy is it to get started?</b>
 
-  When done, click the Publish button on the right, and you'll get your game in a file you can upload to itch.
+  All you have to do is start writing, here, in the editor!
 
-  Check out the rest of this tutorial first, to see what Fable is capable of and how it does things.
+  When done, click the Publish button on the right, and you'll get your game in a file you can upload to itch. `->`
 
-  If you'd prefer to create IF more graphically, check out Twine.
+- What tools are available for writing in Fable?
+  <b>What tools are available for writing in Fable?</b>
 
-- I am a writer first
-  <b>Writer</b>
+  This editor is the main tool for beginning and intermediate users.
+  Unlike Twine, there isn't a graphical editor.
 
-  Fable is more minimalistic than other IF systems:
-  your writing is front and centre, and everything can be done in a single file.
+  If you like command line tools and text editors, you can write Fable in any editor that supports Markdown. There is a Vite plugin for calling the CLI tool and hot reloading. `->`
 
-  Like Twine, it targets the web and publishes to a single HTML file you can directly upload to itch.
+- How does it compare to other popular tools?
+  <b>How does it compare to other popular tools?</b>
 
-  Its design is loosely inspired by Ink, though a Fable story _is_ the game, and isn't to be embedded in a larger engine (which streamlines things).
+  Fable is sort of a cross between Ink and Twine.
 
-  Fable also has a pleasant, minimal, and consistent language design, with a clear delineation between prose and code.
+  Compared to Ink, Fable has a greater focus on standalone games (instead of being a scripting language for a larger engine) and has a simpler design, allowing the entire game can be written in a single file.
+  Its language is minimalistic and consistent.
 
-  This editor doesn't send your work anywhere: you are completely in control of your writing.
+  Like Twine, Fable targets the web and publishes to a single HTML file you can directly upload to itch. There is only one dialect of Fable. `->`
 
-- I am a programmer first
-  <b>Programmer</b>
+- What kind of interactive fiction can I make?
+  <b>What kind of interactive fiction can I make?</b>
 
-  Fable is web-first: it is a Markdown dialect, uses JavaScript natively, and publishes to a single HTML file.
-  It is appropriate for quickly writing IF without having to worry about the engine --- there is almost no scaffolding, and you can write the entire game in a single text file, directly interacting with the web page using native browser APIs.
-  All the tools you know will work.
+  The default kind of story (shown in this tutorial) scrolls, like Ink's default template. A Twine-like page-by-page mode is also available.
 
-  (If you are looking for a narrative scripting language to be embedded within a larger game engine, you will probably be better served by Ink.)
+  In general, Fable is a very thin layer over a web page, so you can customise it in arbitrary ways, including widgets, images, and arbitrary HTML inline as the story unfolds. `->`
 
-  Fable also has a pleasant, minimal, and consistent language design --- there is a clear delineation between prose and code, and the usual IF programming needs are met using metaprogramming rather than bespoke syntax. It has a well-defined semantics, and tools for (automatically) testing your stories and finding bugs in them.
+- I am a programmer; will I like Fable?
+  <b>I am a programmer; will I like Fable?</b>
+
+  You're already used to writing in text files, so Fable will feel familiar.
+  As Fable is a Markdown dialect, all the tools you know will work.
+  Fable is a thin layer over the web page, so you can directly interact with it using native browser APIs.
 
   This editor is entirely client-side and has vim keybindings, which you can enable by opening the settings using <kbd>Cmd</kbd> + <kbd>,</kbd>.
-  A command-line workflow with hot reloading is also supported.
-  The whole system is open source and well-documented.
 
-  Check out the language reference for more.
+  A command-line workflow with hot reloading is also supported, and simple tools for regression testing and finding bugs are available.
 
-<!-- this is a divider -->
+  The language has a well-defined semantics, and the whole system is open source and well-documented.
+
+  Check out the language reference for more. `->`
+
+- I am a writer; will I like Fable?
+  <b>I am a writer; will I like Fable?</b>
+
+  Fable is designed around the idea that your writing should be front and center.
+  Once you're done writing, there is no engine to configure, and no need to think about the scaffolding --- click Publish and you can upload to itch.
+
+  You don't have to do any programming to use Fable, though the minimalism of writing in plain text might take some getting used to. Recipes are provided in this tutorial for common things which would ordinarily require programming. `->`
+
+- What are the principles guiding Fable's design?
+  <b>What are the principles guiding Fable's design?</b>
+
+  Fable's design is largely driven by simplicity and minimalism.
+
+  The system should be web-first and keep friction low. It should be easy to get started with both writing and publishing. It should integrate well with existing tools.
+
+  It should respect the freedom and privacy of the user, so the whole system is open source, and this editor doesn't send your writing anywhere, so you remain completely in control of it.
+
+  The language should be simple and consistent, and keep concepts and cognitive overhead to a minimum. `->`
 
 - Back
 
@@ -148,7 +172,7 @@ You now know enough Fable to be dangerous!
 
 # ever_changing_prose
 
-<h1>Ever-changing prose</h1>
+<h1>Recipe: Ever-changing prose</h1>
 
 The prose you write in Fable doesn't have to be static; it can change across playthroughs!
 We'll demonstrate this using a classic example: the <a href="https://www.scholastic.com/content/dam/teachers/articles/migrated-files-in-body/shakespeare_insult_kit.pdf">Shakespeare Insult Kit</a>.
@@ -203,7 +227,7 @@ Thou `~randomFrom(adjective1)`, `~randomFrom(adjective2)` `~randomFrom(noun)`!
 
 # keeping_score
 
-<h1>Keeping score</h1>
+<h1>Recipe: Keeping score</h1>
 
 It is sometimes useful to keep track of the reader's score over the course of the game.
 For example, you might want to count the number of clues they have encountered in a mystery game.
@@ -254,7 +278,7 @@ Number of clues found: `~score`
 
 # taking_inventory
 
-<h1>Taking inventory</h1>
+<h1>Recipe: Taking inventory</h1>
 
 Sometimes we need to track more than just a score.
 For example, you might want to track what the reader has in their pockets at a certain point in the story.
@@ -376,7 +400,7 @@ To see how and to add to what is saved, see the language reference.
 
 # guarded_choices
 
-<h1>Conditional choices</h1>
+<h1>Recipe: Conditional choices</h1>
 
 Some choices are dependent on others having been taken. For example, the reader might have to get a key before they can unlock a door.
 
@@ -422,7 +446,7 @@ You unlocked the door!
 
 # dialogue_loops
 
-<h1>Dialogue loops</h1>
+<h1>Recipe: Dialogue loops</h1>
 
 When writing the flow of a conversation, one sometimes wants a _dialogue loop_, where there is a list of outstanding talking points, some of which unlock new ones, and the conversation goes on until the reader decides to leave it or runs out of options.
 
