@@ -165,7 +165,7 @@ function setupEditor() {
   editor.session.setUseWrapMode(true);
   editor.setOptions({
     mode: "ace/mode/markdown",
-    tabSize: 4,
+    tabSize: 2,
     useSoftTabs: true,
     scrollPastEnd: 0.8,
     enableBasicAutocompletion: true, // both have to be enabled
