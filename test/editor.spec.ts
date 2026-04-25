@@ -174,3 +174,16 @@ test("restart button", async ({ page }) => {
     page.locator("iframe").contentFrame().locator("#content-container"),
   ).toMatchAriaSnapshot(scrumInitial);
 });
+
+test("Cmd+1 triggers shortcut when iframe is focused", async ({ page }) => {
+  await page.goto("http://localhost:8005/");
+  await page.locator("#examples").selectOption("Scrum");
+
+  const iframe = page.frameLocator("iframe");
+  await iframe.locator("#content").click();
+  await page.keyboard.press("Meta+1");
+
+  await expect(iframe.locator("#content-container")).toContainText(
+    "What would you like to do next?",
+  );
+});

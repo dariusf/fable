@@ -814,11 +814,15 @@ window.onerror = () => {
   stop_testing();
 };
 
-document.onkeydown = (e) => {
+window.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     stop_testing();
   }
-};
+  if ((e.metaKey || e.ctrlKey) && e.key >= "1" && e.key <= "9") {
+    e.preventDefault();
+  }
+  handleChoiceShortcutKey(e.key);
+});
 
 const TESTING_FREQ = 30;
 function click_links() {
@@ -993,9 +997,6 @@ function handleChoiceShortcutKey(key) {
   }
 }
 
-document.body.onkeydown = function (e) {
-  handleChoiceShortcutKey(e.key);
-};
 
 // back button
 // note that we have to push dummy entries to history to enable this
