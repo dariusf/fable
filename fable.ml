@@ -54,21 +54,21 @@ let produce_style_override =
       Format.asprintf "<style>:root { %s }</style>"
         (String.concat " " overrides)
 
-let write_standalone dir frontmatter json =
+let write_standalone dir (prog : Fabula.Ast.program) =
   let get_fm fm name default =
     List.assoc_opt name fm |> Option.value ~default
   in
   if not (Sys.file_exists dir) then Sys.mkdir dir 0o777;
   let fmt = Format.asprintf in
-  let style_override = produce_style_override frontmatter in
+  let style_override = produce_style_override prog.frontmatter in
   write_file (fmt "%s/index.html" dir)
     begin
       substitute_vars
         [
-          ("title", get_fm frontmatter "title" "Fable");
+          ("title", get_fm prog.frontmatter "title" "Fable");
           ( "extra",
             (* this relies on extra being at the end of <head>, after default.css *)
-            style_override ^ get_fm frontmatter "extra" "" );
+            style_override ^ get_fm prog.frontmatter "extra" "" );
         ]
         Embedded.index
     end;
@@ -76,9 +76,9 @@ let write_standalone dir frontmatter json =
   write_file (fmt "%s/interpret.js" dir) Embedded.interpret;
   write_file (fmt "%s/runtime.js" dir) Embedded.runtime;
   write_file (fmt "%s/graph.dot" dir)
-    (Fabula.Graph.(program_graph graphviz_renderer) json);
+    (Fabula.Graph.(program_graph graphviz_renderer) prog);
   write_file (fmt "%s/graph.mmd" dir)
-    (Fabula.Graph.(program_graph mermaid_renderer) json);
+    (Fabula.Graph.(program_graph mermaid_renderer) prog);
   (* testing *)
   if !testing then begin
     write_file (fmt "%s/test.js" dir) Embedded.test;
@@ -86,9 +86,9 @@ let write_standalone dir frontmatter json =
     write_file (fmt "%s/dune" dir) "(cram (deps (glob_files *)))"
   end;
   (* done *)
-  if !show_stats then Format.printf "%s@." (Fabula.collate_stats json);
+  if !show_stats then Format.printf "%s@." (Fabula.collate_stats prog);
   Out_channel.with_open_text (fmt "%s/story.js" dir) (fun out ->
-      Fabula.print_story_js ~out json)
+      Fabula.print_story_js ~out prog)
 
 let () =
   Arg.parse arg_specs
@@ -100,18 +100,18 @@ let () =
     | exception Fabula.InputError s ->
       Format.eprintf "error: %s@." s;
       exit 1
-    | frontmatter, json ->
+    | prog ->
       (match !standalone with
       | true ->
         (match !output_file with
         | None -> Format.printf "expected an output directory name@."
-        | Some dir -> write_standalone dir frontmatter json)
+        | Some dir -> write_standalone dir prog)
       | false ->
         (match !output_file with
-        | None -> Fabula.print_story_js json
+        | None -> Fabula.print_story_js prog
         | Some o ->
           Out_channel.with_open_text o (fun out ->
-              Fabula.print_story_js ~out json))))
+              Fabula.print_story_js ~out prog))))
   | _ -> Format.printf "expected one input file@."
 
 (* let () =

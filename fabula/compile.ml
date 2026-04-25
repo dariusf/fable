@@ -278,12 +278,14 @@ let rec recursively_add_choices f ss =
         failwith (s ^ " is not a scene with a single choice in it"))
     ss
 
-let expand_more p =
+let expand_more (p : scene list) =
   let visitor =
     object (_)
       inherit [_] Ast.map_scene
       inherit! [_] Ast.map_cmd
       inherit! [_] Ast.map_program
+      inherit! [_] Ast.map_frontmatter
+      inherit! [_] Ast.map_scenes
 
       method! visit_Choice _env { more; items; fallthrough } =
         let ch1 =
@@ -298,7 +300,7 @@ let expand_more p =
         Choice { more = []; items = items @ ch1; fallthrough }
     end
   in
-  visitor#visit_program () p
+  visitor#visit_scenes () p
 
 let validate p =
   let visitor =
@@ -306,6 +308,8 @@ let validate p =
       inherit [_] Ast.map_scene
       inherit! [_] Ast.map_cmd
       inherit! [_] Ast.map_program
+      inherit! [_] Ast.map_frontmatter
+      inherit! [_] Ast.map_scenes
 
       method! visit_Choice _env { more; items; fallthrough } =
         let oc = count_otherwises items in
@@ -315,7 +319,7 @@ let validate p =
         Choice { more; items; fallthrough }
     end
   in
-  visitor#visit_program () p
+  visitor#visit_scenes () p
 
 let rec find_dupes = function
   | [] -> []
@@ -329,7 +333,7 @@ let validate_scenes prog =
   | [] -> prog
   | d :: _ -> fail "duplicate scene %s" d
 
-let to_program doc =
+let to_scenes doc =
   let doc = Preprocess.run doc in
   (* Format.printf "html: %s@." (Cmarkit_html.of_doc ~safe:true doc); *)
   let acc = Acc.add ("prelude", Acc.empty) Acc.empty in

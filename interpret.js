@@ -120,18 +120,20 @@ function resetInternals() {
 window.seen = internal.seen_scenes;
 
 async function start(story) {
+  const scenes = story.scenes;
+
   // this occurs before the story is interpreted,
   // and can be used to re-run side effects
   window.beforeGameLoad?.();
 
-  if (story.length === 0) {
+  if (scenes.length === 0) {
     return;
   }
   internal.choice_history = [];
-  for (const scene of story) {
+  for (const scene of scenes) {
     internal.scenes[scene.name] = scene.cmds;
   }
-  let scene = story[0].name;
+  let scene = scenes[0].name;
   internal.on_scene_visit.forEach((f) => f(scene));
 
   loadInitialData();
@@ -433,11 +435,12 @@ function interpret_MetaMetaBlock(parent, k, current, rest) {
     //   surfaceError(`Meta: ${metaText} evaluated to ${s}, not a string`);
     // }
     if (Array.isArray(s)) {
+      // TODO
       // fake a list of scenes, assuming internal.scenes[name] is used
       instrs = [{ cmds: s }];
     } else {
       // console.log(kind, "result", s);
-      instrs = Fable.parse(s + "");
+      instrs = Fable.parse(s + "").scenes;
     }
     if (instrs.length > 0) {
       let into;
@@ -996,7 +999,6 @@ function handleChoiceShortcutKey(key) {
     document.querySelector(`a[idx="${+key}"]`)?.click();
   }
 }
-
 
 // back button
 // note that we have to push dummy entries to history to enable this

@@ -52,7 +52,39 @@ type scene = {
   yojson,
   visitors { variety = "map"; name = "map_scene" }]
 
-type program = scene list
+type frontmatter = (string * string) list
+[@@deriving
+  show { with_path = false },
+  visitors { variety = "map"; name = "map_frontmatter" }]
+
+let frontmatter_to_yojson (l : frontmatter) : Yojson.Safe.t =
+  `Assoc (List.map (fun (k, v) -> (k, `String v)) l)
+
+let frontmatter_of_yojson (json : Yojson.Safe.t) =
+  match json with
+  | `Assoc l ->
+    let res =
+      List.fold_left
+        (fun acc (k, v) ->
+          match (acc, v) with
+          | Ok acc, `String v -> Ok ((k, v) :: acc)
+          | (Error _ as e), _ -> e
+          | _, _ -> Error "Expected string value in association object")
+        (Ok []) l
+    in
+    Result.map List.rev res
+  | _ -> Error "Expected JSON object for association list"
+
+type scenes = scene list
+[@@deriving
+  show { with_path = false },
+  yojson,
+  visitors { variety = "map"; name = "map_scenes" }]
+
+type program = {
+  frontmatter : frontmatter;
+  scenes : scenes;
+}
 [@@deriving
   show { with_path = false },
   yojson,

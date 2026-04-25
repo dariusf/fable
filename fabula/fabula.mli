@@ -10,7 +10,7 @@ type frontmatter = (string * string) list
 (** * Parsing *)
 
 (** May fail with an [InputError] *)
-val parse_md_file : string -> frontmatter * program
+val parse_md_file : string -> program
 
 (** May fail with an [InputError] *)
 val parse_str : string -> program

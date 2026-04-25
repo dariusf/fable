@@ -106,7 +106,7 @@ let raw_edges (prog : program) =
           ^ c.name ^ {|\b|}
         in
         (c.name, Str.regexp r))
-      prog
+      prog.scenes
   in
   let found regexes str =
     List.filter_map
@@ -137,7 +137,7 @@ let raw_edges (prog : program) =
         items
   in
   let raw_edges =
-    prog
+    prog.scenes
     |> List.concat_map (fun sc ->
         let name = sc.name in
         let scenes_to =
@@ -158,7 +158,7 @@ let program_graph (r : renderer) (prog : program) =
     let from_edges =
       List.concat_map (fun (u, v, _, _) -> [u; v]) preprocessed_edges
     in
-    let from_prog = List.map (fun (sc : scene) -> sc.name) prog in
+    let from_prog = List.map (fun (sc : scene) -> sc.name) prog.scenes in
     from_edges @ from_prog |> List.sort_uniq compare
   in
 

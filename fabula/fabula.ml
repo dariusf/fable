@@ -82,8 +82,6 @@ let match_all groups regex str =
   in
   loop 0
 
-type frontmatter = (string * string) list
-
 let extract_frontmatter : string -> frontmatter * string =
   let fm_regex =
     Str.regexp "[ \n\t]*---\n[ \n\t]*\\([ -~\n]+\\)---\n\\([ -~\n]*\\)\n*"
@@ -119,20 +117,18 @@ let extract_frontmatter : string -> frontmatter * string =
       (simple @ multi, rest)
     with Fail -> ([], str)
 
-let parse_md_file file =
-  let str = Common.read_file file in
+let parse_str str =
   let front, str = extract_frontmatter str in
   let doc =
     (* ~resolver:Compile.resolver  *)
     Cmarkit.Doc.of_string str
   in
   (* Format.printf "html: %s@." (Cmarkit_html.of_doc ~safe:true doc); *)
-  (front, doc |> Compile.to_program)
+  { frontmatter = front; scenes = doc |> Compile.to_scenes }
 
-let parse_str str =
-  (* ~resolver:Compile.resolver  *)
-  let doc = Cmarkit.Doc.of_string str in
-  doc |> Compile.to_program
+let parse_md_file file_name =
+  let str = Common.read_file file_name in
+  parse_str str
 
 let collate_stats (p : program) =
   let words = ref 0 in
@@ -160,8 +156,8 @@ let collate_stats (p : program) =
       incr choices;
       List.iter (fun (ch : choice_item) -> List.iter walk_cmd ch.rest) items
   in
-  List.iter (fun (s : scene) -> List.iter walk_cmd s.cmds) p;
-  let sections = List.length p in
+  List.iter (fun (s : scene) -> List.iter walk_cmd s.cmds) p.scenes;
+  let sections = List.length p.scenes in
   let jumps = List.length (Graph.raw_edges p) in
   Format.asprintf "Words: %d\nSections: %d\nJumps: %d\nChoices: %d\nLoC: %d"
     !words sections jumps !choices !loc
