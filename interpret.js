@@ -412,7 +412,7 @@ function interpret_JumpDynamic(scene_name) {
     scene = execute(scene_name);
   } catch (e) {
     surfaceError(
-      `JumpDynamic: error when executing ${code}: ${e.toString()}`,
+      `JumpDynamic: error when executing ${scene_name}: ${e.toString()}`,
       e,
     );
   }
