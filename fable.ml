@@ -26,41 +26,13 @@ let substitute_vars vars content =
       Str.global_replace r v acc)
     content vars
 
-(* This makes default.css standard, without template variables.
-  We use a style block to override the default colours the user specifies. *)
-let produce_style_override =
-  let css_vars =
-    [
-      ("light_bg", "--fable-light-bg");
-      ("light_bg_lighter", "--fable-light-bg-lighter");
-      ("light_fg", "--fable-light-fg");
-      ("dark_bg", "--fable-dark-bg");
-      ("dark_bg_lighter", "--fable-dark-bg-lighter");
-      ("dark_fg", "--fable-dark-fg");
-    ]
-  in
-  fun frontmatter ->
-    let overrides =
-      List.filter_map
-        (fun (fm_name, css_name) ->
-          match List.assoc_opt fm_name frontmatter with
-          | Some v -> Some (Format.asprintf "%s: %s;" css_name v)
-          | None -> None)
-        css_vars
-    in
-    match overrides with
-    | [] -> ""
-    | _ ->
-      Format.asprintf "<style>:root { %s }</style>"
-        (String.concat " " overrides)
-
 let write_standalone dir (prog : Fabula.Ast.program) =
   let get_fm fm name default =
     List.assoc_opt name fm |> Option.value ~default
   in
   if not (Sys.file_exists dir) then Sys.mkdir dir 0o777;
   let fmt = Format.asprintf in
-  let style_override = produce_style_override prog.frontmatter in
+  let style_override = Fabula.produce_style_override prog.frontmatter in
   write_file (fmt "%s/index.html" dir)
     begin
       substitute_vars

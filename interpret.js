@@ -208,9 +208,13 @@ window.addEventListener("message", function (e) {
         "*",
       );
     }
-  } else if (e.data.type === "GET_STORY_JSON") {
+  } else if (e.data.type === "GET_STORY_DATA") {
     window.parent.postMessage(
-      { type: "STORY_JSON_RESPONSE", json: story },
+      {
+        type: "STORY_DATA_RESPONSE",
+        json: story,
+        styleOverride: Fable.produceStyleOverride(story.frontmatter),
+      },
       "*",
     );
   }

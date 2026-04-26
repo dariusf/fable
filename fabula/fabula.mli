@@ -36,3 +36,6 @@ val cmd_of_yojson : Yojson.Safe.t -> cmd Ppx_deriving_yojson_runtime.error_or
 val choice_items_to_yojson : choice_items -> Yojson.Safe.t
 val cmds_of_yojson : Yojson.Safe.t -> cmds Ppx_deriving_yojson_runtime.error_or
 val more_of_yojson : Yojson.Safe.t -> more Ppx_deriving_yojson_runtime.error_or
+
+(* Packaging *)
+val produce_style_override : frontmatter -> string

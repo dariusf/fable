@@ -161,3 +161,31 @@ let collate_stats (p : program) =
   let jumps = List.length (Graph.raw_edges p) in
   Format.asprintf "Words: %d\nSections: %d\nJumps: %d\nChoices: %d\nLoC: %d"
     !words sections jumps !choices !loc
+
+(* This makes default.css standard, without template variables.
+  We use a style block to override the default colours the user specifies. *)
+let produce_style_override =
+  let css_vars =
+    [
+      ("light_bg", "--fable-light-bg");
+      ("light_bg_lighter", "--fable-light-bg-lighter");
+      ("light_fg", "--fable-light-fg");
+      ("dark_bg", "--fable-dark-bg");
+      ("dark_bg_lighter", "--fable-dark-bg-lighter");
+      ("dark_fg", "--fable-dark-fg");
+    ]
+  in
+  fun frontmatter ->
+    let overrides =
+      List.filter_map
+        (fun (fm_name, css_name) ->
+          match List.assoc_opt fm_name frontmatter with
+          | Some v -> Some (Format.asprintf "%s: %s;" css_name v)
+          | None -> None)
+        css_vars
+    in
+    match overrides with
+    | [] -> ""
+    | _ ->
+      Format.asprintf "<style>:root { %s }</style>"
+        (String.concat " " overrides)

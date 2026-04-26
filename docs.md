@@ -486,8 +486,8 @@ sequenceDiagram
 
 
         Note right of E: Publishing/Saving
-        E->>S: { type: "GET_STORY_JSON" }
-        S->>E: { type: "STORY_JSON_RESPONSE", json }
+        E->>S: { type: "GET_STORY_DATA" }
+        S->>E: { type: "STORY_DATA_RESPONSE", json }
 ```
 
 </details>

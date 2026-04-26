@@ -342,9 +342,9 @@ window.addEventListener("message", (e) => {
       pendingGraphWindow = null;
     }
     alert("Error generating graph: " + e.data.error);
-  } else if (e.data.type === "STORY_JSON_RESPONSE") {
+  } else if (e.data.type === "STORY_DATA_RESPONSE") {
     if (pendingPublishResolve) {
-      pendingPublishResolve(e.data.json);
+      pendingPublishResolve(e.data);
       pendingPublishResolve = null;
     }
   } else {
@@ -596,14 +596,14 @@ async function publish() {
     assetPromises.css,
   ]);
 
-  const storyJson = await new Promise((resolve) => {
+  const { json: storyJson, styleOverride } = await new Promise((resolve) => {
     pendingPublishResolve = resolve;
-    iframe.contentWindow.postMessage({ type: "GET_STORY_JSON" }, "*");
+    iframe.contentWindow.postMessage({ type: "GET_STORY_DATA" }, "*");
   });
 
   const storyJs = "var story = " + JSON.stringify(storyJson) + ";";
   const title = storyJson.frontmatter.title ?? "Untitled Fable Story";
-  const extra = storyJson.frontmatter.extra ?? "";
+  const extra = styleOverride + (storyJson.frontmatter.extra ?? "");
 
   const html = `
 <!doctype html>
