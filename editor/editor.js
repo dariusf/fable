@@ -602,6 +602,8 @@ async function publish() {
   });
 
   const storyJs = "var story = " + JSON.stringify(storyJson) + ";";
+  const title = storyJson.frontmatter.title ?? "Untitled Fable Story";
+  const extra = storyJson.frontmatter.extra ?? "";
 
   const html = `
 <!doctype html>
@@ -609,8 +611,9 @@ async function publish() {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Fable Story</title>
+    <title>${title}</title>
     <style>${css}</style>
+    ${extra}
   </head>
   <body>
     <div id="centred-container">
