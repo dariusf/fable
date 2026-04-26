@@ -219,7 +219,7 @@ function registerHotkeys() {
         event.preventDefault();
         event.stopPropagation();
         back();
-      } else if (key === "r") {
+      } else if (key === "r" && !event.shiftKey) {
         event.preventDefault();
         event.stopPropagation();
         restart();
