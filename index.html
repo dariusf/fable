@@ -1,0 +1,1504 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+
+    <!-- stop google thinking this page is in spanish -->
+    <!-- <meta name="google" content="notranslate" /> -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fable Editor</title>
+    <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.20.0/src-min-noconflict/ace.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.20.0/src-min-noconflict/ext-language_tools.min.js"></script>
+    <style>
+      :root {
+        --main-bg-color: #f7f7f7;
+        --main-bg-color-lighter: #fafafa;
+        --main-fg-color: #000000;
+        --divider-color: var(--main-bg-color-lighter);
+        --control-border-color: var(--main-bg-color-lighter);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --main-bg-color: #202124;
+          --main-bg-color-lighter: #4e5159;
+          --main-fg-color: #e8eaed;
+          --divider-color: var(--main-bg-color);
+          --control-border-color: var(--main-bg-color-lighter);
+        }
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --control-border-color: color-mix(
+            in srgb,
+            var(--main-bg-color) 75%,
+            var(--main-fg-color) 25%
+          );
+        }
+      }
+
+      body {
+        background-color: var(--main-bg-color);
+        color: var(--main-fg-color);
+        font-family:
+          -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Ubuntu;
+      }
+      * {
+        scrollbar-color: var(--main-bg-color-lighter) var(--main-bg-color);
+        scrollbar-width: thin;
+      }
+      a,
+      a:visited {
+        color: var(--main-fg-color);
+        font-size: 14px;
+      }
+      label {
+        color: var(--main-fg-color);
+        background-color: var(--main-bg-color);
+        font-size: 14px;
+      }
+      /* input[type="checkbox"]:checked::before {
+        background-color: var(--main-bg-color);
+      } */
+      input[type="checkbox"] {
+        accent-color: var(--main-bg-color);
+        color: var(--main-fg-color);
+        /* background-color: var(--main-bg-color); */
+      }
+      iframe {
+        border: 0px;
+      }
+      button.btn,
+      select {
+        background-color: var(--main-bg-color);
+        color: var(--main-fg-color);
+        border: 1px solid var(--control-border-color);
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+      }
+
+      button.btn:hover,
+      select:hover {
+        background-color: var(--main-bg-color-lighter);
+      }
+
+      /* layout taken from https://github.com/mwillsey/egg-smol */
+      body {
+        margin: 0;
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+      }
+
+      #editor {
+        width: 50%;
+        resize: horizontal;
+        margin: 10px;
+        visibility: hidden;
+      }
+
+      #panel {
+        padding: 10px;
+        flex: 1 1 0;
+        border-left: 2px solid var(--divider-color);
+
+        display: flex;
+        flex-flow: column;
+      }
+
+      #toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* Ace overlay UIs ship separate extension CSS and do not fully inherit the editor theme. Bridge them to the page theme with a small shared layer. */
+      :root {
+        --ace-ui-bg: var(--main-bg-color);
+        --ace-ui-fg: var(--main-fg-color);
+        --ace-ui-border: var(--main-bg-color-lighter);
+        --ace-ui-surface: var(--main-bg-color-lighter);
+        --ace-ui-selected-border: var(--main-fg-color);
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --ace-ui-border: color-mix(
+            in srgb,
+            var(--main-bg-color) 75%,
+            var(--main-fg-color) 25%
+          );
+          --ace-ui-selected-border: color-mix(
+            in srgb,
+            var(--main-bg-color) 20%,
+            var(--main-fg-color) 80%
+          );
+        }
+      }
+
+      #ace_settingsmenu,
+      #kbshortcutmenu,
+      .ace_search {
+        background: var(--ace-ui-bg) !important;
+        color: var(--ace-ui-fg) !important;
+        border-color: var(--ace-ui-border) !important;
+        opacity: 1 !important;
+      }
+
+      #ace_settingsmenu,
+      #kbshortcutmenu {
+        border-left: 1px solid var(--ace-ui-border) !important;
+        box-shadow: -16px 0 32px rgba(0, 0, 0, 0.35) !important;
+      }
+
+      #ace_settingsmenu table,
+      #ace_settingsmenu tr,
+      #ace_settingsmenu td,
+      #ace_settingsmenu label,
+      #ace_settingsmenu span,
+      #ace_settingsmenu div,
+      #kbshortcutmenu table,
+      #kbshortcutmenu tr,
+      #kbshortcutmenu td,
+      #kbshortcutmenu label,
+      #kbshortcutmenu span,
+      #kbshortcutmenu div,
+      .ace_search_form,
+      .ace_replace_form,
+      .ace_search_options,
+      .ace_search_counter,
+      .ace_button {
+        color: var(--ace-ui-fg) !important;
+        background: transparent !important;
+        border-color: var(--ace-ui-border) !important;
+      }
+
+      #ace_settingsmenu .ace_optionsMenuEntry:hover,
+      #kbshortcutmenu .ace_optionsMenuEntry:hover {
+        background: transparent !important;
+        transition: none !important;
+      }
+
+      #ace_settingsmenu .ace_optionsMenuKey,
+      #ace_settingsmenu .ace_optionsMenuCommand,
+      #kbshortcutmenu .ace_optionsMenuKey,
+      #kbshortcutmenu .ace_optionsMenuCommand {
+        color: var(--ace-ui-fg) !important;
+      }
+
+      #ace_settingsmenu .ace_closeButton,
+      #kbshortcutmenu .ace_closeButton,
+      #ace_settingsmenu input,
+      #ace_settingsmenu select,
+      #ace_settingsmenu button,
+      #kbshortcutmenu input,
+      #kbshortcutmenu select,
+      #kbshortcutmenu button,
+      .ace_search_field,
+      .ace_searchbtn {
+        background: var(--ace-ui-bg) !important;
+        color: var(--ace-ui-fg) !important;
+        border: 1px solid var(--ace-ui-border) !important;
+        box-shadow: none !important;
+        font-weight: normal !important;
+      }
+
+      #ace_settingsmenu button[ace_selected_button="true"],
+      #kbshortcutmenu button[ace_selected_button="true"] {
+        border-color: var(--ace-ui-selected-border) !important;
+        color: var(--ace-ui-fg) !important;
+        background: var(--ace-ui-bg) !important;
+        box-shadow: none !important;
+      }
+
+      #ace_settingsmenu button:hover,
+      #ace_settingsmenu select:hover,
+      #ace_settingsmenu input:hover,
+      #kbshortcutmenu button:hover,
+      #kbshortcutmenu select:hover,
+      #kbshortcutmenu input:hover,
+      .ace_searchbtn:hover,
+      .ace_searchbtn:focus {
+        background: var(--ace-ui-surface) !important;
+      }
+
+      #ace_settingsmenu button:focus,
+      #ace_settingsmenu select:focus,
+      #ace_settingsmenu input:focus,
+      #kbshortcutmenu button:focus,
+      #kbshortcutmenu select:focus,
+      #kbshortcutmenu input:focus,
+      .ace_search_field:focus,
+      .ace_searchbtn:focus {
+        outline: 1px solid var(--ace-ui-fg) !important;
+        outline-offset: 1px;
+      }
+
+      #ace_settingsmenu button[ace_selected_button="true"]:focus,
+      #kbshortcutmenu button[ace_selected_button="true"]:focus {
+        outline: none !important;
+      }
+
+      .ace_search_field {
+        border-color: var(--ace-ui-border) !important;
+      }
+
+      .ace_searchbtn.prev:after,
+      .ace_searchbtn.next:after {
+        border-color: var(--ace-ui-fg) !important;
+      }
+
+      .ace_searchbtn_close {
+        filter: invert(0.85) !important;
+      }
+
+      .ace_button:hover,
+      .ace_button:focus,
+      .ace_button:active,
+      .ace_button.checked {
+        background: var(--ace-ui-surface) !important;
+        color: var(--ace-ui-fg) !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="editor"></div>
+    <div id="panel">
+      <div id="toolbar">
+        <select
+          name="examples"
+          id="examples"
+          onchange="load_selected_example()"
+        >
+          <option value="custom" disabled hidden>Custom</option>
+          <option value="An Introduction" data-text="Hello! Fable is a narrative scripting language which makes it easy to publish your interaction fiction on the web.
+
+Try it out on this page --- edit this text on the left and see your changes live on the right!
+
+You can get started writing immediately: regular prose is valid Fable.
+
+To give the reader some choices, list them with dashes.
+
+- Here is a choice
+- Here is another
+
+Often you will want to _jump_ to different sections of your story depending on what the reader chooses.
+
+- Turn to page 10 `->page10`
+- Attempt a Persuasion check `->persuasion`
+
+# persuasion
+
+Success!
+
+`->end`
+
+# page10
+
+You turned to page 10!
+
+`->end`
+
+# end
+
+That's all you need to get started!
+Check out the tutorial (and other examples) in the dropdown on the right for more.">An Introduction</option><option value="Crime" data-text="
+# beginning
+
+```js
+function findContainingText(s) {
+    const notOld = Array.from(document.querySelectorAll(&quot;.para&quot;));
+    return notOld.filter((e) => e.innerText.includes(s));
+}
+
+internal.bug_detectors.push(() => {
+  let not_ended = !findContainingText(&quot;THE END&quot;).length;
+  let no_options = !document.querySelectorAll('.choice').length
+  return not_ended && no_options;
+});
+
+var inventory = new Set();
+
+var dark_under = false;
+
+var bedroom_light = {seen: false, on: false, loc: 'desk'}; // desk, floor, bed
+
+var knife_loc = 'under_bed'; // under_bed, floor, joe
+
+var go_back_to = null; // for compare_prints
+
+// knowledge subsystem
+bed_knowledge = {meta: ['neatly_made', 'crumpled_duvet', 'hastily_remade', 'body_on_bed', 'murdered_in_bed', 'murdered_while_asleep']};
+knife_knowledge = {meta: ['prints_on_knife', 'joe_seen_prints_on_knife', 'joe_wants_better_prints', 'joe_got_better_prints']};
+window_knowledge = {meta: ['steam_on_glass', 'fingerprints_on_glass', 'fingerprints_on_glass_match_knife']};
+
+for (let k of [bed_knowledge, knife_knowledge, window_knowledge]) {
+  for (let i of k.meta) {
+    k[i] = false;
+  }
+}
+
+function reached(st, which) {
+  return st[which];
+}
+
+function reach(st, which) {
+  let i = st.meta.indexOf(which);
+  if (i < 0) {
+    throw 'fail';
+  }
+  for (let e of st.meta.slice(0, i+1)) {
+    st[e] = true;
+  }
+}
+```
+
+The bedroom. This is where it happened. Now to look for clues. `->murder_scene`
+
+# murder_scene
+
+```js
+go_back_to = 'murder_scene'
+```
+
+- `?bedroom_light.seen` `more seen_light`
+- `more compare_prints`
+- The bed...
+    The bed was low to the ground, but not so low something might not roll underneath. It was still neatly made. `->prebed`
+- `?dark_under && bedroom_light.loc === 'floor' && bedroom_light.on` Look under the bed
+    I peered under the bed. Something glinted back at me.
+    `->reaching`
+
+- `?turns_since('reaching') >= 4 && inventory.has('cane')` `more knock_with_cane`
+
+- `?knife_loc == 'floor'` Pick up the knife
+    Careful not to touch the handle, I lifted the blade from the carpet.
+    `inventory.add('knife')`
+
+- `?inventory.has('knife')` Look at the knife
+    The blood was dry enough. Dry enough to show up partial prints on the hilt!
+    `reach(knife_knowledge, 'prints_on_knife')`
+
+- The desk...
+    I turned my attention to the desk. A lamp sat in one corner, a neat, empty in-tray in the other. There was nothing else out.
+
+    Leaning against the desk was a wooden cane.
+
+    `bedroom_light.seen = true`
+
+    `->predesk`
+
+- `?inventory.has('cane') && turns_since('desk') <= 2` Swoosh the cane
+    I was still holding the cane: I gave it an experimental swoosh. It was heavy indeed, though not heavy enough to be used as a bludgeon.
+    But it might have been useful in self-defence. Why hadn't the victim reached for it? Knocked it over?
+
+- The window...
+    I went over to the window and peered out. A dismal view of the little brook that ran down beside the house.
+    `->prewindow`
+
+- `?seen.murder_scene>=5` Leave the room
+    I'd seen enough. I `$bedroom_light.on ? ' switched off the lamp, then ' : ''` turned and left the room.
+    `->joe_in_hall`
+
+`->murder_scene`
+
+# prebed
+
+```js
+reach(bed_knowledge, 'neatly_made');
+var bed_state = 'made_up'; // made_up, covers_shifted, covers_off, bloodstain_visible
+```
+
+`->bed`
+
+# bed
+
+- Lift the bedcover `reach(bed_knowledge, 'crumpled_duvet'); bed_state = 'covers_shifted'` I lifted back the bedcover. The duvet underneath was crumpled.
+
+- `?reached(bed_knowledge, 'crumpled_duvet')` Remove the cover `reach(bed_knowledge, 'hastily_remade'); bed_state = 'covers_off'` Careful not to disturb anything beneath, I removed the cover entirely. The duvet below was rumpled.
+
+    Not the work of the maid, who was conscientious to a point. Clearly this had been thrown on in a hurry.
+
+- `?bed_state == 'covers_off'` Pull back the duvet `reach(bed_knowledge, 'body_on_bed'); bed_state = 'bloodstain_visible'` I pulled back the duvet. Beneath it was a sheet, sticky with blood.
+
+    Either the body had been moved here before being dragged to the floor - or this was where the murder had taken place.
+
+- `?bed_state != 'made_up'` Remake the bed `bed_state = 'made_up'` Carefully, I pulled the bedsheets back into place, trying to make it seem undisturbed.
+  <!-- seems like there's a bug here, shouldn't be able to pull back duvet after making -->
+
+- Test the bed
+    I pushed the bed with spread fingers. It creaked a little, but not so much as to be obnoxious.
+
+- Look under the bed `dark_under = true;` Lying down, I peered under the bed, but could make nothing out.
+
+- `?turns_since('prebed')>1` Something else?
+    I took a step back from the bed and looked around. `->murder_scene`
+
+`->bed`
+
+# predesk
+
+```js
+var drawers_opened = 0;
+```
+
+`->desk`
+
+# desk
+
+- `?!inventory.has('cane')` Pick up the cane `inventory.add('cane')` I picked up the wooden cane. It was heavy, and unmarked.
+
+- `?!bedroom_light.on` Turn on the lamp `>->operate_lamp`
+
+- Look at the in-tray
+
+  I regarded the in-tray, but there was nothing to be seen. Either the victim's papers were taken, or his line of work had seriously dried up. Or the in-tray was all for show.
+
+- `sticky` `?drawers_opened<3` Open a drawer
+
+    I tried `$['a drawer at random', 'another drawer', 'a third drawer'][drawers_opened]`. `$['Locked', 'Also locked', 'Unsurprisingly, locked as well'][drawers_opened]`.
+
+    `drawers_opened++`
+
+- `?seen.desk >= 2` Something else? `1` I took a step away from the desk once more. `->murder_scene`
+
+`->desk`
+
+# prewindow
+
+```js
+var window_state = 'none'; // none, steamed, steam_gone
+```
+
+`->window`
+
+# window
+
+```js
+go_back_to = 'window';
+```
+
+- `more compare_prints`
+- Look down at the brook `1` `>->downy`
+- Look at the glass `see('greasy')`
+    ```js ~
+    if (window_state === 'steamed') {
+      '`->downy`'
+    } else {
+      'The glass in the window was greasy. No one had cleaned it in a while, inside or out.'
+    }
+    ```
+- `?window_state == 'steamed' && !seen.see_prints_on_glass && seen.downy && seen.greasy`
+    Look at the steam `1`
+    A cold day outside. Natural my breath should steam. `>->see_prints_on_glass`
+- `sticky`  `?window_state == 'steam_gone'` Breathe on the glass `1`
+    I breathed gently on the glass once more.
+    ```js ~
+    window_state = 'steamed';
+    reached(window_knowledge, 'fingerprints_on_glass') ? 'The fingerprints reappeared.' : ''
+    ```
+
+- `sticky` Something else? `1`
+    ```js ~
+    let acc = '';
+    if (seen.window < 2 || reached(window_knowledge, 'fingerprints_on_glass') || window_state == 'steamed') {
+      acc += 'I looked away from the dreary glass.\n\n';
+      //render('I looked away from the dreary glass.');
+      if (window_state == 'steamed') {
+        window_state = 'steam_gone';
+        //render('The steam from my breath faded.');
+        acc += 'The steam from my breath faded.\n\n';
+      }
+      //render('`->murder_scene`');
+      acc += '`->murder_scene`';
+    }
+    acc
+    ```
+    I leant back from the glass. My breath had steamed up the pane a little.
+    `window_state = 'steamed'`
+
+<!-- TODO fallback -->
+
+`->window`
+
+# downy
+
+```js ~
+if (window_state == 'steamed') {
+  // TODO higher-level helper
+  &quot;Through the steamed glass I couldn't see the brook. `>->see_prints_on_glass` `->window`&quot;
+}
+```
+I watched the little stream rush past for a while. The house probably had damp but otherwise, it told me nothing.
+
+# knock_with_cane
+
+- Use the cane to reach under the bed `1`
+
+    Positioning the cane above the carpet, I gave the glinting thing a sharp tap. It slid out from the under the foot of the bed.
+    `knife_loc = 'floor'`
+
+    - Stand up `1`
+    - Look under the bed once more `1` Moving the cane aside, I looked under the bed once more, but there was nothing more there.
+
+    Satisfied, I stood up, and saw I had knocked free a bloodied knife. `->murder_scene`
+
+# seen_light
+
+- `?!bedroom_light.on` Turn on lamp `1` `>->operate_lamp`
+
+- `?bedroom_light.loc === 'bed'  && bed_state == 'bloodstain_visible'`
+    Move the light to the bed `bedroom_light.loc = 'bed'`
+
+    I moved the light over to the bloodstain and peered closely at it. It had soaked deeply into the fibres of the cotton sheet.
+    There was no doubt about it. This was where the blow had been struck. `reach(bed_knowledge, 'murdered_in_bed')`
+
+- `?bedroom_light.loc != 'desk' && turns_since('moved_light_to_floor') >= 2`
+    Move the light back to the desk
+    `bedroom_light.loc = 'desk'`
+    I moved the light back to the desk, setting it down where it had originally been.
+
+- `?bedroom_light.loc != 'floor' && dark_under`
+    Move the light to the floor
+    `bedroom_light.loc = 'floor'`
+    I picked the light up and set it down on the floor.
+    `visit('moved_light_to_floor')`
+
+<!-- `->murder_scene` -->
+
+# compare_prints
+
+- `?reached(window_knowledge, 'fingerprints_on_glass') && reached(knife_knowledge, 'prints_on_knife') && !reached(window_knowledge, 'fingerprints_on_glass_match_knife')`
+    Compare the prints on the knife and the window `1`
+    Holding the bloodied knife near the window, I breathed to bring out the prints once more, and compared them as best I could.
+    Hardly scientific, but they seemed very similar - very similiar indeed.
+    `reach(window_knowledge, 'fingerprints_on_glass_match_knife')`
+    `->$go_back_to`
+
+# see_prints_on_glass
+
+`reach(window_knowledge, 'fingerprints_on_glass')`
+`$['But I could see a few fingerprints, as though someone hadpressed their palm against it.', 'The fingerprints were quite clear and well-formed.'][0]`
+They faded as I watched.
+
+`window_state= 'steam_gone'`
+
+# operate_lamp
+
+I flicked the light switch.
+
+```js ~
+let res = '';
+if (bedroom_light.on) {
+  res = 'The bulb fell dark';
+  bedroom_light.on = false;
+} else {
+  if (bedroom_light.loc === 'floor') {
+    res = 'A little light spilled under the bed.';
+  } else if (bedroom_light.loc === 'desk') {
+    res = 'The light gleamed on the polished tabletop.';
+  }
+  bedroom_light.on = true;
+}
+res
+```
+
+# joe_in_hall
+
+My police contact, Joe, was waiting in the hall. 'So?' he demanded. 'Did you find anything interesting?'
+
+`->joe_in_hall1`
+
+# joe_in_hall1
+
+- `?seen.joe_in_hall1 == 1` 'Nothing.' `1`
+    He shrugged. 'Shame.'
+    `->done`
+
+- `?inventory.has('knife')` 'I found the murder weapon.' `1`
+    'Good going!' Joe replied with a grin. 'We thought the murderer had gotten rid of it. I'll bag that for you now.'
+    `knife_loc = 'joe'`
+
+- `?reached(knife_knowledge, 'prints_on_knife') && knife_loc == 'joe'`
+    'There are prints on the blade.' `1`
+    'There are prints on the blade,' I told him.
+    He regarded them carefully.
+    'Hrm. Not very complete. It'll be hard to get a match from these.'
+    `reach(knife_knowledge, 'joe_seen_prints_on_knife')`
+
+- `?reached(window_knowledge, 'fingerprints_on_glass_match_knife') && reached(knife_knowledge, 'joe_seen_prints_on_knife') `
+    'They match a set of prints on the window, too.' `1`
+    'Anyone could have touched the window,' Joe replied thoughtfully. 'But if they're more complete, they should help us get a decent match!'
+    `reach(knife_knowledge, 'joe_wants_better_prints')`
+
+- `?reached(bed_knowledge, 'body_on_bed') && !reached(bed_knowledge, 'murdered_in_bed')`
+    'The body was moved to the bed at some point.' `1`
+    'The body was moved to the bed at some point,' I told him. 'And then moved back to the floor.'
+    'Why?'
+    - 'I don't know.' `1`
+        Joe nods. 'All right.'
+    - 'Perhaps to get something from the floor?' `1`
+        'You wouldn't move a whole body for that.'
+    - 'Perhaps he was killed in bed.' `1`
+        'It's just speculation at this point,' Joe remarks.
+
+- `?reached(bed_knowledge, 'murdered_in_bed')`
+    'The victim was murdered in bed, and then the body was moved to the floor.' `1`
+    'Why?'
+    - 'I don't know.' `1`
+        Joe nods. 'All right, then.'
+    - 'Perhaps the murderer wanted to mislead us.' `1`
+        'How so?'
+
+        - 'They wanted us to think the victim was awake.' `1`
+            'They wanted us to think the victim was awake[.'], I replied thoughtfully.
+            'That they were meeting their attacker, rather than being stabbed in their sleep.'
+
+        - 'They wanted us to think there was some kind of struggle.' `1`
+            'They wanted us to think there was some kind of struggle,' I replied.
+            'That the victim wasn't simply stabbed in their sleep.'
+
+        'But if they were killed in bed, that's most likely what happened. Stabbed, while sleeping.'
+        `reach(bed_knowledge, 'murdered_while_asleep')`
+    - 'Perhaps the murderer hoped to clean up the scene.' `1`
+        'But they were disturbed? It's possible.'
+
+  - `?seen.joe_in_hall1 > 1` 'That's it.' `1`
+      'All right. It's a start,' Joe replied.
+      `->done`
+
+<!-- TODO fallback -->
+
+`->joe_in_hall1`
+
+# reaching
+
+- Reach for it `1` I fished with one arm under the bed, but whatever it was, it had been kicked far enough back that I couldn't get my fingers on it. `->reaching`
+- `?inventory.has('cane')` Knock it with the cane `->knock_with_cane`
+- `?turns_since('reaching')>1` Stand up `1` I stood up once more, and brushed my coat down. `->murder_scene`
+
+<!-- TODO fallback -->
+
+# done
+<!-- this is also a fallback option... -->
+
+```js ~
+if (reached(knife_knowledge, 'joe_wants_better_prints') && !reached(knife_knowledge, 'joe_got_better_prints')) {
+  reach(knife_knowledge, 'joe_got_better_prints');
+  &quot;I'll get those prints from the window now.&quot;;
+} else if (reached(knife_knowledge, 'joe_seen_prints_on_knife')) {
+  &quot;I'll run those prints as best I can.&quot;;
+} else {
+  &quot;'Not much to go on.'&quot;;
+}
+```
+THE END
+
+
+<!--
+
+make_choices([
+    &quot;The bed...&quot;,
+    &quot;Lift the bedcover&quot;,
+    &quot;Remove the cover&quot;,
+    &quot;Pull back the duvet&quot;,
+    &quot;Remake the bed&quot;,
+    &quot;Test the bed&quot;,
+    &quot;Look under the bed&quot;,
+    &quot;Something else?&quot;,
+    &quot;The desk...&quot;,
+    &quot;Pick up the cane&quot;,
+    &quot;Turn on the lamp&quot;,
+    &quot;Look at the in-tray&quot;,
+    &quot;Open a drawer&quot;,
+    &quot;Open a drawer&quot;,
+    &quot;Open a drawer&quot;,
+    &quot;Something else?&quot;,
+    &quot;Swoosh the cane&quot;,
+    &quot;The window...&quot;,
+    &quot;Look down at the brook&quot;,
+    &quot;Look at the glass&quot;,
+    &quot;Something else?&quot;,
+    &quot; Look at the steam&quot;,
+    &quot;Breathe on the glass&quot;,
+    &quot;Something else?&quot;,
+    &quot; Move the light to the floor &quot;,
+    &quot; Look under the bed&quot;,
+    &quot;Knock it with the cane&quot;,
+    &quot;Use the cane to reach under the bed&quot;,
+    &quot;Look under the bed once more&quot;,
+    &quot; Pick up the knife&quot;,
+    &quot; Look at the knife&quot;,
+    &quot; Compare the prints on the knife and the window&quot;,
+    &quot; Move the light back to the desk &quot;,
+    &quot; Move the light to the floor &quot;,
+    &quot;Leave the room&quot;
+])
+
+-->">Crime</option><option value="Scrum" data-text="
+```js
+var seen_review = 0;
+```
+
+`->start`
+
+# start
+
+Let's begin today's standup.
+
+<!-- This records energy level -->
+How are you feeling today?
+
+- Green
+- Amber
+- Red
+
+`->do`
+
+# do
+
+What would you like to do next?
+
+- Review `1` `->review`
+- `sticky` Add a story `1` `>->add` `->start`
+
+# add
+
+How many points is this story worth?
+
+- 2 points
+- 3 points
+- 5 points
+
+How much creative energy do you think you'll need to finish this?
+
+- A bit
+- A lot
+
+Okay, I've added it to the backlog.
+
+`->do`
+
+# review
+
+```js
+seen_review++;
+```
+
+Reviewing...
+
+<!--Debug {saw_review} {review} {TURNS_SINCE(->review)}-->
+
+- `?seen_review > 1 && !seen.exceeded` Energy exceeded `->exceeded`
+- Pick a ticket `1` So how are we doing on this next story?
+    - It's done `1` Great! `->review`
+    - It's not yet done `1` Is it still something you want to do today?
+        - Yes `1` Do you think you'll be able to finish it today?
+            - Yes `1` Great, let's move on. `->review`
+            - No `1` Maybe we should break it down into smaller stories.
+                - Yes `>->add` `->review`
+                - No `1` Okay, I'll leave it. `->review`
+        - No `1` I'll move it to the backlog, then. `->review`
+- No tickets `1` Great!
+    Would you like to take some things out of the backlog?
+    - Yes `->take_from_backlog`
+    - No `->enjoy_your_day`
+- All tickets seen `1` Great! Here's your schedule for today. `->enjoy_your_day`
+
+# exceeded
+
+Are you sure you'll be able to complete everything?
+
+- Yes `1` Great, let's move on. `-> review`
+- No `1` We should reassess. What can or can't you do? `-> prune_aggressively`
+
+# prune_aggressively
+
+- Not done `1` Still pruning. `-> prune_aggressively`
+- Done and under limit `1` Great, let's move on. `-> review`
+
+# take_from_backlog
+
+Pick a random story. Does this look ok?
+
++ Yes `-> review`
++ No `-> take_from_backlog`
+
+# enjoy_your_day
+
+Enjoy the rest of your day!">Scrum</option><option value="Tutorial" data-text="Welcome to Fable's tutorial!
+It is itself a Fable story.
+
+It may help to read the source in the left panel as you play along on the right, to see how something is done.
+
+These topics are best read in order, but feel free to jump around as you please. `->topics`
+
+# topics
+
+- Is Fable for me? `->is_fable_for_me`
+- Getting started `->getting_started`
+- Publishing your story `->publishing_your_story`
+- Exploring the editor `->exploring_the_editor`
+- Saving the game `->saving_the_game`
+- Ever-changing prose `->ever_changing_prose`
+- Guarded choices `->guarded_choices`
+- Dialogue loops `->dialogue_loops`
+- Keeping score `->keeping_score`
+- Taking inventory `->taking_inventory`
+
+# is_fable_for_me
+
+<h1>Is Fable for me?</h1>
+
+Let's see... which of these best describes you?
+
+- I am new to writing interactive fiction
+  <b>New to writing IF</b>
+
+  Fable is a great way to get started with interactive fiction --- all you have to do is start writing, here, in the editor!
+
+  When done, click the Publish button on the right, and you'll get your game in a file you can upload to itch.
+
+  Check out the rest of this tutorial first, to see what Fable is capable of and how it does things.
+
+  If you'd prefer to create IF more graphically, check out Twine.
+
+- I am a writer first
+  <b>Writer</b>
+
+  Fable is more minimalistic than other IF systems:
+  your writing is front and centre, and everything can be done in a single file.
+
+  Like Twine, it targets the web and publishes to a single HTML file you can directly upload to itch.
+
+  Its design is loosely inspired by Ink, though a Fable story _is_ the game, and isn't to be embedded in a larger engine (which streamlines things).
+
+  Fable also has a pleasant, minimal, and consistent language design, with a clear delineation between prose and code.
+
+  This editor doesn't send your work anywhere: you are completely in control of your writing.
+
+- I am a programmer first
+  <b>Programmer</b>
+
+  Fable is web-first: it is a Markdown dialect, uses JavaScript natively, and publishes to a single HTML file.
+  It is appropriate for quickly writing IF without having to worry about the engine --- there is almost no scaffolding, and you can write the entire game in a single text file, directly interacting with the web page using native browser APIs.
+  All the tools you know will work.
+
+  (If you are looking for a narrative scripting language to be embedded within a larger game engine, you will probably be better served by Ink.)
+
+  Fable also has a pleasant, minimal, and consistent language design --- there is a clear delineation between prose and code, and the usual IF programming needs are met using metaprogramming rather than bespoke syntax. It has a well-defined semantics, and tools for (automatically) testing your stories and finding bugs in them.
+
+  This editor is entirely client-side and has vim keybindings, which you can enable by opening the settings using <kbd>Cmd</kbd> + <kbd>,</kbd>.
+  A command-line workflow with hot reloading is also supported.
+  The whole system is open source and well-documented.
+
+  Check out the language reference for more.
+
+<!-- this is a divider -->
+
+- Back
+
+`->topics`
+
+# getting_started
+
+<h1>Getting started</h1>
+
+To get started with Fable, all you need are three fundamental concepts: _sections_, _jumps_, and _choices_.
+
+- Sections
+
+Sections are written like this.
+
+<pre># my_section</pre>
+
+The unnamed section before the first one is called _prelude_, and is shown automatically.
+
+- Jumps
+
+Sections don't automatically flow into one another. For that, you need a _jump_, written like this, with backticks.
+
+<pre>`->my_section`</pre>
+
+NB: _Meta_ things are usually quoted with backticks, to distinguish them from prose.
+Think of them as a way for you to tell Fable what to do next behind the scenes.
+
+You can see the effect of a jump here...
+
+`->my_section`
+
+# my_section
+
+Tada! The transition is seamless, so the reader doesn't have to know it happened.
+
+- Choices
+
+Finally, give the reader some choices with a bulleted list.
+
+<pre>
+- Roll some dice
+- Flip a coin
+</pre>
+
+- Roll some dice
+- Flip a coin
+
+The story continues after a choice.
+Put jumps in the list items to have readers' choices take them to different sections.
+
+<pre>
+- I like apples `->apples`
+- I like oranges `->oranges`
+</pre>
+
+- I like apples `->apples`
+- I like oranges `->oranges`
+
+# apples
+
+You picked apples!
+
+`->converge`
+
+# oranges
+
+I like oranges too!
+
+`->converge`
+
+# converge
+
+You now know enough Fable to be dangerous!
+
+- Back
+
+`->topics`
+
+# ever_changing_prose
+
+<h1>Ever-changing prose</h1>
+
+The prose you write in Fable doesn't have to be static; it can change across playthroughs!
+We'll demonstrate this using a classic example: the <a href=&quot;https://www.scholastic.com/content/dam/teachers/articles/migrated-files-in-body/shakespeare_insult_kit.pdf&quot;>Shakespeare Insult Kit</a>.
+
+This requires some light programming.
+First, we'll need some word lists.
+We'll define them using a _block_ of JavaScript, indicated by three backticks.
+<code>var</code> declares a _variable_, which is used here to name a collection of words.
+
+<pre>
+```
+var adjective1 = [&quot;your&quot;, &quot;words&quot;, &quot;here&quot;];
+```
+</pre>
+
+```
+var adjective1 = [&quot;artless&quot;, &quot;bawdy&quot;, &quot;beslubbering&quot;, &quot;bootless&quot;, &quot;churlish&quot;, &quot;cockered&quot;, &quot;clouted&quot;, &quot;craven&quot;, &quot;currish&quot;, &quot;dankish&quot;, &quot;dissembling&quot;, &quot;droning&quot;, &quot;errant&quot;, &quot;fawning&quot;, &quot;fobbing&quot;, &quot;froward&quot;, &quot;frothy&quot;, &quot;gleeking&quot;, &quot;goatish&quot;, &quot;gorbellied&quot;, &quot;impertinent&quot;, &quot;infectious&quot;, &quot;jarring&quot;, &quot;loggerheaded&quot;, &quot;lumpish&quot;, &quot;mammering&quot;, &quot;mangled&quot;, &quot;mewling&quot;, &quot;paunchy&quot;, &quot;pribbling&quot;, &quot;puking&quot;, &quot;puny&quot;, &quot;qualling&quot;, &quot;rank&quot;, &quot;reeky&quot;, &quot;roguish&quot;, &quot;ruttish&quot;, &quot;saucy&quot;, &quot;spleeny&quot;, &quot;spongy&quot;, &quot;surly&quot;, &quot;tottering&quot;, &quot;unmuzzled&quot;, &quot;vain&quot;, &quot;venomed&quot;, &quot;villainous&quot;, &quot;warped&quot;, &quot;wayward&quot;, &quot;weedy&quot;, &quot;yeasty&quot;]
+
+var adjective2 = [&quot;base-court&quot;, &quot;bat-fowling&quot;, &quot;beef-witted&quot;, &quot;beetle-headed&quot;, &quot;boil-brained&quot;, &quot;clapper-clawed&quot;, &quot;clay-brained&quot;, &quot;common-kissing&quot;, &quot;crook-pated&quot;, &quot;dismal-dreaming&quot;, &quot;dizzy-eyed&quot;, &quot;doghearted&quot;, &quot;dread-bolted&quot;, &quot;earth-vexing&quot;, &quot;elf-skinned&quot;, &quot;fat-kidneyed&quot;, &quot;fen-sucked&quot;, &quot;flap-mouthed&quot;, &quot;fly-bitten&quot;, &quot;folly-fallen&quot;, &quot;fool-born&quot;, &quot;full-gorged&quot;, &quot;guts-griping&quot;, &quot;half-faced&quot;, &quot;hasty-witted&quot;, &quot;hedge-born&quot;, &quot;hell-hated&quot;, &quot;idle-headed&quot;, &quot;ill-breeding&quot;, &quot;ill-nurtured&quot;, &quot;knotty-pated&quot;, &quot;milk-livered&quot;, &quot;motley-minded&quot;, &quot;onion-eyed&quot;, &quot;plume-plucked&quot;, &quot;pottle-deep&quot;, &quot;pox-marked&quot;, &quot;reeling-ripe&quot;, &quot;rough-hewn&quot;, &quot;rude-growing&quot;, &quot;rump-fed&quot;, &quot;shard-borne&quot;, &quot;sheep-biting&quot;, &quot;spur-galled&quot;, &quot;swag-bellied&quot;, &quot;tardy-gaited&quot;, &quot;tickle-brained&quot;, &quot;toad-spotted&quot;, &quot;unchin-snouted&quot;, &quot;weather-bitten&quot;];
+
+var noun = [&quot;apple-john&quot;, &quot;baggage&quot;, &quot;barnacle&quot;, &quot;bladder&quot;, &quot;boar-pig&quot;, &quot;bugbear&quot;, &quot;bum-bailey&quot;, &quot;canker-blossom&quot;, &quot;clack-dish&quot;, &quot;clotpole&quot;, &quot;coxcomb&quot;, &quot;codpiece&quot;, &quot;death-token&quot;, &quot;dewberry&quot;, &quot;flap-dragon&quot;, &quot;flax-wench&quot;, &quot;flirt-gill&quot;, &quot;foot-licker&quot;, &quot;fustilarian&quot;, &quot;giglet&quot;, &quot;gudgeon&quot;, &quot;haggard&quot;, &quot;harpy&quot;, &quot;hedge-pig&quot;, &quot;horn-beast&quot;, &quot;hugger-mugger&quot;, &quot;joithead&quot;, &quot;lewdster&quot;, &quot;lout&quot;, &quot;maggot-pie&quot;, &quot;malt-worm&quot;, &quot;mammet&quot;, &quot;measle&quot;, &quot;minnow&quot;, &quot;miscreant&quot;, &quot;moldwarp&quot;, &quot;mumble-news&quot;, &quot;nut-hook&quot;, &quot;pigeon-egg&quot;, &quot;pignut&quot;, &quot;puttock&quot;, &quot;pumpion&quot;, &quot;ratsbane&quot;, &quot;scut&quot;, &quot;skainsmate&quot;, &quot;strumpet&quot;, &quot;varlot&quot;, &quot;vassal&quot;, &quot;whey-face&quot;, &quot;wagtail&quot;];
+```
+
+- Okay, what next?
+
+The idea is to then _interpolate_ words from the word list into your sentence.
+
+<pre>
+Thou `~randomFrom(adjective1)`, `~randomFrom(adjective2)` `~randomFrom(noun)`!
+</pre>
+
+We use backticks again to signal that we're doing something _meta_, outside the prose.
+The tilde <code>~</code> tells Fable to evaluate some code and have the result be part of the surrounding prose.
+Here, the code uses the JavaScript function <code>randomFrom</code>, which samples words from our word lists.
+
+Now you'll get fresh insults every time you play!
+
+- Get some fresh insults `->insult`
+
+# insult
+
+Thou `~randomFrom(adjective1)`, `~randomFrom(adjective2)` `~randomFrom(noun)`!
+
+Thou `~randomFrom(adjective1)`, `~randomFrom(adjective2)` `~randomFrom(noun)`!
+
+Thou `~randomFrom(adjective1)`, `~randomFrom(adjective2)` `~randomFrom(noun)`!
+
+- `sticky` More fresh insults `->`
+- Back
+
+`->topics`
+
+# keeping_score
+
+<h1>Keeping score</h1>
+
+It is sometimes useful to keep track of the reader's score over the course of the game.
+For example, you might want to count the number of clues they have encountered in a mystery game.
+
+We use some JavaScript to say where we want to keep track of the score.
+
+First, we say that the score is initially 0.
+
+<pre>
+```
+var score = 0;
+```
+</pre>
+
+```
+var score = 0
+```
+
+- Okay
+
+We then annotate our choices with backticked snippets of code to increment (<code>++</code>) the score. For example,
+
+<pre>
+- My choice `score++` `->jump_somewhere`
+</pre>
+
+Let's try this out. Search the room, and we'll track how many clues you found.
+
+`->clues`
+
+# clues
+
+- Look under the bed
+  You peer under the bed and see a strange metallic object. `score++` `->`
+- Look behind the table
+  There is nothing under the table. `->`
+- Look under the lampshade
+  There is something stuck inside the lampshade. `score++` `->`
+- Check inside the drawers
+  You open the drawers and find an old key. `score++`
+- Stop exploring
+
+Number of clues found: `~score`
+
+- Back
+
+`->topics`
+
+# taking_inventory
+
+<h1>Taking inventory</h1>
+
+Sometimes we need to track more than just a score.
+For example, you might want to track what the reader has in their pockets at a certain point in the story.
+
+We need some light programming.
+First, we declare that the <code>inventory</code> is where we track this, and it is initially empty.
+
+<pre>
+```
+var inventory = [];
+```
+</pre>
+
+```
+var inventory = []
+```
+
+- Okay
+
+We then annotate our choices with backticked snippets of code to track the items the reader acquires. For example,
+
+<pre>
+- Pick up the sword `inventory.push(&quot;sword&quot;)` `->jump_somewhere`
+</pre>
+
+Let's try this out. Open the chest and grab all the treasure you can!
+
+`->treasure`
+
+# treasure
+
+- Grab the diamond
+  You got the diamond. `inventory.push(&quot;diamond&quot;)` `->`
+- Pick up the sapphire
+  You got the sapphire. `inventory.push(&quot;sapphire&quot;)` `->`
+- Grab the emerald
+  You got the emerald. `inventory.push(&quot;emerald&quot;)` `->`
+- Leave the rest
+
+You got: `~inventory.join(&quot;, &quot;)`
+
+- Back
+
+`->topics`
+
+# publishing_your_story
+
+<h1>Publishing your story</h1>
+
+Once you've written your piece, itch is the simplest way to publish it.
+
+Click the Publish button on the right, then <a href=&quot;https://itch.io/game/new&quot;>create a new project</a> there and upload the file.
+Some recommended settings:
+
+<ul>
+<li>Kind of project: HTML</li>
+<li>How should your project be run in your page? Click to launch in fullscreen</li>
+<li>Mobile friendly, portrait</li>
+</ul>
+
+And you're done!
+
+- Back
+
+`->topics`
+
+# exploring_the_editor
+
+<h1>Exploring the editor</h1>
+
+You've already been using the editor to both read and play through this tutorial, but it offers a lot more for developing stories.
+
+`->editor0`
+
+# editor0
+
+- Navigate the story
+  <kbd>⌘</kbd><kbd>1</kbd>-<kbd>9</kbd> will choose the corresponding story option on the right. `->`
+- Back and forth
+  The Back (<kbd>⌘</kbd><kbd>B</kbd>) and Restart (<kbd>⌘</kbd><kbd>R</kbd>) buttons help you conveniently navigate your work.
+
+  The Back button is disabled in published stories, so your readers' choices matter. `->`
+- Graph
+  The Graph button (<kbd>⌘</kbd><kbd>G</kbd>) visualises your story.
+  It's great for understanding its structure and spotting what Ink calls _loose ends_: dangling narrative threads.
+  Click it now to try visualising this one! `->`
+- Docs
+  For the details on Fable, the language reference is available at the Docs link. `->`
+- Open and Save
+  The Open (<kbd>⌘</kbd><kbd>O</kbd>) and Save (<kbd>⌘</kbd><kbd>S</kbd>) buttons allow you to save your work and resume a writing session another day.
+  You can also drag and drop a markdown file into the editor to open it.
+
+  Always click the Save button after a long writing section!
+  A best-effort attempt is made to preserve your writing across reloads of the tab, but it's best not to rely on it. `->`
+- Publish and Share
+  The Publish button will download your story as an HTML file, ready for publishing.
+
+  The Share button will create a link you can send to a friend to share your work.
+  For longer stories, the link can get very long and may not work, so it is better to Publish and send them the file. `->`
+- Privacy
+  The editor runs entirely on your computer and it doesn't send your story anywhere.
+  For that reason, some things like saving are a little less convenient than in a normal app.
+  The tradeoff is that you get to stay in control of your work. `->`
+- Back
+
+`->topics`
+
+# saving_the_game
+
+<h1>Saving the game</h1>
+
+In published stories, Fable automatically saves readers' choices, so if they refresh the page, they won't have to start over.
+You will have to clear the save data manually.
+To see how and to add to what is saved, see the language reference.
+
+- Back
+
+`->topics`
+
+# guarded_choices
+
+<h1>Conditional choices</h1>
+
+Some choices are dependent on others having been taken. For example, the reader might have to get a key before they can unlock a door.
+
+You can model this using a _precondition_ on a choice. This is a backticked bit of code with <code>?</code> in front.
+
+First, declare that there is a key to be acquired.
+
+<pre>
+```
+var has_key = false;
+```
+</pre>
+
+```
+var has_key = false;
+```
+
+- Okay
+
+After that, set up a situation where a choice somewhere records that the player has a key, while another choice is guarded by it.
+
+<pre>
+# loot
+
+- Open the chest `has_key=true`
+- `?has_key` Unlock the door `->`
+</pre>
+
+- Try this
+
+`->loot`
+
+# loot
+
+- Open the chest `has_key=true` `->`
+- `?has_key` Unlock the door
+
+You unlocked the door!
+
+- Back
+
+`->topics`
+
+# dialogue_loops
+
+<h1>Dialogue loops</h1>
+
+When writing the flow of a conversation, one sometimes wants a _dialogue loop_, where there is a list of outstanding talking points, some of which unlock new ones, and the conversation goes on until the reader decides to leave it or runs out of options.
+
+Here's an example dialogue loop, which is explained right after.
+
+You stare into her eyes. `->loop_example`
+
+# loop_example
+
+```
+local.dog ||= 0
+```
+
+- Ask about her dog `local.dog=true`
+  &quot;How's your dog?&quot; you ask.
+
+  &quot;Fine. He loves his kibbles.&quot; `->`
+- `?local.dog` Ask about the kibbles
+  &quot;What's in the kibbles?&quot;
+
+  &quot;I have no idea. Some dried meat, maybe.&quot; `->`
+- Talk about the weather
+  &quot;It's been really hot recently, huh?&quot;
+
+  &quot;Yeah, it has.&quot; `->`
+- Leave
+
+&quot;I'll see you around.&quot;
+
+This uses several features of Fable simultaneously.
+
+<ul>
+<li><code>`->`</code> is shorthand for a jump back to the current section.</li>
+<li><code>local.dog ||= 0</code> sets a section-local variable. This is useful to track the state of conversations, without having to worry about reusing the same variable name elsewhere.</li>
+<li>A conditional choice blocks access to the kibbles talking point until the dog is brought up.</li>
+</ul>
+
+- Two more things
+
+In the conversation before, the reader was allowed to leave at any time.
+Two more variations are useful.
+
+Marking a choice as <code>otherwise</code> makes it so it only appears when all other choices are exhausted.
+This makes the reader have to finish the conversation before they can move on.
+
+<pre>
+- A choice
+- `otherwise` An otherwise choice
+</pre>
+
+- What's the second thing?
+
+Having a choice marked as <code>fallthrough</code> is similar, but instead of the choice appearing, the story instead continues seamlessly with whatever is after the choice.
+
+<pre>
+- A choice
+- Another choice
+- `fallthrough`
+</pre>
+
+This has a similar effect as <code>otherwise</code>, except that the reader automatically leaves the conversation.
+
+- Back
+
+`->topics`">Tutorial</option><option value="Wash" data-text="```js
+var outlet_closed = false;
+```
+
+`->start`
+
+# start
+
+You stand before the washing machine.
+
+The outlet is `$' ' + (outlet_closed ? 'closed' : 'open')`.
+
+`->hub`
+
+# hub
+
+```js
+function done_everything() {
+  return ['dial', 'temp', 'spin', 'time'].map(i => !!seen[i]).reduce((a, b) => a && b, true);
+}
+```
+
+- `sticky` Turn the dial `->dial`
+- `sticky` Set the temperature `->temp`
+- `sticky` Set the spin `->spin`
+- `sticky` Adjust the time `->time`
+- Add detergent
+    You added some detergent. `see('detergent')`
+- `?!outlet_closed` Close the outlet `outlet_closed = true` You closed the outlet.
+- `?done_everything()` Start the machine
+    ```js ~
+    !outlet_closed ? '`->water`' : !seen.detergent ? '`->unwashed`' : '`->wait`'
+    ```
+
+`->hub`
+
+# dial
+
+- `sticky` Cottons
+- `sticky` Mixed
+- `sticky` Delicates
+- `sticky` Quick 18
+- `sticky` Spin
+- `sticky` Rinse
+- `sticky` Energy Saver
+- `sticky` Bedding
+- `sticky` Wool
+- `sticky` Jeans
+- `sticky` Sensitive Plus
+
+You turned the dial to `$' ' + last_choice()`.
+
+`->hub`
+
+# temp
+
+- `sticky` 90
+- `sticky` 60
+- `sticky` 50
+- `sticky` 40
+- `sticky` 30
+- `$'*'` `sticky`
+
+You set the temperature to `$' ' + last_choice()`.
+
+`->hub`
+
+# spin
+
+- `sticky` 1000
+- `sticky` 800
+- `sticky` 600
+- `sticky` Swirl
+- `sticky` Box
+
+You set the spin to `$' ' + last_choice()`.
+
+`->hub`
+
+# time
+
+- `sticky` 115
+- `sticky` 55
+
+You set the time to `$' ' + last_choice()`.
+
+`->hub`
+
+# water
+
+You left the machine and came back to find the clothes unwashed and the floor covered with water.
+
+THE END
+
+# unwashed
+
+You came back to find the clothes wet but unwashed, because you had forgotten to add detergent.
+
+THE END
+
+# wait
+
+Time to wait.
+
+THE END">Wash</option>
+        </select>
+        <button class="btn" id="back-btn" onclick="back()" title="Back (⌘B)">
+          Back
+        </button>
+        <button
+          class="btn"
+          id="restart-btn"
+          onclick="restart()"
+          title="Restart (⌘R)"
+        >
+          Restart
+        </button>
+        <button class="btn" id="graph-btn" onclick="graph()" title="Graph (⌘G)">
+          Graph
+        </button>
+        <!-- <button class="btn" onclick="reload()">Reload</button> -->
+        <a
+          href="https://github.com/dariusf/fable/blob/master/docs.md"
+          target="_blank"
+          >Docs</a
+        >
+        <button
+          class="btn"
+          id="open-btn"
+          onclick="openFile()"
+          title="Open (⌘O)"
+        >
+          Open
+        </button>
+        <button class="btn" id="save-btn" onclick="save()" title="Save (⌘S)">
+          Save
+        </button>
+        <button
+          class="btn"
+          id="publish-btn"
+          onclick="publish()"
+          title="Publish"
+        >
+          Publish
+        </button>
+        <button class="btn" id="share-btn" onclick="share()" title="Share">
+          Share
+        </button>
+        <!-- prevent the checkbox and label from wrapping separately -->
+        <!-- <span style="display: inline-block">
+          <input
+            type="checkbox"
+            id="fastreload"
+            style="vertical-align: middle"
+          />
+          <label for="fastreload" style="vertical-align: middle"
+            >Fast reload</label
+          >
+        </span> -->
+      </div>
+      <div id="content"></div>
+      <!-- https://web.dev/articles/sandboxed-iframes#safely_sandboxing_eval -->
+      <iframe
+        sandbox="allow-scripts"
+        src="story.html"
+        style="width: 100%; height: 100%"
+      ></iframe>
+    </div>
+    <!-- <script type="text/javascript" src="page.js"></script> -->
+    <!-- hipjs logs to the console (page) -->
+    <!-- <script type="text/javascript" src="hipjs.bc.js"></script> -->
+    <!-- bundle.js/main.js requires ocaml_ready (hipjs) and enable_buttons (page) to be defined -->
+    <!-- <script type="text/javascript" src="bundle.js"></script> -->
+    <script type="text/javascript" src="editor.js"></script>
+
+    <!-- <script type="text/javascript" src="story.js"></script> -->
+    <!-- <script type="text/javascript" src="interpret.js"></script> -->
+    <script>
+      main();
+    </script>
+  </body>
+</html>
