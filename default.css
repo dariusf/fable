@@ -1,0 +1,205 @@
+:root {
+  /* meant to be overridden */
+  --fable-light-bg: #f7f7f7;
+  --fable-light-bg-lighter: #fafafa;
+  --fable-light-fg: #000000;
+  --fable-dark-bg: #202124;
+  --fable-dark-bg-lighter: #4e5159;
+  --fable-dark-fg: #e8eaed;
+
+  /* meant for use */
+  --main-bg-color: var(--fable-light-bg);
+  --main-bg-color-lighter: var(--fable-light-bg-lighter);
+  --main-fg-color: var(--fable-light-fg);
+  --control-border-color: var(--main-bg-color-lighter);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --main-bg-color: var(--fable-dark-bg);
+    --main-bg-color-lighter: var(--fable-dark-bg-lighter);
+    --main-fg-color: var(--fable-dark-fg);
+    --control-border-color: var(--main-bg-color-lighter);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --control-border-color: color-mix(
+      in srgb,
+      var(--main-bg-color) 75%,
+      var(--main-fg-color) 25%
+    );
+  }
+}
+
+/* prevent body from scrolling */
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  /* https://github.com/system-fonts/modern-font-stacks */
+  /* font-family: Charter, 'Bitstream Charter', 'Sitka Text', Cambria, serif; */
+  font-family: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, serif;
+  background-color: var(--main-bg-color);
+  color: var(--main-fg-color);
+  line-height: 1.4;
+  font-size: calc(15px + 0.390625vw);
+  /* font-size: 2.5vmin; */
+  /* font-size: 3.5vmin; */
+}
+
+#centred-container {
+  display: flex;
+  justify-content: center;
+  height: 100%;
+}
+
+/* this is so we don't rely on the page's scrollbars, which are buggy on ios/itch */
+#scroll-container {
+  max-height: 100%; /* it's the height of the viewport */
+  width: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+#scroll-placeholder {
+  /* give full scrolloff */
+  height: 90vh;
+
+  /* height: 20vh; */
+  /* same as % because parent (scroll-container) is height of viewport */
+  /* height: 20%; */
+}
+
+/* hide the scrollbars of the contain container */
+#scroll-container {
+  overflow-y: scroll;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+}
+
+#scroll-container::-webkit-scrollbar { /* WebKit */
+  width: 0;
+  height: 0;
+}
+
+#content-container {
+  max-width: 640px;
+  margin-inline: auto;
+  padding: clamp(16px, 5vw, 30px);
+  padding-top: 1em;
+}
+
+
+/* for minimum margin */
+/* html {
+  padding: 20pt;
+} */
+
+/* fix relayout on scrollbars appearing */
+/* html {
+  overflow-y: hidden;
+} */
+
+a,
+a:visited {
+  color: var(--main-fg-color);
+}
+
+/* for paragraphs, maybe make more specific later */
+.para {
+  padding-bottom: 1em;
+  text-align: justify;
+  hyphens: auto;
+}
+
+ul.choice {
+  /* margin-top: 0px; */
+  /* margin-bottom: 1em; */
+
+  /* remove bullets */
+  list-style-type: none;
+
+  /* remove default indentation */
+  padding: 0;
+  margin: 0;
+
+  display: flex;
+
+  /* stack items vertically */
+  flex-direction: column;
+
+  /* center horizontally */
+  /* align-items: center; */
+
+  /* space out. em is the current line height */
+  gap: 0.5em;
+
+  /* fade out a little bit, though not as much as old text */
+  opacity: 0.8;
+}
+
+.para.old {
+  animation: fadeout 0.5s ease forwards;
+}
+
+@keyframes fadeout {
+  from { opacity: 1; }
+  to   { opacity: 0.5; }
+}
+
+* {
+  scrollbar-color: var(--main-bg-color-lighter) var(--main-bg-color);
+  scrollbar-width: thin;
+}
+
+select {
+	color: var(--main-fg-color);
+	background-color: var(--main-bg-color);
+	border: solid var(--main-fg-color) 1px;
+	border-radius: 5px;
+	font-family: inherit;
+	font-size: inherit;
+
+  /* remove arrow */
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  -ms-appearance: none;
+  -o-appearance: none;
+  appearance: none;
+}
+
+.disable-justify-hyphenation {
+  text-align: left;
+  hyphens: none;
+}
+
+pre, ul, h1, h2, h3, h4, h5, h6 {
+  margin: 0 0;
+}
+
+pre {
+  white-space: pre-wrap;
+  text-align: revert;
+  hyphens: revert;
+}
+
+pre, code {
+  font-size: 0.9rem;
+}
+
+kbd {
+  padding: 0.08em 0.4em;
+  border-radius: 4px;
+  border: 1px solid var(--control-border-color);
+  background-color: var(--main-bg-color);
+  color: var(--main-fg-color);
+  font-family:
+    -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu,
+    sans-serif;
+  font-size: 0.9em;
+}
