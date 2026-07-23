@@ -122,6 +122,8 @@ window.seen = internal.seen_scenes;
 async function start(story) {
   const scenes = story.scenes;
 
+  reloadFrontmatter(story.frontmatter);
+
   // this occurs before the story is interpreted,
   // and can be used to re-run side effects
   window.beforeGameLoad?.();
@@ -148,6 +150,16 @@ async function start(story) {
     internal.is_replaying = false;
     scrollToLastOld("auto");
   });
+}
+
+function reloadFrontmatter(fm) {
+  // title doesn't need to do anything
+
+  // TODO extra might introduce scripts, css, fonts...
+  // can cache but needs marker to delete from <head>, and needs to be idempotent
+
+  tweet_style_choices = fm.twine_mode === "true";
+  console.log(fm, tweet_style_choices);
 }
 
 // "double buffer", so the work that has to be done before a hot reload is completed before we show anything
