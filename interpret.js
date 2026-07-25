@@ -126,7 +126,7 @@ async function start(story) {
 
   // this occurs before the story is interpreted,
   // and can be used to re-run side effects
-  window.beforeGameLoad?.();
+  await window.beforeGameLoad?.();
 
   if (scenes.length === 0) {
     return;
@@ -1140,7 +1140,10 @@ async function automaticallyMakeChoicesUntil(text) {
           resolve(true);
           return true;
         });
-        document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "1" }));
+        document.body.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "1", bubbles: true }),
+        );
+        // handleChoiceShortcutKey("1");
       },
       // setTimeout(resolve, 1)
     );
