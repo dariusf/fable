@@ -5,7 +5,7 @@
   {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Para",[["Text","“hello — don’t worry, we’ll be open 9–10…”"]]]]}]}
 
   $ compile ../programs/smartypants.md
-  {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Para",[["Text","“hello — don’t worry, we’ll be open 9–10…”"]]]]}]}
+  {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Para",[["Text","\"hello --- don't worry, we'll be open 9--10...\""]]]]}]}
 
   $ compile ../programs/empty-section.md
   {"frontmatter":{},"scenes":[{"name":"a","cmds":[]}]}
@@ -20,13 +20,13 @@
   {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Para",[["Emph",[["Text","text"]]],["Text","from"],["Emph",[["Text","Scene"]]],["Text","1"]]]]}]}
 
   $ compile ../programs/comments.md
-  {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Para",[["Text","inline comments"],["Verbatim","<i>don’t</i>"],["Text","appear"]]]]}]}
+  {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Para",[["Text","inline comments"],["Verbatim","<i>don't</i>"],["Text","appear"]]]]}]}
 
   $ compile ../programs/jump-links.md
   {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Para",[["LinkJump","jump","One"]]]]},{"name":"One","cmds":[["Para",[["Text","asd"]]]]}]}
 
   $ compile ../programs/code-links.md
-  {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Run","function runMe() {\n  console.log('hi');\n  interpret([['Para', [['Text', 'Hi!']]]], content,()=>{});\n}"],["Para",[["LinkCode","code","runMe"]]]]}]}
+  {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Run","function runMe() {\n  console.log('hi');\n  // this API no longer exists\n  // interpret([['Para', [['Text', 'Hi!']]]], content,()=>{});\n}"],["Para",[["LinkCode","code","runMe"]]]]}]}
 
   $ compile ../programs/frontmatter.md
   {"frontmatter":{"a":"asd","c":"lol","extra":"hi there","b":"hi\nthere\n"},"scenes":[{"name":"prelude","cmds":[["Para",[["Text","hello"]]]]}]}
@@ -67,6 +67,12 @@
   $ compile ../programs/choices-copy.md
   {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["MetaBlock","internal.scenes['One']"]]},{"name":"One","cmds":[["Para",[["Text","text from Scene 1"]]]]}]}
 
+  $ compile ../programs/choices-copy-scenes.md
+  {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["MetaBlock","scenes['One']"]]},{"name":"One","cmds":[["Para",[["Text","text from Scene 1"]]]]}]}
+
+  $ compile ../programs/meta-undefined.md
+  {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Para",[["Text","a"],["Meta","undefined"],["Text","b"],["Meta","null"],["Text","c"]]],["MetaBlock","undefined"],["MetaBlock","null"],["Para",[["Text","after"]]]]}]}
+
   $ compile ../programs/tunnels.md
   {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Para",[["Tunnel","a"]]],["Para",[["Text","2"]]]]},{"name":"a","cmds":[["Para",[["Text","1"]]]]}]}
 
@@ -74,7 +80,7 @@
   {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Para",[["Text","before"]]],["Para",[["Tunnel","tunnel_test_a"]]],["Para",[["Text","after"]]]]},{"name":"tunnel_test_a","cmds":[["Para",[["Text","a"]]],["Para",[["Jump","tunnel_test_b"]]]]},{"name":"tunnel_test_b","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]}]]}]}
 
   $ compile ../programs/spaces.md
-  {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":["true"],"otherwise":false,"initial":[["Text","choice text"]],"code":[["Run","1"]],"rest":[["Para",[["Text","code after"]]]],"kind":["Consumable","c0"]}]}],["Para",[["Text","“Hi,"],["Interpolate","'A'"],["Text",",” he said."]]],["Para",[["Text","“"],["Interpolate","'Edge case'"],["Text","“ here"]]],["Para",[["Interpolate","'A'"],["Text","’s thing"]]]]}]}
+  {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":["true"],"otherwise":false,"initial":[["Text","choice text"]],"code":[["Run","1"]],"rest":[["Para",[["Text","code after"]]]],"kind":["Consumable","c0"]}]}],["Para",[["Text","\"Hi,"],["Interpolate","'A'"],["Text",",\" he said."]]],["Para",[["Text","\""],["Interpolate","'Edge case'"],["Text","\" here"]]],["Para",[["Interpolate","'A'"],["Text","'s thing"]]]]}]}
 
   $ compile ../programs/inline-and-block-meta.md
   {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Para",[["Text","interpolation"],["Interpolate","'1'"]]],["Para",[["Text","inline meta"],["Meta","'1'"]]],["MetaBlock","'block meta'"]]}]}
@@ -113,7 +119,7 @@
   error: fallthrough is not compatible with otherwises
 
   $ compile ../programs/api-local-state.md
-  {"frontmatter":{},"scenes":[{"name":"ha","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","ha’s state:"],["Interpolate","local.state"]]],["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","hb"]]]],"kind":["Sticky"]}]}]]},{"name":"hb","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","hb’s state:"],["Interpolate","local.state"]]],["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","ha"]]]],"kind":["Sticky"]}]}]]}]}
+  {"frontmatter":{},"scenes":[{"name":"ha","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","ha's state:"],["Interpolate","local.state"]]],["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","b"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","hb"]]]],"kind":["Sticky"]}]}]]},{"name":"hb","cmds":[["Run","local.state ||= 0;"],["Para",[["Text","hb's state:"],["Interpolate","local.state"]]],["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Run","local.state++"]],"rest":[["Para",[["Jump","ha"]]]],"kind":["Sticky"]}]}]]}]}
 
   $ compile ../programs/api-seen.md
   {"frontmatter":{},"scenes":[{"name":"ha","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","a"]],"code":[["Jump","a"]],"rest":[],"kind":["Consumable","c1"]},{"guard":["seen.a"],"otherwise":false,"initial":[["Text","b"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]}]]},{"name":"a","cmds":[["Para",[["Jump","ha"]]]]}]}
@@ -164,10 +170,10 @@ An empty more is just a run.
   $ compile ../programs/error-empty-more.md
   {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[],"code":[["Run","more"]],"rest":[],"kind":["Consumable","c0"]}]}]]}]}
 
-  $ compile ../programs/dynamic-more.md
+  $ compile ../programs/error-dynamic-more.md
   {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["MetaBlock","'- `more x`'"]]},{"name":"x","cmds":[["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","hello"]],"code":[],"rest":[],"kind":["Consumable","c0"]}]}]]}]}
 
-  $ compile ../programs/dynamic-section.md
+  $ compile ../programs/error-dynamic-section.md
   {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["MetaBlock","`# a\n\nhello`"],["Para",[["Jump","a"]]]]}]}
 
   $ compile ../programs/error-duplicate-section.md

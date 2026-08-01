@@ -1,0 +1,20 @@
+{
+  // Typechecks the machine-path renderer against fable.d.ts (editors pick
+  // this up; CI can run `npx tsc -p jsconfig.json`). interpret.js (the old
+  // path) is deliberately excluded — it dies in stage 6.
+  "compilerOptions": {
+    "checkJs": true,
+    "noEmit": true,
+    // "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "strict": true,
+    // render.js leans on load order (handle is assigned in main() before
+    // any handler can run); null-strictness would demand assertions with
+    // no runtime meaning
+    // "strictNullChecks": false,
+    "target": "es2022",
+    "lib": ["es2022", "dom"]
+  },
+  "files": ["fable.d.ts", "stdlib.js", "render.js"]
+}

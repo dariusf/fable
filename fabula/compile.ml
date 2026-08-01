@@ -7,10 +7,10 @@ let inline_cmd_folder section =
    fun self acc i ->
     match i with
     | Inline.Text (s, _) when not (is_whitespace s) ->
-      Folder.ret (Acc.add (Text (String.trim s)) acc)
+      Folder.ret (Acc.add acc (Text (String.trim s)))
     | Inline.Text _ -> Folder.default
     | Inline.Autolink (_, _) -> failwith "unimplemented Autolink"
-    | Inline.Break (_, _) -> Folder.ret (Acc.add Break acc)
+    | Inline.Break (_, _) -> Folder.ret (Acc.add acc Break)
     | Inline.Code_span (cs, _) ->
       let c = Inline.Code_span.code cs in
       let r =
@@ -31,11 +31,11 @@ let inline_cmd_folder section =
         | _ when String.starts_with ~prefix:">->" c -> Tunnel (strip_prefix 3 c)
         | _ -> Run (String.trim c)
       in
-      Folder.ret (Acc.add r acc)
+      Folder.ret (Acc.add acc r)
     | Inline.Emphasis (e, _) ->
       let inl = Inline.Emphasis.inline e in
       let r = Folder.fold_inline self Acc.empty inl in
-      let acc = acc |> Acc.add (Emph (Acc.to_list r)) in
+      let acc = Acc.add acc (Emph (Acc.to_list r)) in
       Folder.ret acc
     | Inline.Image (_, _) -> failwith "unimplemented Image"
     | Inline.Inlines (_is, _) ->
@@ -69,7 +69,7 @@ let inline_cmd_folder section =
           failwith "reference links not supported"
         (* LinkCode (t, Label.key l) *)
       in
-      Folder.ret (Acc.add r acc)
+      Folder.ret (Acc.add acc r)
     | Inline.Raw_html (ls, _) ->
       let l =
         List.map (fun (a, (b, _)) -> a ^ b) ls
@@ -77,7 +77,7 @@ let inline_cmd_folder section =
       in
       (* Format.printf "(raw html %s)@." l; *)
       if String.starts_with ~prefix:"<!--" l then Folder.default
-      else Folder.ret (Acc.add (Verbatim l) acc)
+      else Folder.ret (Acc.add acc (Verbatim l))
     | Inline.Strong_emphasis (_, _) -> failwith "unimplemented Strong_emphasis"
     | _ -> Folder.default
   in
@@ -108,7 +108,7 @@ let check_no_fallthrough_and_otherwise fallthrough oc =
 let list_item_to_choice_item self section i =
   let bs =
     Folder.fold_block self
-      (Acc.add (section, Acc.empty) Acc.empty)
+      (Acc.single (section, Acc.empty))
       (Block.List_item.block i)
     |> Acc.to_list
   in
@@ -153,15 +153,15 @@ let list_item_to_choice_item self section i =
         | Run "otherwise", _ -> otherwise := true
         | Run "fallthrough", _ -> fallthrough := true
         | Run s, _ when String.starts_with ~prefix:"guard " s ->
-          preconditions := Acc.add (strip_prefix 6 s) !preconditions
+          preconditions := Acc.add !preconditions (strip_prefix 6 s)
         | Run s, _ when String.starts_with ~prefix:"?" s ->
-          preconditions := Acc.add (strip_prefix 1 s) !preconditions
+          preconditions := Acc.add !preconditions (strip_prefix 1 s)
         (* things to stop at *)
         | (Break | Run _ | Jump _ | JumpDynamic _ | Tunnel _), None ->
           code := Some e
         (* the rest *)
-        | _, Some _ -> rest := Acc.add e !rest
-        | _, None -> initial := Acc.add e !initial);
+        | _, Some _ -> rest := Acc.add !rest e
+        | _, None -> initial := Acc.add !initial e);
     if !fallthrough then `Fallthrough
     else
       `Choice
@@ -189,7 +189,7 @@ let block_cmd_folder =
       in
       Folder.ret
         (Acc.change_last
-           (fun (name, cmds) -> (name, Acc.add (Para (Acc.to_list a)) cmds))
+           (fun (name, cmds) -> (name, Acc.add cmds (Para (Acc.to_list a))))
            acc)
     | Block.Code_block (cb, _meta) ->
       (* match Block.Code_block.info_string cb with
@@ -213,7 +213,7 @@ let block_cmd_folder =
           | _ -> Run (String.trim content))
       in
       Folder.ret
-        (Acc.change_last (fun (name, cmds) -> (name, Acc.add thing cmds)) acc)
+        (Acc.change_last (fun (name, cmds) -> (name, Acc.add cmds thing)) acc)
       (* acc *)
       (* in *)
       (* Folder.ret acc *)
@@ -236,14 +236,14 @@ let block_cmd_folder =
         Folder.fold_inline inline_text_folder Acc.empty (Block.Heading.inline h)
         |> Acc.to_list |> String.concat "" |> String.trim
       in
-      Folder.ret (Acc.add (name, Acc.empty) acc)
+      Folder.ret (Acc.add acc (name, Acc.empty))
     | Block.Html_block (b, _) ->
       let l = List.map Block_line.to_string b |> String.concat "\n" in
       let elt = VerbatimBlock (String.trim l) in
       if String.starts_with ~prefix:"<!--" l then Folder.default
       else
         Folder.ret
-          (Acc.change_last (fun (name, cmds) -> (name, Acc.add elt cmds)) acc)
+          (Acc.change_last (fun (name, cmds) -> (name, Acc.add cmds elt)) acc)
     | Block.Link_reference_definition (_, _) ->
       failwith "unimplemented Link_reference_definition"
     | Block.List (l, _) ->
@@ -260,7 +260,7 @@ let block_cmd_folder =
       in
       let choice = Choice { more; items = choices; fallthrough } in
       Folder.ret
-        (Acc.change_last (fun (name, cmds) -> (name, Acc.add choice cmds)) acc)
+        (Acc.change_last (fun (name, cmds) -> (name, Acc.add cmds choice)) acc)
     | Block.Thematic_break (_, _) -> Folder.default
     | _ -> Folder.default (* let the folder thread the fold *)
   in
@@ -336,7 +336,7 @@ let validate_scenes prog =
 let to_scenes doc =
   let doc = Preprocess.run doc in
   (* Format.printf "html: %s@." (Cmarkit_html.of_doc ~safe:true doc); *)
-  let acc = Acc.add ("prelude", Acc.empty) Acc.empty in
+  let acc = Acc.single ("prelude", Acc.empty) in
   let prog = Folder.fold_doc block_cmd_folder acc doc in
   let scenes =
     Acc.to_list prog

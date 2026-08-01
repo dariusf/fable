@@ -90,8 +90,8 @@ let collapse_bidirectional edges =
       (match List.find_opt is_reverse rest with
       | Some (_, _, static2) ->
         let rest = List.filter (fun e -> not (is_reverse e)) rest in
-        aux (Acc.add (min u v, max u v, static && static2, true) acc) rest
-      | None -> aux (Acc.add (u, v, static, false) acc) rest)
+        aux (Acc.add acc (min u v, max u v, static && static2, true)) rest
+      | None -> aux (Acc.add acc (u, v, static, false)) rest)
   in
   aux Acc.empty edges
 

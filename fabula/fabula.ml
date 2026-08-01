@@ -5,16 +5,9 @@ include Ast
 
 exception InputError = Common.InputError
 
-let rec may_have_text s =
-  match s with
-  | Para p | Emph p -> List.exists may_have_text p
-  | Verbatim t | VerbatimBlock t | Text t -> String.length (String.trim t) > 0
-  | Break | LinkCode _ | LinkJump _ | Interpolate _ -> true
-  | Choice c -> (not (List.is_empty c.more)) || not (List.is_empty c.items)
-  | Meta _ | MetaBlock _ ->
-    (* overapproximation *)
-    true
-  | Run _ | Tunnel _ | Jump _ | JumpDynamic _ -> false
+module Machine = Machine
+
+let may_have_text = Ast.may_have_text
 
 (* let rec instantiate bs s =
    match s with

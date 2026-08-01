@@ -29,39 +29,39 @@ module CollapseTags = struct
         | None, [] ->
           (* Format.printf "no element, no block open@."; *)
           (* not an element, no block is open *)
-          Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, [])
+          Folder.ret (Acc.add acc (Acc.single inl), [])
         | Some (true, "br"), [] ->
           (* some tags are exceptions *)
-          Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, curr_tag)
+          Folder.ret (Acc.add acc (Acc.single inl), curr_tag)
         | Some (true, t), [] ->
           (* Format.printf "start new block@."; *)
           (* start a new block *)
-          Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, [t])
+          Folder.ret (Acc.add acc (Acc.single inl), [t])
         | Some (_, t), t1 :: _ when t <> t1 ->
           (* nest *)
           (* Format.printf "nest@."; *)
-          Folder.ret (Acc.change_last (Acc.add inl) acc, curr_tag)
+          Folder.ret (Acc.change_last (fun a -> Acc.add a inl) acc, curr_tag)
         | Some (true, _), _ :: _ ->
           (* nest also *)
           (* Format.printf "nest also@."; *)
-          Folder.ret (Acc.change_last (Acc.add inl) acc, curr_tag)
+          Folder.ret (Acc.change_last (fun a -> Acc.add a inl) acc, curr_tag)
         | None, _ :: _ ->
           (* not an element, add to current block *)
           (* Format.printf "not an element, add to current block@."; *)
-          Folder.ret (Acc.change_last (Acc.add inl) acc, curr_tag)
+          Folder.ret (Acc.change_last (fun a -> Acc.add a inl) acc, curr_tag)
         | Some (false, t), t1 :: rest when t = t1 ->
           (* close current block *)
           (* Format.printf "close current block@."; *)
-          Folder.ret (Acc.change_last (Acc.add inl) acc, rest)
+          Folder.ret (Acc.change_last (fun a -> Acc.add a inl) acc, rest)
         | Some (false, _), _ -> failwith "unmatched closing tag")
       | Inline.Text _ ->
         (match curr_tag with
         | [] ->
           (* Format.printf "text on its own@."; *)
-          Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, curr_tag)
+          Folder.ret (Acc.add acc (Acc.single inl), curr_tag)
         | _ :: _ ->
           (* Format.printf "text existing@."; *)
-          Folder.ret (Acc.change_last (Acc.add inl) acc, curr_tag))
+          Folder.ret (Acc.change_last (fun xs -> Acc.add xs inl) acc, curr_tag))
       (* | Inline.Autolink (_, _) ->
            Format.printf "autolink@.";
            Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, curr_tag)
@@ -91,10 +91,10 @@ module CollapseTags = struct
         (match curr_tag with
         | [] ->
           (* Format.printf "other inline on its own@."; *)
-          Folder.ret (Acc.add (Acc.add inl Acc.empty) acc, curr_tag)
+          Folder.ret (Acc.add acc (Acc.single inl), curr_tag)
         | _ :: _ ->
           (* Format.printf "other inline existing@."; *)
-          Folder.ret (Acc.change_last (Acc.add inl) acc, curr_tag))
+          Folder.ret (Acc.change_last (fun xs -> Acc.add xs inl) acc, curr_tag))
       (* Folder.default *)
     in
 
@@ -123,32 +123,6 @@ module CollapseTags = struct
             Meta.none )
       in
       Mapper.ret (Block.Paragraph (Block.Paragraph.make p, _m))
-    | _ -> Mapper.default
-end
-
-module SmartyPants = struct
-  let smartypants =
-    let em_dash = Str.regexp_string "---" in
-    let en_dash = Str.regexp_string "--" in
-    let ellipsis = Str.regexp_string "..." in
-    let apostrophe = Str.regexp "'\\([st]\\)" in
-    let opening_single = Str.regexp "\\(^\\|[ \t\n(]\\)'" in
-    let closing_single = Str.regexp_string "'" in
-    let opening_double = Str.regexp "\\(^\\|[ \t\n(]\\)\"" in
-    let closing_double = Str.regexp_string "\"" in
-    fun s ->
-      s (* the order matters *)
-      |> Str.global_replace em_dash "—"
-      |> Str.global_replace en_dash "–"
-      |> Str.global_replace ellipsis "…"
-      |> Str.global_replace apostrophe "’\\1"
-      |> Str.global_replace opening_single "\\1‘"
-      |> Str.global_replace closing_single "’"
-      |> Str.global_replace opening_double "\\1“"
-      |> Str.global_replace closing_double "”"
-
-  let inline_mapper _ = function
-    | Inline.Text (s, meta) -> Mapper.ret (Inline.Text (smartypants s, meta))
     | _ -> Mapper.default
 end
 
@@ -247,7 +221,6 @@ end
 
 let run doc =
   doc
-  |> Mapper.map_doc (Mapper.make ~inline:SmartyPants.inline_mapper ())
   |> Mapper.map_doc (Mapper.make ~block:SemicolonBreak.block ())
   (* |> Mapper.map_doc (Mapper.make ~block:DoubleSemicolon.block ()) *)
   |> Mapper.map_doc (Mapper.make ~block:CollapseTags.block ())

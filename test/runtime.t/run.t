@@ -42,7 +42,6 @@
 
   $ run ../programs/code-links.md code
   <div class="para"><a href="#">code</a></div>
-  <div class="para"><span>Hi!</span></div>
 
   $ run ../programs/frontmatter.md
   <div class="para"><span>hello</span></div>
@@ -85,9 +84,7 @@
   </ul>
 
   $ run ../programs/error-non-string-meta.md
-  <div class="para">
-    <span><span>1</span></span>
-  </div>
+  <div class="para"><span>1</span></div>
 
   $ run ../programs/interpolation.md a c
   <div class="para old"><span>Turns:</span><span> </span><span>0</span></div>
@@ -128,6 +125,15 @@
   $ run ../programs/choices-copy.md
   <div class="para"><span>text from Scene 1</span></div>
 
+  $ run ../programs/choices-copy-scenes.md
+  <div class="para"><span>text from Scene 1</span></div>
+
+  $ run ../programs/meta-undefined.md
+  <div class="para">
+    <span>a</span><span> </span><span>b</span><span> </span><span>c</span>
+  </div>
+  <div class="para"><span>after</span></div>
+
   $ run ../programs/tunnels.md
   <div class="para"><span>1</span></div>
   <div class="para"><span>2</span></div>
@@ -146,23 +152,16 @@
   <div class="para">
     <span>“Hi,</span><span> </span><span>A</span><span>,” he said.</span>
   </div>
-  <div class="para">
-    <span>“</span><span> </span><span>Edge case</span><span> </span
-    ><span>“ here</span>
-  </div>
-  <div class="para"><span>A</span><span> </span><span>’s thing</span></div>
+  <div class="para"><span>“</span><span>Edge case</span><span>“ here</span></div>
+  <div class="para"><span>A</span><span>’s thing</span></div>
 
   $ run ../programs/inline-and-block-meta.md
   <div class="para"><span>interpolation</span><span> </span><span>1</span></div>
-  <div class="para">
-    <span>inline meta</span><span> </span><span><span>1</span></span>
-  </div>
+  <div class="para"><span>inline meta</span><span> </span><span>1</span></div>
   <div class="para"><span>block meta</span></div>
 
   $ run ../programs/inline-meta-jump.md
-  <div class="para">
-    <span>hi</span><span> </span><span><span>there</span></span>
-  </div>
+  <div class="para"><span>hi</span><span> </span><span>there</span></div>
   <div class="para"><span>b</span></div>
 
   $ run ../programs/block-meta-jump.md
@@ -183,7 +182,7 @@
 This has to be checked dynamically because jumps may be produced by meta blocks. Currently we only check it dynamically.
 
   $ run ../programs/error-nonexistent-section.md Hello
-  <div class="para error" style="color: red">Jump: scene a not found</div>
+  <div class="para error" style="color: red">Jump: section a not found</div>
 
   $ run ../programs/choices-consumable.md c1
   <ul class="choice fadein">
@@ -254,17 +253,14 @@ This has to be checked dynamically because jumps may be produced by meta blocks.
 
 more cannot reference other sections when used in a meta block, so essentially only static use is supported.
 
-  $ run ../programs/dynamic-more.md
+  $ run ../programs/error-dynamic-more.md
   <div class="para error" style="color: red">
-    MetaBlock: error when executing '- `more x`': Error: parse: nonexistent
-    section x used in more
+    MetaBlock: error when executing '- `more x`': nonexistent section x used in
+    more
   </div>
 
 Sections created in meta blocks do not make it out.
 
-  $ run ../programs/dynamic-section.md
+  $ run ../programs/error-dynamic-section.md
   <div class="para"><span>hello</span></div>
-  <div class="para error" style="color: red">Jump: scene a not found</div>
-  <div class="para error" style="color: red">
-    MetaBlock: error when executing `# a hello`: Error: Jump: scene a not found
-  </div>
+  <div class="para error" style="color: red">Jump: section a not found</div>

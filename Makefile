@@ -3,10 +3,13 @@ export OCAMLRUNPARAM=b
 
 .PHONY: default
 default:
-	@echo 'note: this only runs unit tests; make test to run integration/runtime tests'
-	dune build ./fable.exe
-	dune build @compiler # cram tests
-	dune build @editor # build
+	@echo 'note: this only runs unit tests; make test to run integration tests'
+	dune build ./fable.exe # compile
+	dune test fabula       # expect unit tests
+	dune build @compiler   # cram integration tests
+	dune build @editor     # compile only
+	npx -y -p typescript tsc -p jsconfig.json
+	npx -y -p typescript tsc -p editor/jsconfig.json
 
 .PHONY: example
 example: default
@@ -15,12 +18,11 @@ example: default
 	python -m http.server 8005 --directory  _build/story
 
 .PHONY: test
-test: playwright
-	dune test
-
-.PHONY: playwright
-playwright:
-	npx playwright test
+test: default
+# dune test will run unit, compiler, machine, runtime; we're just more explicit here
+	dune build @machine # machine integration tests; node-only/headless
+	dune build @runtime # integration tests on standalone story.html; playwright
+	npx playwright test # editor tests
 #	npx playwright test -g filter --ui
 #	--headed
 # npx playwright codegen localhost:8005
@@ -28,10 +30,6 @@ playwright:
 .PHONY: release
 release:
 	dune build --release ./fable.exe
-
-.PHONY: random
-random: default
-	test/runtime.t/test.js
 
 .PHONY: watch
 watch: default

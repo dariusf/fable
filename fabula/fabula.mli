@@ -29,6 +29,7 @@ val recursively_add_choices : (string -> cmd list) -> more -> choice_item list
 
 (* * Program graphs *)
 module Graph = Graph
+module Machine = Machine
 
 (* * JSON *)
 val program_to_yojson : program -> Yojson.Safe.t

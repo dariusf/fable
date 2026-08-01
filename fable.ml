@@ -45,7 +45,8 @@ let write_standalone dir (prog : Fabula.Ast.program) =
         Embedded.index
     end;
   write_file (fmt "%s/default.css" dir) Embedded.default_css;
-  write_file (fmt "%s/interpret.js" dir) Embedded.interpret;
+  write_file (fmt "%s/stdlib.js" dir) Embedded.stdlib;
+  write_file (fmt "%s/render.js" dir) Embedded.render;
   write_file (fmt "%s/runtime.js" dir) Embedded.runtime;
   write_file (fmt "%s/graph.dot" dir)
     (Fabula.Graph.(program_graph graphviz_renderer) prog);

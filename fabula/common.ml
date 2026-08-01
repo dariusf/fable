@@ -3,7 +3,8 @@ module Acc : sig
   type 'a t
 
   val empty : 'a t
-  val add : 'a -> 'a t -> 'a t
+  val single : 'a -> 'a t
+  val add : 'a t -> 'a -> 'a t
   val plus : 'a t -> 'a t -> 'a t
   val add_all : 'a list -> 'a t -> 'a t
   val to_list : 'a t -> 'a list
@@ -13,7 +14,8 @@ end = struct
   type 'a t = 'a list
 
   let empty = []
-  let add = List.cons
+  let add xs x = List.cons x xs
+  let single x = add empty x
   let add_all xs t = List.fold_left (Fun.flip List.cons) t xs
   let plus = ( @ )
   let to_list = List.rev
@@ -43,6 +45,10 @@ let show_inline i =
 let show_block b =
   Format.printf "%s@." (Cmarkit_html.of_doc ~safe:true (Cmarkit.Doc.make b))
 
+module IMap = struct
+  include Map.Make (Int)
+end
+
 module SMap = struct
   include Map.Make (String)
 
@@ -56,6 +62,13 @@ end
 
 let strip_prefix n s = String.trim (String.sub s n (String.length s - n))
 let is_whitespace s = String.equal (String.trim s) ""
+
+let contains_substring ~sub s =
+  try
+    ignore (Str.search_forward (Str.regexp_string sub) s 0);
+    true
+  with Not_found -> false
+
 let if_any_exn_then ex f = try f () with _ -> raise ex
 let ( let@ ) f x = f x
 
@@ -70,13 +83,17 @@ exception InputError of string
 
 let fail fmt = Format.kasprintf (fun a -> raise (InputError a)) fmt
 
+let describe_exn = function
+  | InputError s -> s
+  | e -> Printexc.to_string e
+
 let inline_text_folder =
   let open Cmarkit in
   Folder.make
     ~inline:(fun self acc i ->
       match i with
       | Inline.Text (s, _) when not (is_whitespace s) ->
-        Folder.ret (Acc.add (String.trim s) acc)
+        Folder.ret (Acc.add acc (String.trim s))
       | Inline.Text _ -> Folder.default
       | Inline.Autolink (_, _) -> failwith "unimplemented Autolink"
       | Inline.Break (_, _) -> failwith "unimplemented Break"
@@ -92,7 +109,7 @@ let inline_text_folder =
           s |> List.map snd |> List.map fst |> String.concat "" |> String.trim
         in
         (* Format.printf "ninline text folder. raw html |%s|@." s; *)
-        Folder.ret (Acc.add s acc)
+        Folder.ret (Acc.add acc s)
         (* failwith "unimplemented Raw_html" *)
       | Inline.Strong_emphasis (_, _) ->
         failwith "unimplemented Strong_emphasis"

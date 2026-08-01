@@ -11,7 +11,6 @@ run() {
   shift
   out=$(mktemp -d)
   fable -s $md -o $out/test
-  npm link playwright > /dev/null
   node test.js $out/test/index.html "$@" | prettier --parser html
 }
 

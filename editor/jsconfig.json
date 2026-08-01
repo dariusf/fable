@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "checkJs": true,
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "strict": true,
+    "target": "es2022",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "types": ["wicg-file-system-access"],
+    "typeRoots": ["../node_modules/@types"]
+  },
+  "files": ["../fable.d.ts", "globals.d.ts", "editor.js"]
+}

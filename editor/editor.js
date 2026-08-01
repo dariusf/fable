@@ -1,11 +1,90 @@
+/// <reference path="../fable.d.ts" />
+
+/** @type {AceEditor} */
 let editor;
-const iframe = document.querySelector("iframe");
-let choice_history = [];
+const iframe = /** @type {HTMLIFrameElement} */ (
+  document.querySelector("iframe")
+);
+
+// the last status we received from the story.
+// only tracks history length, so we don't send backs that fail
+let lastStatus = { historyLength: 0 };
+
+// one-shot flag that controls whether we send a load or an edit event
+let freshLoad = false;
+
+// protocol
+const storyFrame = {
+  /** @param {EditorMsg} msg */
+  post(msg) {
+    if (iframe.contentWindow) {
+      iframe.contentWindow.postMessage(msg, "*");
+    }
+  },
+  /** @param {string} md */
+  load(md) {
+    this.post({ type: "LOAD", md });
+  },
+  /** @param {string} md */
+  edit(md) {
+    this.post({ type: "EDIT", md });
+  },
+  back() {
+    this.post({ type: "BACK" });
+  },
+  /** @param {number} n */
+  choose(n) {
+    this.post({ type: "CHOOSE", index: n });
+  },
+  /** @type {(() => void)[]} */
+  readyCallbacks: [],
+  /** @type {((s: StatusMsg) => void)[]} */
+  statusCallbacks: [],
+  /** @param {() => void} cb */
+  onReady(cb) {
+    this.readyCallbacks.push(cb);
+  },
+  /** @param {(s: StatusMsg) => void} cb */
+  onStatus(cb) {
+    this.statusCallbacks.push(cb);
+  },
+};
+
+window.addEventListener("message", (e) => {
+  const data = /** @type {StoryMsg} */ (e.data);
+  if (data.type === "READY") {
+    storyFrame.readyCallbacks.forEach((cb) => cb());
+  } else if (data.type === "STATUS") {
+    storyFrame.statusCallbacks.forEach((cb) => cb(data));
+  } else {
+    console.warn(`unknown message ${/** @type {any} */ (data).type}`);
+  }
+});
+
+/** @typedef {Extract<StoryMsg, {type: "STATUS"}>} StatusMsg */
+
+const compiler = {
+  /** @param {string} md */
+  graph(md) {
+    return Fable.graph(md);
+  },
+  /** @param {string} md */
+  storyData(md) {
+    const json = Fable.parse(md);
+    return {
+      json,
+      styleOverride: Fable.produceStyleOverride(json.frontmatter),
+    };
+  },
+};
 
 const Completion = (function () {
+  /** @type {AceCompletion[]} */
   let headingCache = [];
 
+  /** @param {AceEditSession} session */
   function collectHeadings(session) {
+    /** @type {AceCompletion[]} */
     const headings = [];
     const seen = new Set();
 
@@ -32,6 +111,7 @@ const Completion = (function () {
     headingCache = collectHeadings(editor.session);
   }, 100);
 
+  /** @param {string} text @param {RegExp} boundaryRegex */
   function findBoundaryStart(text, boundaryRegex) {
     for (let i = text.length - 1; i >= 0; i--) {
       if (boundaryRegex.test(text[i])) {
@@ -42,6 +122,7 @@ const Completion = (function () {
     return 0;
   }
 
+  /** @param {string} text @param {RegExp} boundaryRegex */
   function findBoundaryEnd(text, boundaryRegex) {
     for (let i = 0; i < text.length; i++) {
       if (boundaryRegex.test(text[i])) {
@@ -52,6 +133,10 @@ const Completion = (function () {
     return text.length;
   }
 
+  /**
+   * @param {AceEditSession} session
+   * @param {AcePoint} pos
+   * @param {RegExp} [boundaryRegex] */
   function getCursorBoundedText(session, pos, boundaryRegex = /[\s()[\]]/) {
     const line = session.getLine(pos.row);
     const beforeCursor = line.slice(0, pos.column);
@@ -71,18 +156,19 @@ const Completion = (function () {
     };
   }
 
-  function isHeadingAnchorContext(session, pos, prefix) {
-    const { chunkBeforeCursor, chunkAfterCursor } = getCursorBoundedText(
-      session,
-      pos,
-    );
+  /**
+   * @param {AceEditSession} session
+   * @param {AcePoint} pos */
+  function isHeadingAnchorContext(session, pos) {
+    const { chunkBeforeCursor } = getCursorBoundedText(session, pos);
 
     return chunkBeforeCursor.startsWith("`->"); //&& chunkAfterCursor === "`";
   }
 
+  /** @type {AceCompleter} */
   const headingCompleter = {
-    getCompletions(editor, session, pos, prefix, callback) {
-      if (!isHeadingAnchorContext(session, pos, prefix)) {
+    getCompletions(_editor, session, pos, _prefix, callback) {
+      if (!isHeadingAnchorContext(session, pos)) {
         callback(null, []);
         return;
       }
@@ -91,13 +177,14 @@ const Completion = (function () {
     },
   };
 
+  /** @param {AceEditor} editor */
   function setupTriggerOnIntentToJump(editor) {
-    editor.commands.on("afterExec", (e) => {
+    editor.commands.on("afterExec", (/** @type {any} */ e) => {
       if (e.command.name !== "insertstring" || e.args !== ">") {
         return;
       }
       const pos = editor.getCursorPosition();
-      if (isHeadingAnchorContext(editor.session, pos, "")) {
+      if (isHeadingAnchorContext(editor.session, pos)) {
         editor.execCommand("startAutocomplete");
       }
     });
@@ -111,9 +198,11 @@ const Completion = (function () {
 })();
 
 // https://www.joshwcomeau.com/snippets/javascript/debounce/
+/** @param {(...args: any[]) => void} callback @param {number} wait */
 function debounce(callback, wait) {
-  let timeoutId = null;
-  return (...args) => {
+  /** @type {number | undefined} */
+  let timeoutId;
+  return (/** @type {any[]} */ ...args) => {
     window.clearTimeout(timeoutId);
     timeoutId = window.setTimeout(() => {
       callback(...args);
@@ -135,7 +224,8 @@ function updateTheme() {
     editor.setTheme("ace/theme/chrome");
   }
   editor.renderer.once("themeLoaded", () => {
-    document.getElementById("editor").style.visibility = "visible";
+    const div = /** @type {HTMLElement} */ (document.getElementById("editor"));
+    div.style.visibility = "visible";
   });
 }
 
@@ -160,7 +250,7 @@ function setupEditor() {
   editor.setHighlightActiveLine(false);
   editor.setOption("displayIndentGuides", false);
   editor.setOption("cursorStyle", "wide"); // disable blinking
-  editor.commands.bindKey("Cmd-L", null);
+  editor.commands.bindKey("Cmd-L", /** @type {any} */ (null));
   editor.session.setUseWorker(false);
   editor.session.setUseWrapMode(true);
   editor.setOptions({
@@ -179,7 +269,7 @@ function setupEditor() {
   editor.completers = [Completion.headingCompleter];
   Completion.setupTriggerOnIntentToJump(editor);
 
-  editor.setFontSize("14px");
+  editor.setFontSize(14);
   registerHotkeys();
   editor.on("change", onEdit);
 
@@ -232,12 +322,7 @@ function registerHotkeys() {
         event.preventDefault();
         event.stopPropagation();
         const digitKey = event.code.replace("Digit", "");
-        if (iframe.contentWindow) {
-          iframe.contentWindow.postMessage(
-            { type: "CHOICE_SHORTCUT", key: digitKey },
-            "*",
-          );
-        }
+        storyFrame.choose(parseInt(digitKey));
       }
     },
     true, // run first, during capture (top-down) phase
@@ -245,19 +330,20 @@ function registerHotkeys() {
 }
 
 function setupDragAndDrop() {
-  const editorDiv = document.getElementById("editor");
+  const editorDiv = /** @type {HTMLElement} */ (
+    document.getElementById("editor")
+  );
   editorDiv.addEventListener("dragover", (e) => {
     e.preventDefault();
   });
   editorDiv.addEventListener("drop", async (e) => {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
+    const file = e.dataTransfer?.files[0];
     if (!file) return;
 
     if (file.name.endsWith(".md")) {
       const text = await file.text();
-      choice_history = [];
-      editorSet(text);
+      editorSetFresh(text);
     } else if (file.name.endsWith(".html")) {
       alert(
         "This is a published story file. Open the original .md file to edit.",
@@ -266,9 +352,16 @@ function setupDragAndDrop() {
   });
 }
 
+/** @param {string} s */
 function editorSet(s) {
   // inp.value = s;
   editor.setValue(s, -1);
+}
+
+/** @param {string} s */
+function editorSetFresh(s) {
+  freshLoad = true;
+  editorSet(s);
 }
 
 function editorGet() {
@@ -284,21 +377,15 @@ function vim() {
   editor.setKeyboardHandler("ace/keyboard/vim");
 }
 
-function refreshEditor() {
-  // if (true || usingFastReload()) {
-  iframe.contentWindow.postMessage({ type: "RESET", md: editorGet() }, "*");
-  // } else {
-  // fullReload();
-  // }
-}
-
 function fullReload() {
   iframe.src += ""; // reload
 }
 
 let onEdit = debounce(() => {
   const currentText = editorGet();
-  const examplesSelect = document.querySelector("#examples");
+  const examplesSelect = /** @type {HTMLSelectElement} */ (
+    document.querySelector("#examples")
+  );
   const selectedOption = examplesSelect.options[examplesSelect.selectedIndex];
 
   if (
@@ -306,52 +393,18 @@ let onEdit = debounce(() => {
     selectedOption.dataset.text?.trim() !== currentText.trim()
   ) {
     examplesSelect.value = "custom";
-    setDirty(true);
+    isDirty = true;
   }
 
-  // refreshEditor();
-  triggerEdited();
+  if (freshLoad) {
+    freshLoad = false;
+    storyFrame.load(currentText);
+  } else {
+    storyFrame.edit(currentText);
+  }
 }, 250);
 
-let pendingGraphWindow = null;
-
-window.addEventListener("message", (e) => {
-  if (e.data.type === "PAGE_LOADED") {
-    onPageLoad();
-  } else if (e.data.type === "CHOICE_MADE") {
-    choice_history.push(e.data.choice);
-  } else if (e.data.type === "DIVERGED") {
-    let at = e.data.which;
-    let idx = choice_history.indexOf(at);
-    if (idx === -1) {
-      // what's going on
-      console.error("story reported divergence at", at, idx, choice_history);
-      choice_history = [];
-    } else {
-      choice_history = choice_history.slice(0, idx);
-    }
-    onPageLoad();
-  } else if (e.data.type === "GRAPH_RESPONSE") {
-    if (pendingGraphWindow) {
-      populateGraphWindow(pendingGraphWindow, e.data.source);
-      pendingGraphWindow = null;
-    }
-  } else if (e.data.type === "GRAPH_ERROR") {
-    if (pendingGraphWindow) {
-      pendingGraphWindow.close();
-      pendingGraphWindow = null;
-    }
-    alert("Error generating graph: " + e.data.error);
-  } else if (e.data.type === "STORY_DATA_RESPONSE") {
-    if (pendingPublishResolve) {
-      pendingPublishResolve(e.data);
-      pendingPublishResolve = null;
-    }
-  } else {
-    throw `unknown message ${e.data.type}`;
-  }
-});
-
+/** @param {Window} win @param {string} mermaidSource */
 function populateGraphWindow(win, mermaidSource) {
   const isDarkMode =
     window.matchMedia &&
@@ -415,82 +468,82 @@ function populateGraphWindow(win, mermaidSource) {
 }
 
 function graph() {
-  pendingGraphWindow = window.open();
-  pendingGraphWindow.document.write("Loading graph...");
-  iframe.contentWindow.postMessage({ type: "GET_GRAPH", md: editorGet() }, "*");
-}
-
-function triggerEdited() {
+  let source;
   try {
-    iframe.contentWindow.postMessage(
-      { type: "EDITED", md: editorGet(), history: choice_history },
-      "*",
-    );
-  } catch (e) {}
+    source = compiler.graph(editorGet());
+  } catch (err) {
+    alert("Error generating graph: " + String(err));
+    return;
+  }
+  const win = window.open();
+  if (!win) {
+    alert("Unable to open a popup to view the graph");
+    return;
+  }
+  populateGraphWindow(win, source);
 }
 
+// makes onReady idempotent
 let isInitialized = false;
-// this is called multiple times, so this state prevents repeated initialization
-function onPageLoad() {
+function onReady() {
   if (!isInitialized) {
     isInitialized = true;
     const queryParams = new URLSearchParams(window.location.search);
-    if (queryParams.get("story") !== null) {
-      editorSet(base64ToString(queryParams.get("story")));
+    const story = queryParams.get("story");
+    if (story !== null) {
+      editorSetFresh(base64ToString(story));
     } else {
-      editorSet(current_example_text());
+      editorSetFresh(current_example_text());
     }
-    // The editorSet above triggers onEdit, which will call triggerEdited
-    // after its 250ms debounce. We don't call it here to avoid a double-send.
+    // The editorSet above triggers onEdit, which will send after its
+    // 250ms debounce. We don't send here to avoid a double-send.
     return;
   }
-  triggerEdited();
+  storyFrame.load(editorGet());
 }
 
-const examples = document.querySelector("#examples");
+const examples = /** @type {HTMLSelectElement} */ (
+  document.querySelector("#examples")
+);
 function current_example_name() {
-  return examples[examples.selectedIndex].value;
+  return examples.options[examples.selectedIndex].value;
 }
 function current_example_text() {
-  return examples[examples.selectedIndex].dataset.text.trim();
+  const text = /** @type {string} */ (
+    examples.options[examples.selectedIndex].dataset.text
+  );
+  return text.trim();
 }
 
 function load_selected_example() {
-  choice_history = [];
   fileHandle = null;
-  setDirty(false);
-  editorSet(current_example_text());
+  isDirty = false;
+  editorSetFresh(current_example_text());
 }
 
 function back() {
-  if (choice_history.length > 0) {
-    choice_history.pop();
-    triggerEdited();
+  if (lastStatus.historyLength > 0) {
+    storyFrame.back();
   }
 }
 
 function restart() {
-  choice_history = [];
-  refreshEditor();
+  storyFrame.load(editorGet());
 }
 
 function reload() {
-  choice_history = [];
   fullReload();
 }
 
+// whether or not to block leaving in case there are unsaved changes
 let isDirty = false;
-
-function setDirty(dirty) {
-  isDirty = dirty;
-}
-
 window.onbeforeunload = function () {
   if (isDirty) {
     return "You have unsaved changes. Are you sure you want to leave?";
   }
 };
 
+/** @type {FileSystemFileHandle | null} */
 let fileHandle = null;
 
 async function openFile() {
@@ -507,9 +560,8 @@ async function openFile() {
       fileHandle = handle;
       const file = await handle.getFile();
       const text = await file.text();
-      choice_history = [];
-      setDirty(true);
-      editorSet(text);
+      isDirty = true;
+      editorSetFresh(text);
     } catch (e) {
       console.error(e);
     }
@@ -518,18 +570,18 @@ async function openFile() {
     input.type = "file";
     input.accept = ".md";
     input.onchange = async (e) => {
-      const file = e.target.files[0];
+      const file = /** @type {HTMLInputElement} */ (e.target).files?.[0];
       if (file) {
         const text = await file.text();
-        choice_history = [];
-        setDirty(true);
-        editorSet(text);
+        isDirty = true;
+        editorSetFresh(text);
       }
     };
     input.click();
   }
 }
 
+/** @param {string} markdown */
 async function saveFileNative(markdown) {
   try {
     if (!fileHandle) {
@@ -546,12 +598,13 @@ async function saveFileNative(markdown) {
     const writable = await fileHandle.createWritable();
     await writable.write(markdown);
     await writable.close();
-    setDirty(false);
+    isDirty = false;
   } catch (e) {
     console.error(e);
   }
 }
 
+/** @param {Blob} blob @param {string} filename */
 function downloadBlob(blob, filename) {
   const link = document.createElement("a");
   link.style.display = "none";
@@ -561,14 +614,15 @@ function downloadBlob(blob, filename) {
   link.click();
   setTimeout(() => {
     URL.revokeObjectURL(link.href);
-    link.parentNode.removeChild(link);
+    link.remove();
   }, 0);
 }
 
+/** @param {string} markdown */
 function saveFileFallback(markdown) {
   const file = new File([markdown], "story.md", { type: "text/markdown" });
   downloadBlob(file, file.name);
-  setDirty(false);
+  isDirty = false;
 }
 
 async function save() {
@@ -583,23 +637,20 @@ async function save() {
 // Prefetch assets for standalone HTML assembly
 const assetPromises = {
   runtime: fetch("fablejs.bc.js").then((r) => r.text()),
-  interpret: fetch("interpret.js").then((r) => r.text()),
+  stdlib: fetch("stdlib.js").then((r) => r.text()),
+  render: fetch("render.js").then((r) => r.text()),
   css: fetch("default.css").then((r) => r.text()),
 };
 
-let pendingPublishResolve = null;
-
 async function publish() {
-  const [runtime, interpret, css] = await Promise.all([
+  const [runtime, stdlib, render, css] = await Promise.all([
     assetPromises.runtime,
-    assetPromises.interpret,
+    assetPromises.stdlib,
+    assetPromises.render,
     assetPromises.css,
   ]);
 
-  const { json: storyJson, styleOverride } = await new Promise((resolve) => {
-    pendingPublishResolve = resolve;
-    iframe.contentWindow.postMessage({ type: "GET_STORY_DATA" }, "*");
-  });
+  const { json: storyJson, styleOverride } = compiler.storyData(editorGet());
 
   const storyJs = "var story = " + JSON.stringify(storyJson) + ";";
   const title = storyJson.frontmatter.title ?? "Untitled Fable Story";
@@ -626,7 +677,8 @@ async function publish() {
     </div>
     <script>${runtime}</script>
     <script>${storyJs}</script>
-    <script>${interpret}</script>
+    <script>${stdlib}</script>
+    <script>${render}</script>
     <script>main();</script>
   </body>
 </html>`;
@@ -636,8 +688,10 @@ async function publish() {
 }
 
 function share() {
-  const url = new URL(window.location);
-  url.search = new URLSearchParams({ story: stringToBase64(editorGet()) });
+  const url = new URL(window.location.href);
+  url.search = new URLSearchParams({
+    story: stringToBase64(editorGet()),
+  }).toString();
   // this navigates away
   // window.location = url.toString();
   history.pushState({}, "Shared Code URL", url.toString());
@@ -654,27 +708,37 @@ function getThemeCSS() {
     })
     .filter(
       (rule) =>
-        rule.selectorText === ":root" ||
-        (rule.media && rule.media.mediaText.includes("prefers-color-scheme")),
+        (rule instanceof CSSStyleRule && rule.selectorText === ":root") ||
+        (rule instanceof CSSMediaRule &&
+          rule.media.mediaText.includes("prefers-color-scheme")),
     )
     .map((rule) => rule.cssText)
     .join("\n");
 }
 
 function main() {
-  // the editor is created immediately, but other things are deferred to when the iframe finishes loading, in onPageLoad
+  // the editor is created immediately, but other things are deferred to when the iframe finishes loading, in onReady
   setupEditor();
   setupDragAndDrop();
+  storyFrame.onReady(onReady);
+  storyFrame.onStatus((s) => {
+    lastStatus = s;
+    if (s.divergedAt != null) {
+      console.error("story diverged at", s.divergedAt);
+    }
+  });
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa
+/** @param {string} base64 */
 function base64ToString(base64) {
   const binString = atob(base64);
   return new TextDecoder().decode(
-    Uint8Array.from(binString, (m) => m.codePointAt(0)),
+    Uint8Array.from(binString, (m) => m.codePointAt(0) ?? 0),
   );
 }
 
+/** @param {string} str */
 function stringToBase64(str) {
   const binString = Array.from(new TextEncoder().encode(str), (byte) =>
     String.fromCodePoint(byte),

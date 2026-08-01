@@ -89,6 +89,21 @@ The block form of this uses the `meta` or `~` info-string after the language typ
     CODE
     ```
 
+<details>
+<summary>What fragment of Fable is allowed in interpolations?</summary>
+
+Meta-Fable is restricted in a number of ways:
+
+- New sections will not persist. They also cannot be jumped to. Only the prelude is useful, essentially.
+- `more` cannot refer to sections outside the interpolation.
+- Inline interpolations only use the first paragraph. They can't produce choices or other blocks.
+- Frontmatter is not parsed. `---` is a hr or a heading/section, depending on where it appears.
+
+Some of these restrictions are arbitrary and only for ease of implementation.
+They may be relaxed in future if the need arises.
+
+</details>
+
 See [the docs on the runtime](#runtime) for more on its API.
 
 ### Jumps and Tunnels
@@ -167,6 +182,8 @@ A `[TEXT](#SECTION)` link jumps to SECTION.
 
 A `[TEXT](!FN)` link causes the function FN to be executed.
 
+Links currently are not part of history, and so are not replayed.
+
 ### Semantics
 
 A Fable story can be given a (denotational) semantics as a procedural program.
@@ -190,7 +207,7 @@ Necessary data structures, libraries, and language features can be used without 
 
 ## Runtime
 
-The [runtime system](interpret.js) supports the execution of Fable stories.
+The [runtime system](render.js) supports the execution of Fable stories.
 Direct console access to its APIs is supported.
 
 - `seen[SECTION]`: the number of times SECTION has been seen; can be used in a truthy manner
@@ -450,44 +467,29 @@ It simulates[^1] hot reloading on edit by _restarting_ and replaying choices mad
 
 ```mermaid
 sequenceDiagram
+    participant S as Story (render.js)
     participant E as Editor (editor.js)
-    participant S as Story (interpret.js)
 
     Note over E, S: Init
-    S->>E: { type: "PAGE_LOADED" }
-    Note right of E: Occurs on window.onload
+    S->>E: { type: "READY" }
+    Note right of S: window.onload
 
-    Note over E, S: Editing
-    E->>S: { type: "EDITED", md, history }
-    Note right of S: Re-parses MD and replays choice history
+    Note over E, S: Commands
+    E->>S: { type: "LOAD", md }
+    Note right of S: Parse, fresh machine, render
 
-    E->>S: { type: "RESET", md }
-    Note right of S: Full reset of story state
+    E->>S: { type: "EDIT", md }
+    Note right of S: Parse, hot reload
 
-    Note over E, S: Choices
-    E->>S: { type: "CHOICE_SHORTCUT", key }
-    Note right of S: Delegates to the existing number-key choice handler
+    E->>S: { type: "BACK" }
+    Note right of S: Back one choice
 
-    S->>E: { type: "CHOICE_MADE", choice }
-    Note right of E: Appends choice to local history
+    E->>S: { type: "CHOOSE", index }
+    Note right of S: Pick the nth offered choice
 
-    S->>E: { type: "DIVERGED", which }
-    Note right of E: Truncates history to match story state
-
-    Note over E, S: Editor Features
-
-        Note right of E: Graph Generation
-        E->>S: { type: "GET_GRAPH", md }
-        alt Success
-            S->>E: { type: "GRAPH_RESPONSE", source }
-        else Failure
-            S->>E: { type: "GRAPH_ERROR", error }
-        end
-
-
-        Note right of E: Publishing/Saving
-        E->>S: { type: "GET_STORY_DATA" }
-        S->>E: { type: "STORY_DATA_RESPONSE", json }
+    Note over E, S: Status
+    S->>E: { type: "STATUS", historyLength, divergedAt? }
+    Note right of S: After every state change
 ```
 
 </details>
