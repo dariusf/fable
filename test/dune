@@ -3,4 +3,4 @@
 (cram
  (deps
   (glob_files programs/*.md)
-  (glob_files testing.sh) %{bin:fable} ../fablejs.bc.js ../stdlib.js))
+  (glob_files testing.sh) %{bin:fable} ../fablejs.bc.js ../runtime.js))

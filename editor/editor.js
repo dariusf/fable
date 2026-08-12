@@ -636,17 +636,17 @@ async function save() {
 
 // Prefetch assets for standalone HTML assembly
 const assetPromises = {
-  runtime: fetch("fablejs.bc.js").then((r) => r.text()),
-  stdlib: fetch("stdlib.js").then((r) => r.text()),
-  render: fetch("render.js").then((r) => r.text()),
+  fablejs: fetch("fablejs.bc.js").then((r) => r.text()),
+  runtime: fetch("runtime.js").then((r) => r.text()),
+  main_browser: fetch("main_browser.js").then((r) => r.text()),
   css: fetch("default.css").then((r) => r.text()),
 };
 
 async function publish() {
-  const [runtime, stdlib, render, css] = await Promise.all([
+  const [fablejs, runtime, main_browser, css] = await Promise.all([
+    assetPromises.fablejs,
     assetPromises.runtime,
-    assetPromises.stdlib,
-    assetPromises.render,
+    assetPromises.main_browser,
     assetPromises.css,
   ]);
 
@@ -675,10 +675,10 @@ async function publish() {
         <div id="scroll-placeholder"></div>
       </div>
     </div>
-    <script>${runtime}</script>
+    <script>${fablejs}</script>
     <script>${storyJs}</script>
-    <script>${stdlib}</script>
-    <script>${render}</script>
+    <script>${runtime}</script>
+    <script>${main_browser}</script>
     <script>main();</script>
   </body>
 </html>`;

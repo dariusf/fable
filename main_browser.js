@@ -1,6 +1,4 @@
-/// <reference path="./fable.d.ts" />
-
-// A DOM renderer over the machine's event stream, plus glue needed to play a story.
+// A DOM renderer for the machine's events, plus the browser implementation of the runtime's capabilities.
 
 // CONFIG
 
@@ -61,6 +59,11 @@ function resetRenderer() {
   renderer.blocks = [];
   renderer.firstNotOld = 0;
   renderer.choiceLists.clear();
+}
+
+function clearContent() {
+  content.textContent = "";
+  resetRenderer();
 }
 
 /**
@@ -228,208 +231,45 @@ function scrollToLastOld(behavior = "smooth") {
   }
 }
 
-/** Response to a user interaction (choose/activate)
- * @param {Result} res */
-function interacted(res) {
-  saveGameOnInteract();
-  postStatus();
-  interpretEvents(res.events);
-}
-
-/**
- * clear the DOM and re-render a sequence of events
- * @param {Result} res
- * @returns {string | undefined} */
-function rerender(res) {
-  if (res.diverged) {
-    console.log("diverged at", res.divergedAt);
-  }
-  content.textContent = "";
-  resetRenderer();
-  interpretEvents(res.events, "instant");
-  return res.divergedAt;
-}
-
-// rewind: truncate-history + headless replay + one rebuild
-function handleBack() {
-  resetLocalSectionState();
-  return rerender(machine().rewind(1));
-}
-
-// HOST
-
-/** @type {FableMachine | null} */
-let handle_ = null;
-
-/** @returns {FableMachine} */
-function machine() {
-  if (handle_ == null) {
-    throw new Error("machine used before main()");
-  }
-  return handle_;
-}
-
-// host-owned state, opaque to the machine
-/** @type {Record<string, Record<string, unknown>>} */
-const local_section_state = {};
-
-function resetLocalSectionState() {
-  for (const k of Object.keys(local_section_state)) {
-    delete local_section_state[k];
-  }
-}
-
-/**
- * State backing story API
- * @type {Record<string, unknown[]>} */
-const scenes = {};
-
-/** @param {Story} s */
-function initStoryState(s) {
-  tweet_style_choices = s.frontmatter.twine_mode === "true";
-  for (const k of Object.keys(scenes)) {
-    delete scenes[k];
-  }
-  for (const scene of s.scenes) {
-    scenes[scene.name] = scene.cmds;
-  }
-  resetLocalSectionState();
-}
-
-// fresh machine over a story, resuming a save if one applies
-/** @param {Story} s @returns {string | undefined} */
-function loadStory(s) {
-  initStoryState(s);
-  content.textContent = "";
-  resetRenderer();
-
-  const save = loadSave();
-  const seed =
-    save.seed ?? (isDeterministic() ? 1 : Math.floor(Math.random() * 2 ** 31));
-  handle_ = Machine.create(s, { eval: evalCapability, seed });
-
-  if (save.choices.length > 0) {
-    // headless replay, then one render of the buffered log
-    const res = machine().loadSaved(save.choices);
-    if (res.diverged) {
-      // it's possible to diverge on load if a new version of the game was released
-      console.log("diverged at", res.divergedAt);
-    }
-    interpretEvents(res.events, "instant");
-    return res.divergedAt;
-  } else {
-    interpretEvents(machine().start().events, "instant");
-    return undefined;
-  }
-}
-
-/**
- * called on hot reload with a new story
- * @param {Story} s
- * @returns {string | undefined} */
-function applyEdit(s) {
-  initStoryState(s);
-  return rerender(machine().hotReload(s));
-}
-
-function main() {
-  loadStory(story);
-}
-
-/** * @param {string} code */
-function evalCapability(code) {
-  const scene = machine().currentScene();
-  if (scene != null) {
-    local_section_state[scene] ||= {};
-    /** @type {any} */ (window).local = local_section_state[scene];
-  }
-  // indirect (global-scope) eval
-  return eval?.(code);
-}
-
-// compatibility shims for story code that reaches into `internal`
-// TODO remove this after all stories are ported
-const internal = {
-  scenes,
-  section_state: local_section_state,
-  get turns() {
-    return machine().turns();
-  },
-  get current_scene() {
-    return machine().currentScene();
-  },
-  get choice_history() {
-    return machine().history();
-  },
-};
-
-// user API shims (machine-owned state, read through the handle).
-// Randomness is handle-owned; the handle reseeds its own RNG before any
-// replay/rewind, so draws re-roll identically. Math.random in story
-// code would not.
-const random = () => machine().random();
-/** @type {(l: number, h: number) => number} */
-const randomIncl = (l, h) => machine().randomIncl(l, h);
-/** @type {(l: number, h: number) => number} */
-const randomExcl = (l, h) => machine().randomExcl(l, h);
-const coin = () => machine().coin();
-
-/** @param {string} scene */
-function turns_since(scene) {
-  return machine().turnsSince(scene);
-}
-/** @type {Record<string, number>} */
-const seen = new Proxy(
-  {},
-  {
-    get: (_target, scene) => machine().seen(String(scene)),
-  },
-);
-function last_choice() {
-  const h = machine().history();
-  return h[h.length - 1];
-}
-
-// PERSISTENCE (localStorage; the machine's history is the save)
+// PERSISTENCE (localStorage)
 
 const local_storage_key = "fable";
 const local_storage_version = 2;
 
-function saveGameOnInteract() {
-  if (!isStandalone()) return;
-  const save = {
-    version: local_storage_version,
-    choices: machine().history(),
-    seed: machine().seed(), // save the seed to improve determinism
-  };
-  localStorage.setItem(local_storage_key, JSON.stringify(save));
-  if (isInDev()) window.history.pushState({}, ""); // enable back button
-}
-
-/** @returns {{choices: string[], seed?: number}} */
-function loadSave() {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("reset") === "1") {
-    localStorage.removeItem(local_storage_key);
-    return { choices: [] };
-  }
-  const choices = params.get("choices");
-  if (choices) {
-    return { choices: choices.split("|") };
-  }
-  if (!isStandalone()) return { choices: [] };
-  try {
-    const raw = localStorage.getItem(local_storage_key);
-    if (!raw) {
-      return { choices: [] };
+/** @type {RuntimeCapabilities["storage"]} */
+const localStorageBacked = {
+  get() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("reset") === "1") {
+      localStorage.removeItem(local_storage_key);
+      return null;
     }
-    const save = JSON.parse(raw);
-    return save ? { choices: save.choices, seed: save.seed } : { choices: [] };
-  } catch (e) {
-    console.error("error loading game", e);
-    return { choices: [] };
-  }
-}
+    const choices = params.get("choices");
+    if (choices) {
+      return { choices: choices.split("|") };
+    }
+    if (!isStandalone()) return null;
+    try {
+      const raw = localStorage.getItem(local_storage_key);
+      if (!raw) {
+        return null;
+      }
+      const save = JSON.parse(raw);
+      return save ? { choices: save.choices, seed: save.seed } : null;
+    } catch (e) {
+      console.error("error loading game", e);
+      return null;
+    }
+  },
+  set(save) {
+    if (!isStandalone()) return;
+    localStorage.setItem(
+      local_storage_key,
+      JSON.stringify({ version: local_storage_version, ...save }),
+    );
+    if (isInDev()) window.history.pushState({}, ""); // enable back button
+  },
+};
 
 // back button
 window.onpopstate = function () {
@@ -502,24 +342,108 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-// TESTING
+function main() {
+  initRuntime({
+    render: interpretEvents,
+    clear: clearContent,
+    defaultSeed: () =>
+      isDeterministic() ? 1 : Math.floor(Math.random() * 2 ** 31),
+    storage: localStorageBacked,
+    configure: (frontmatter) => {
+      tweet_style_choices = frontmatter.twine_mode === "true";
+    },
+    afterInteract: () => postStatus(),
+  });
+  loadStory(story);
+}
 
-function randomly_test() {
-  while (machine().status() === "awaiting") {
-    const cs = machine().choices();
-    const c = randomFrom(cs);
-    console.log("choice taken:", c.label);
-    interpretEvents(machine().choose(c.choiceId).events);
-  }
-  console.log(
-    machine().status() === "halted" ? "bug found" : "no links left",
-    machine().history(),
+// ENVIRONMENT PREDICATES
+
+// true if we are running in a html page or on itch
+// false if we are running in the editor
+function isStandalone() {
+  return !inIFrame() || location.host.indexOf("itch") > -1;
+}
+
+function isInDev() {
+  return (
+    location.host.indexOf("localhost") > -1 ||
+    location.host.indexOf("127.0.0.1") > -1 ||
+    location.protocol === "file:"
   );
 }
 
-/** @param {string[]} labels */
-function clickAll(...labels) {
-  for (const l of labels) {
-    interpretEvents(machine().chooseByLabel(l).events);
+function inIFrame() {
+  try {
+    return window.self !== window.top;
+  } catch (e) {
+    return true;
   }
+}
+
+function isDeterministic() {
+  const p = new URLSearchParams(window.location.search);
+  return navigator.webdriver || p.get("det") === "1";
+}
+
+// TEXT
+
+/** @param {string} s */
+function smartypants(s) {
+  // the order matters
+  return s
+    .replace(/---/g, "—")
+    .replace(/--/g, "–")
+    .replace(/\.\.\./g, "…")
+    .replace(/'([st])/g, "’$1")
+    .replace(/(^|[ \t\n(])'/g, "$1‘")
+    .replace(/'/g, "’")
+    .replace(/(^|[ \t\n(])"/g, "$1“")
+    .replace(/"/g, "”");
+}
+
+/**
+ * smartypants for raw HTML, so only the text between tags is transformed
+ * @param {string} html */
+function smartypantsHtml(html) {
+  return html
+    .split(/(<[^>]*>)/)
+    .map((part) => (part.startsWith("<") ? part : smartypants(part)))
+    .join("");
+}
+
+// BROWSER STORY HELPERS
+
+/**
+ * @param {string} id
+ * @param {string} val */
+function putValueInSelect(id, val) {
+  const selectElt = /** @type {HTMLSelectElement | null} */ (
+    document.getElementById(id)
+  );
+  if (selectElt) {
+    selectElt.value = val;
+  }
+}
+
+// tap an element 5 times in 2 seconds to offer a game reset
+/** @param {HTMLElement} element @param {() => void} reset */
+function enableResetDetector(element, reset) {
+  const REQUIRED_TAPS = 5;
+  const TIME_WINDOW_MS = 2000;
+
+  /** @type {number[]} */
+  let taps = [];
+
+  element.addEventListener("click", () => {
+    const now = performance.now();
+    taps.push(now);
+    taps = taps.filter((t) => now - t < TIME_WINDOW_MS);
+    if (taps.length >= REQUIRED_TAPS) {
+      taps = [];
+      if (confirm("Start over?")) {
+        reset();
+      }
+    }
+  });
 }

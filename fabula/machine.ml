@@ -229,17 +229,6 @@ type game = {
   choice_history : string Acc.t; (* in order *)
 }
 
-(* The origin is what a machine is *created from* — the fixed inputs of
-   the world, as opposed to the state that evolves. Together with
-   [choice_history] it is the whole source of truth: replay = [create]
-   from the same origin + re-feed the history. [replay_saved] and
-   [rewind] just forward [m.origin]; hot reload builds a new origin with
-   the newly parsed program.
-
-   [seed] is inert here — the machine draws no randomness itself — but
-   recording it makes replay deterministic: the host must reseed its RNG
-   from it before any replay-family call (the jsoo boundary does), so
-   user-code draws re-roll identically and rewind cannot diverge. *)
 type origin = {
   program : program;
   seed : int;
@@ -613,7 +602,9 @@ let step (m : machine) : machine =
     | LinkCode (label, dest) | LinkJump (label, dest) ->
       let link_kind = match instr with LinkCode _ -> `Code | _ -> `Jump in
       let m, id = fresh_id m in
-      let m = { m with links = IMap.add id { link_kind; dest; label } m.links } in
+      let m =
+        { m with links = IMap.add id { link_kind; dest; label } m.links }
+      in
       push_inline m (ILink { link_id = id; label })
     | Jump section -> do_jump m "Jump" section
     | JumpDynamic code ->

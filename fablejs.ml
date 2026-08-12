@@ -110,8 +110,8 @@ exception Eval_error of string
 let () =
   Printexc.register_printer (function Eval_error s -> Some s | _ -> None)
 
-let eval_of_host host stref =
-  let f = Jv.get host "eval" in
+let eval_with_caps caps stref =
+  let f = Jv.get caps "eval" in
   fun game code ->
     (* upon eval, make the current game state visible *)
     Option.iter (fun st -> st.game <- game) !stref;
@@ -228,7 +228,7 @@ let machine_handle (st : state) : Jv.t =
             let h = Jv.to_int h in
             Jv.of_int (l + Random.State.int st.rng (h - l))) );
       ( "coin",
-        Jv.callback ~arity:0 (fun () -> Random.State.bool st.rng |> Jv.of_bool)
+        Jv.callback ~arity:1 (fun () -> Random.State.bool st.rng |> Jv.of_bool)
       );
     |]
 
@@ -238,13 +238,13 @@ let () =
        [|
          ( "create",
            (* create(storyJson, { eval, seed }) -> handle *)
-           Jv.callback ~arity:2 (fun story host ->
+           Jv.callback ~arity:2 (fun story caps ->
                let program = jv_to_ocaml Fabula.Ast.program_of_yojson story in
-               let seed = Jv.get host "seed" |> Jv.to_int in
+               let seed = Jv.get caps "seed" |> Jv.to_int in
                let stref = ref None in
                let m =
                  (* only the ref is passed in here (i.e. a knot); it's not read! *)
-                 M.create { M.program; eval = eval_of_host host stref; seed }
+                 M.create { M.program; eval = eval_with_caps caps stref; seed }
                in
                let st =
                  {

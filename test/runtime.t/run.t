@@ -247,6 +247,33 @@ This has to be checked dynamically because jumps may be produced by meta blocks.
     </li>
   </ul>
 
+  $ run ../programs/api-turns-since.md go back go
+  <div class="para old"><span>since a:</span><span> </span><span>0</span></div>
+  <div class="para old">
+    <span>since a:</span><span> </span><span>1</span><span>, since b:</span
+    ><span> </span><span>0</span>
+  </div>
+  <div class="para old"><span>since a:</span><span> </span><span>0</span></div>
+  <div class="para">
+    <span>since a:</span><span> </span><span>1</span><span>, since b:</span
+    ><span> </span><span>0</span>
+  </div>
+  <ul class="choice fadein">
+    <li>
+      <a idx="1" href="#" class="choice" draggable="false"><span>back</span></a>
+    </li>
+  </ul>
+
+  $ run ../programs/api-random.md
+  <div class="para">
+    <span>roll:</span><span> </span><span>3</span><span>, coin:</span
+    ><span> </span><span>false</span><span>, pick:</span><span> </span
+    ><span>y</span><span>, float below one:</span><span> </span><span>true</span>
+  </div>
+
+  $ run ../programs/api-last-choice.md second
+  <div class="para"><span>you chose</span><span> </span><span>second</span></div>
+
   $ run ../programs/jump-to-current-section.md a
   <div class="para old"><span>hello</span></div>
   <div class="para"><span>hello</span></div>

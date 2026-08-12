@@ -9,12 +9,13 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "strict": true,
-    // render.js leans on load order (handle is assigned in main() before
-    // any handler can run); null-strictness would demand assertions with
-    // no runtime meaning
-    // "strictNullChecks": false,
     "target": "es2022",
     "lib": ["es2022", "dom"]
   },
-  "files": ["fable.d.ts", "stdlib.js", "render.js"]
+  "files": [
+    "fable.d.ts",
+    "runtime.d.ts",
+    "runtime.js",
+    "main_browser.js"
+  ]
 }

@@ -16,7 +16,7 @@ type value =
     initial state. *)
 type origin = {
   program : Ast.program;
-  seed : int;  (** for determinim *)
+  seed : int;  (** for determinism *)
   eval : game -> string -> value;
       (** the capability to evaluate JS, which may observe some game state *)
 }

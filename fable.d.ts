@@ -24,7 +24,7 @@ type FableEvent =
   | { type: "markOld" }
   | { type: "error"; message: string };
 
-type Status = "running" | "awaiting" | "halted" | "done";
+type Status = "running" | "awaiting" | "stuck" | "done";
 
 interface Result {
   status: Status;
@@ -34,8 +34,8 @@ interface Result {
   divergedAt?: string;
 }
 
-// Capabilities the machine needs from its host
-interface Host {
+// Capabilities the machine needs from its environment
+interface MachineCapabilities {
   eval(code: string): unknown;
   seed: number;
 }
@@ -70,7 +70,7 @@ interface FableMachine {
 }
 
 declare const Machine: {
-  create(story: Story, host: Host): FableMachine;
+  create(story: Story, capabilities: MachineCapabilities): FableMachine;
 };
 
 interface Story {
