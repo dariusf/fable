@@ -1,17 +1,19 @@
 
 - [Fable User Guide](#fable-user-guide)
-  - [Workflows](#workflows)
+  - [Working with Fable](#working-with-fable)
   - [Language Reference](#language-reference)
     - [Prose](#prose)
     - [Sections](#sections)
-    - [Code](#code)
+    - [Code and Interpolations](#code-and-interpolations)
     - [Jumps and Tunnels](#jumps-and-tunnels)
     - [Choices](#choices)
     - [Breaks and Spaces](#breaks-and-spaces)
     - [Links](#links)
     - [Semantics](#semantics)
   - [Runtime](#runtime)
-    - [Programming](#programming)
+    - [Story APIs](#story-apis)
+    - [Browser APIs](#browser-apis)
+    - [How code is run](#how-code-is-run)
     - [Saving and loading](#saving-and-loading)
   - [CLI](#cli)
     - [Exporting a standalone HTML page](#exporting-a-standalone-html-page)
@@ -19,17 +21,17 @@
     - [Visualising a story](#visualising-a-story)
     - [Expect tests](#expect-tests)
     - [Random testing](#random-testing)
-  - [Related work](#related-work)
+  - [Design](#design)
+  - [Other systems](#other-systems)
 - [Development](#development)
   - [Getting started](#getting-started)
   - [Compiler and Runtime](#compiler-and-runtime)
   - [Editor](#editor)
     - [Restarting](#restarting)
-    - [Reloading](#reloading)
 
 # Fable User Guide
 
-## Workflows
+## Working with Fable
 
 Fable consists of a browser-based [editor](https://dariusf.github.io/fable/), a CLI tool, and a library (Fabula).
 
@@ -41,13 +43,9 @@ Fable consists of a browser-based [editor](https://dariusf.github.io/fable/), a 
 
 ## Language Reference
 
-Fable is a Markdown dialect. Its design is guided by a number of desiderata:
+Fable is a Markdown dialect for writing choice-based interactive fiction.
 
-- Web-first. The web is the only open mainstream platform, and also the most accessible one for casual players.
-- First-class support for programming. Substantial stories will need a substantial amount of code. Rather than reinventing the programming language, we start with the most popular language, JavaScript.
-- Future-proof. Stories are just Markdown text files. The Fable compiler is open source. The output is vanilla HTML/JS/CSS which can be immediately uploaded to e.g. itch.
-- Interoperability with the existing ecosystem. The use of Markdown confers many advantages: editor extensions, e.g., folding, jumping to headings, syntax highlighting, will just work (even if they can be specialised a little). Typesetting, formatting, escaping into HTML, etc. are all solved. Diagrams can be rendered with Graphviz or Mermaid.
-- Lightweight. The pipeline is simple and minimal: a markdown file is compiled into high-level instructions for a small runtime. The mental model is also simple: choice-based interface fiction where code blocks imperatively modify the page as they become visible. While a framework or game engine might be useful for larger projects or teams, for small, indie ones, this is the right balance.
+This section informally specifies the language. For a friendlier introduction, see the [tutorial](https://dariusf.github.io/fable/).
 
 ### Prose
 
@@ -61,17 +59,18 @@ Meta elements which have imperative effects are called _instructions_.
 ### Sections
 
 A Fable _story_ consists of named _sections_, which contain paragraphs of prose and instructions.
-<!-- why not call them scenes? a scene is a reader-level concept that may span multiple sections (an author-level concept). jumping between sections is completely transparent and does not necessarily map to a change of scene -->
 
-Sections are named using headings, and are shown until they end or are interrupted (e.g., by a jump or choice), which may later either continue the section or move to another. A section may thus never be shown in its entirety.
+<!-- Why not call them scenes? a scene is a reader-level concept that may span multiple sections (an author-level concept). jumping between sections is completely transparent and does not necessarily map to a change of scene -->
 
-Content before first section goes into an implicit section named "prelude".  The story starts there or at the first section.
+Sections are named using Markdown headings, and are shown until they end or are interrupted (e.g. by a jump or choice). A section may never be shown in its entirety.
 
-### Code
+Content before first section goes into an implicit section named `prelude`.  The story starts there or at the first section.
+
+### Code and Interpolations
 
 Code can be freely interleaved with prose in Fable.
 
-Inline code `` `CODE` `` is executed when encountered (see the [programming guide](#programming) for how). Its output is hidden. Code blocks (with an optional language declaration) can be used for longer snippets.
+Inline code `` `CODE` `` is executed when encountered (details [here](#how-code-is-run)). Its output is hidden. Code blocks (with an optional language declaration) can be used for longer snippets.
 
     ```js
     CODE
@@ -104,7 +103,7 @@ They may be relaxed in future if the need arises.
 
 </details>
 
-See [the docs on the runtime](#runtime) for more on its API.
+The [runtime docs](#runtime) have the details of what APIs are available.
 
 ### Jumps and Tunnels
 
@@ -112,9 +111,9 @@ _Jumps_ connect sections.
 They may occur anywhere in prose:
 as part of the flow of a section (in which case the section seamlessly ends and another begins), or in response to player input (via choices).
 
-Jumps are represented as inline code with a different family of prefixes.
+Jumps are represented as inline code with special prefixes.
 
-A `jump` or `->` (e.g. `` `->SECTION` ``) prefix denotes a jump to SECTION.
+A `jump` or `->` (e.g. `` `jump SECTION` `` or `` `->SECTION` ``) prefix denotes a jump to SECTION.
 An empty SECTION is shorthand for the current section.
 
 A _dynamic jump_ `->$` prefix jumps to the name of the section that its content evaluates to.
@@ -129,7 +128,7 @@ Lists denote choices. Each choice item is typically of the form ``TEXT `CODE` BO
 - CODE is some fragment of code that will be run when the choice is selected. Its result is not shown.
 - BODY is some Fable fragment that will be executed only if the item is chosen.
 
-The section *continues* after a choice, like Ink's [weave](https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md#the-weave-philosophy). This is the default, unlike in Ink.
+The section *continues* after a choice, like [Ink's weave](https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md#the-weave-philosophy). This is the default, unlike in Ink.
 
 **Loose lists.** Like in Markdown, lists can be loose, with blank lines between items. This is useful if items have a significant body.
 
@@ -154,8 +153,7 @@ Persistent choices are incompatible with fallback choices, as then the fallback 
 
 **Empty choices and fallthrough.**
 Empty choices may arise due to incomplete preconditions, or choices being exhausted without an `otherwise` clause.
-<!-- By default, they are an error: since the reader has not selected anything, the natural thing to do would be to get stuck. -->
-They _get stuck_, rather than continuing with whatever is after.
+They _get stuck_, rather than continuing with whatever is after, since the reader has not selected anything.
 To instead continue with whatever is after the choice, add `` `fallthrough` `` in an item (which will otherwise be ignored).
 This is also incompatible with `` `otherwise` ``.
 
@@ -163,7 +161,94 @@ This is also incompatible with `` `otherwise` ``.
 
 Like in Markdown, double linebreaks delimit paragraphs, and single linebreaks are turned into spaces.
 
-For control, spaces between prose and other instructions are stripped, so they have to be readded if interpolation is used.
+Spaces are inserted between inline elements according to the _spacing rules_.
+
+1. By default, a space is inserted between adjacent elements.
+
+   ```markdown
+   You have `$n` coins.
+   ```
+
+   where n = 3 produces
+
+   ```
+   You have 3 coins.
+   ```
+
+2. Punctuation and closing quotes attach to the previous word.
+
+   ```markdown
+   Very `$status`!
+   ```
+
+   where status = "good" produces
+
+   ```
+   Very good!
+   ```
+
+3. Opening quotes attach to the next word.
+   <!-- A trailing quote suppresses the next space. -->
+
+   ```markdown
+   "`$suspect` did it!"
+   ```
+
+   where suspect = "Bob" produces
+
+   ```
+   "Bob did it!"
+   ```
+
+4. Textless elements are transparent.
+
+   ```markdown
+   before $x after
+   ```
+
+   where x = "" produces
+
+   ```
+   before after
+   ```
+
+5. Spacing uses visible text.
+
+   ```markdown
+   some <b>bold</b> text
+   ```
+
+   produces
+
+   ```
+   some bold text
+   ```
+
+6. Containers are spaced on their own.
+
+   ```markdown
+   very *important, truly* so.
+   ```
+
+   produces
+
+   ```
+   very important, truly so.
+   ```
+
+   Inside an emph, there will be no space just after the opening delimiter. Space before the emph belongs to its parent.
+
+   The same applies to links.
+
+   ```markdown
+   see [here](#start).
+   ```
+
+   ```
+   see here.
+   ```
+
+   (Rule 2 applies here too.)
 
 <!-- A minor extension is the quoted semicolon `` `;` ``.
 This acts as a paragraph break wherever it appears, i.e. the equivalent of two newlines, followed by matching the indentation of the context.
@@ -174,6 +259,9 @@ The quoted semicolon is used for putting paragraph breaks between things like di
 
 ### Links
 
+> [!WARNING]
+> Unstable; may change!
+
 Links allow input outside the usual flow of choices.
 
 A `[TEXT](#SECTION)` link jumps to SECTION.
@@ -182,21 +270,24 @@ A `[TEXT](#SECTION)` link jumps to SECTION.
 
 A `[TEXT](!FN)` link causes the function FN to be executed.
 
-Links currently are not part of history, and so are not replayed.
+Links are currently not part of history, and so are not replayed.
+
+Links currently persist forever.
 
 ### Semantics
 
 A Fable story can be given a (denotational) semantics as a procedural program.
 
-| Fable   | Program         |
-| ------- | --------------- |
-| section | labelled block  |
-| prose   | print statement |
-| code    | statements      |
-| choices | conditional     |
-| tunnel  | procedure call  |
-| jump    | goto            |
-| meta    | unquote         |
+| Fable          | Program         |
+| -------------- | --------------- |
+| section        | labelled block  |
+| prose          | print statement |
+| code           | statements      |
+| interpolations | expressions     |
+| choice         | conditional     |
+| jump           | goto            |
+| tunnel         | procedure call  |
+| meta           | unquote/eval    |
 
 The abstraction provided by Fable is intentionally leaky.
 This has several benefits.
@@ -207,18 +298,16 @@ Necessary data structures, libraries, and language features can be used without 
 
 ## Runtime
 
-The [runtime system](render.js) supports the execution of Fable stories.
-Direct console access to its APIs is supported.
+The runtime system supports the execution of Fable stories.
+It provides APIs to manipulate [stories](runtime.js) as well as their execution in [the browser](main_browser.js).
+The former are typically used when writing stories, while the latter are for writing code for the games supporting stories.
+Direct console access to both is supported.
 
-- `seen[SECTION]`: the number of times SECTION has been seen; can be used in a truthy manner
-- `internal`: internal state of the runtime system
-    - `internal.bug_detectors`: push oracles in here
-    - `internal.history_interpretations`: push functions of type `(string) => boolean`. They should return true (and perform side effects) to indicate that an ad hoc history item is handled upon hot reload
-    - Hooks: these are lists of callbacks, typically of type `() => void`; exceptions are noted
-      - `internal.on_scene_visit`
-      - `internal.on_interact`: called at some point when a choice is made
-      - `pre_push_history`: called before a choice history item is pushed; may be used to add ad hoc history items, whose meaning can then be defined using `history_interpretations`. Return `true` to make the callback one-shot.
-- `local`: section-local state, may be mutated; initialise its variables at the top of a section using
+All other parts of the runtime not mentioned below are considered unstable.
+
+### Story APIs
+
+- `local`: section-local state, may be mutated; initialise at the top of a section using
     ````markdown
     # My Section
 
@@ -226,13 +315,63 @@ Direct console access to its APIs is supported.
     local.x ||= 0
     ```
     ````
+- `seen.SECTION`: the number of times SECTION has been seen; can be used in a truthy manner
+- `turns_since(SECTION)`: turns elapsed since SECTION was last visited
+- `last_choice()`: label of the most recent choice made
+- Replay-safe randomness: `random()`, `randomFrom(xs)`, `coin()`, `randomIncl(lo, hi)`, `randomExcl(lo, hi)`
+- `clickAll(...labels)`: take a sequence of choices by label
+- Builders for Fable fragments in interpolations: `jump(label)`, `tunnel(label)`
+
+<!-- - `randomly_test()`: play the story by making random choices until it ends or gets stuck -->
+
+<!-- `stop_testing` didn't survive rewrite -->
+
+<!-- All other parts of the runtime are considered unstable and not part of the API. -->
+
+<!--
+|                           | Deprecated                     | Replacement |
+| ------------------------- | ------------------------------ |
+| `internal.turns`          | `machine().turns()`            |
+| `internal.current_scene`  | `machine().currentScene()`     |
+| `internal.choice_history` | `machine().history()`          |
+| `internal.scenes`         | none yet (runtime-owned state) |
+| `internal.section_state`  | `local` within a section       |
+-->
+
+<!-- - `internal`: internal state of the runtime system -->
+<!-- - `internal.bug_detectors`: push oracles in here -->
+<!-- - `internal.history_interpretations`: push functions of type `(string) => boolean`. They should return true (and perform side effects) to indicate that an ad hoc history item is handled upon hot reload
+    - Hooks: these are lists of callbacks, typically of type `() => void`; exceptions are noted
+      - `internal.on_scene_visit`
+      - `internal.on_interact`: called at some point when a choice is made
+      - `pre_push_history`: called before a choice history item is pushed; may be used to add ad hoc history items, whose meaning can then be defined using `history_interpretations`. Return `true` to make the callback one-shot.
 - `clear()`: clears the page
-- `jump(label)`, `tunnel(label)`: builders for Fable fragments which may help reduce the amount of quoting required
-- `randomly_test()`, `stop_testing()`: start and stop random testing
+- `jump(label)`, `tunnel(label)`: builders for Fable fragments which may help reduce the amount of quoting required -->
 
-All other parts of the runtime are considered unstable and not part of the API.
+### Browser APIs
 
-### Programming
+<!-- - `putValueInSelect(id, val)`: set the value of a `<select>` element by id. For restoring widget state. Browser only -->
+<!-- - `enableResetDetector(elt, reset)`: tap the element 5 times in 2 seconds to prompt for a game reset, then call `reset`. An escape hatch for corrupt saves. Browser only -->
+- `smartypants(str)`: smart quotes, dashes, ellipses; use when generating text into raw HTML
+- `smartypantsHtml(html)`: `smartypants` for raw HTML, transforming only text between tags
+- `chooseNth(n)`: click the nth offered choice, as the digit keys do
+<!-- - `isStandalone()`: true in a published page or on itch; false in the editor -->
+<!-- - `isInDev()`: true on localhost or a `file:` page -->
+<!-- - `isDeterministic()`: true under test automation or with `?det=1`. The seed is fixed to 1 -->
+
+<!-- - `choices_disappear`: if true (default), a choice list is removed after a choice is taken. If false, the choices remain but are de-linked -->
+
+<!-- - `?reset=1` — clear the saved game and start over. The value must be exactly `1`. An
+  escape hatch for corrupt saves; also skips loading any other save source this run.
+  - `?choices=a|b|c` — start from a given history: the listed choice labels, separated by
+  `|`, are replayed at load. Overrides the localStorage save without deleting it.
+  Carries no seed, so random draws are not reproduced from the original session.
+  - `?det=1` — deterministic mode: a fresh session starts with seed 1 instead of a random
+  seed. Any non-empty value works, and test automation (`navigator.webdriver`) enables
+  it without the parameter. A saved seed still takes precedence; combine with `reset=1`
+  for a fully reproducible run. -->
+
+### How code is run
 
 Code is evaluated using [indirect `eval`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval), which means:
 
@@ -292,14 +431,13 @@ Caveats:
     Tapping it 5 times in 2 seconds will prompt the user for confirmation on whether they want to reset.
 
 - **Divergence** Persisting the reader's game state *just works* by saving their history of choices and playing through the entire sequence on reload. However, what happens if you remove or reword some of those choices? This is called *divergence* from the previous history; when it happens, the game will just stop at the point of divergence. This is a reasonable, best-effort default, in that it seems better than starting over completely. It also goes through the hot reloading flow so it's well-tested. The tradeoff is that it may leave the player somewhere odd, so it may appear like a glitch. However, it will be at a point they reached through their own choices.
-- the save file will not be versioned. if it's invalid, i'll just throw it away and not attempt to migrate it. or write code to migrate and never break old fields.
-- **Guarantees on persistence** Unfortunately there are no guarantees on how long saved data will be persisted; it varies a lot across browsers, platforms, settings, and **time**. It is best to assume that the saved data is transient: it survives refreshes, but you probably shouldn't rely on it surviving beyond a few days. As of the time of writing, it works this way on itch in mobile and desktop browsers.
+- The save file will not be versioned. if it's invalid, i'll just throw it away and not attempt to migrate it. or write code to migrate and never break old fields.
+- **Guarantees on persistence** Unfortunately there are no guarantees on how long saved data will be persisted; it varies a lot across browsers, platforms, settings, and *time*. It is best to assume that the saved data is transient: it survives refreshes, but you probably shouldn't rely on it surviving beyond a few days. As of the time of writing, it works this way on itch in mobile and desktop browsers.
   - It has historically not worked at all on mobile Safari and itch
   - It appears to work now, but I've seen reports that the data is cleared after 7 days, as well as upon killing the browser app
-  -
 
-- different browsers remove the save at different times. safari apparently does it when the app is killed, or in 7 days. who knows
--
+<!-- - different browsers remove the save at different times. safari apparently does it when the app is killed, or in 7 days. who knows -->
+
 
 <!--
 Apr 2026 ios safari itch loses save data on quit
@@ -426,7 +564,17 @@ Custom testing oracles can be added by pushing functions which return `true` on 
 
 To stop, remove the URL hash property or evaluate `stop_testing()` in the console.
 
-## Related work
+## Design
+
+Fable's design is guided by a number of desiderata:
+
+- Web-first. The web is the only open mainstream platform, and also the most accessible one for casual players.
+- First-class support for programming. Substantial stories will need a substantial amount of code. Rather than reinventing the programming language, we start with the most popular language, JavaScript.
+- Future-proof. Stories are just Markdown text files. The Fable compiler is open source. The output is vanilla HTML/JS/CSS which can be immediately uploaded to e.g. itch.
+- Interoperability with the existing ecosystem. The use of Markdown confers many advantages: editor extensions which provide e.g. folding, jumping to headings, syntax highlighting, etc. will just work (even if they can be specialised a little). Formatting, typesetting, escaping into HTML, etc. are all solved. Diagrams can be rendered with Graphviz or Mermaid.
+- Lightweight. The pipeline is simple and minimal: a Markdown file is compiled into high-level instructions for a small runtime. The mental model is also simple: choice-based interface fiction where code blocks imperatively modify the page as they become visible. While a framework or game engine might be useful for larger projects or teams, for small, indie ones, this is the right balance.
+
+## Other systems
 
 Fable's closest relative is Ink.
 
@@ -447,27 +595,23 @@ npm i -g playwright @playwright/browser-chromium prettier
 
 ## Compiler and Runtime
 
-Fable Markdown is compiled into a set of named sequences of instructions. Instructions may contain others nested in them.
+A Fable story is compiled into a map of sequences of instructions. Instructions are high-level and may be nested.
 
-The runtime is a CPS interpreter whose state is a list of instructions (to be executed), a current element to mutate (e.g. with new prose), and a continuation, which enables the control primitives like jumps and choices.
-
-For efficiency, the interpreter executes instructions in a loop until it reaches one that may change control. That instruction is then given access to the ones after as a continuation.
-
-Note that only `~` and the jump or tunnel instructions can cause control flow changes. In particular, calling runtime functions like `render` within regular inline code will not work (as the jumps have to go through the interpreter).
+Instructions are executed by a yielding abstract [machine](fabula/machine.mli) with an explicit frame stack. Its output is a sequence of events, which are further [interpreted](runtime.js) to [render the story in a browser](main_browser.js).
 
 ## Editor
 
 The editor can be used to share Fable stories, so it [sandboxes JS evaluation using an iframe](https://web.dev/articles/sandboxed-iframes#safely_sandboxing_eval).
 
-It simulates[^1] hot reloading on edit by _restarting_ and replaying choices made since the last restart, stopping short if a choice can no longer be taken in a new version.
+It simulates hot reloading on edit by _restarting_ and replaying choices made since the last restart, stopping short if a choice can no longer be taken in a new version.
 
 <details>
 
-<summary>Communication</summary>
+<summary>How the editor and a story communicate</summary>
 
 ```mermaid
 sequenceDiagram
-    participant S as Story (render.js)
+    participant S as Story (runtime.js)
     participant E as Editor (editor.js)
 
     Note over E, S: Init
@@ -535,6 +679,7 @@ Having crashes hidden like this may seem nasty, but...
 
 Hence, we assume stories are closed and default to restarting.
 
+<!--
 ### Reloading
 
 A safe but slow alternative is to reload the iframe on every edit, relying on the browser's cache for efficiency.
@@ -546,7 +691,6 @@ A safe but slow alternative is to reload the iframe on every edit, relying on th
 5. On edit, the iframe is reloaded, causing the process to start again from 2
 
 This guarantees that hot reloading will not result in "spooky" executions (`[A, reload, B]` would crash), but transfers quite a bit of data. See the previous section for other reasons why this isn't the default.
-
-[^1]: We can't hot-reload in the traditional sense (by saving and restoring all interpreter state), as some state is maintained by the JS runtime due to the use of CPS.
+-->
 
 [^2]: A helpful analogy is the execution model of a REPL. If the same closed block of code is pasted every time, it should always execute the same way, as it only relies on definitions given in the block itself. Idempotency of definitions can be ensured by using `var`.
