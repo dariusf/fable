@@ -267,7 +267,9 @@ const localStorageBacked = {
       local_storage_key,
       JSON.stringify({ version: local_storage_version, ...save }),
     );
-    if (isInDev()) window.history.pushState({}, ""); // enable back button
+  },
+  clear() {
+    localStorage.removeItem(local_storage_key);
   },
 };
 
@@ -342,7 +344,7 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-function main() {
+async function main() {
   initRuntime({
     render: interpretEvents,
     clear: clearContent,
@@ -352,8 +354,15 @@ function main() {
     configure: (frontmatter) => {
       tweet_style_choices = frontmatter.twine_mode === "true";
     },
-    afterInteract: () => postStatus(),
+    afterInteract: () => {
+      // choices give rise to history items
+      if (isStandalone() && isInDev()) {
+        window.history.pushState({}, "");
+      }
+      postStatus();
+    },
   });
+  await window.init?.();
   loadStory(story);
 }
 

@@ -1,4 +1,4 @@
-// The DOM-free layer over the machine: lifecycle, story API, persistence logic.
+// JS API for running the machine. Lifecycle, story API, persistence logic.
 // Anything requiring a browser is injected via initRuntime.
 
 /** @type {RuntimeCapabilities | null} */
@@ -72,10 +72,10 @@ function loadStory(s) {
       // it's possible to diverge on load if a new version of the game was released
       console.log("diverged at", res.divergedAt);
     }
-    caps().render(res.events, "instant");
+    render(res.events, "instant");
     return res.divergedAt;
   } else {
-    caps().render(machine().start().events, "instant");
+    render(machine().start().events, "instant");
     return undefined;
   }
 }
@@ -86,7 +86,12 @@ function loadStory(s) {
  * @returns {string | undefined} */
 function applyEdit(s) {
   initStoryState(s);
-  return rerender(machine().hotReload(s));
+  const divergedAt = rerender(machine().hotReload(s));
+
+  // when reloading, we want to see the updated, diverged state
+  saveCurrentChoices();
+
+  return divergedAt;
 }
 
 /**
@@ -98,7 +103,7 @@ function rerender(res) {
     console.log("diverged at", res.divergedAt);
   }
   caps().clear();
-  caps().render(res.events, "instant");
+  render(res.events, "instant");
   return res.divergedAt;
 }
 
@@ -111,9 +116,18 @@ function handleBack() {
 /** Response to a user interaction (choose/activate)
  * @param {Result} res */
 function interacted(res) {
-  saveGameOnInteract();
+  saveCurrentChoices();
   caps().afterInteract?.();
-  caps().render(res.events);
+  render(res.events);
+}
+
+/**
+ * @param {FableEvent[]} events
+ * @param {ScrollBehavior=} scrollBehaviour
+ */
+function render(events, scrollBehaviour) {
+  caps().render(events, scrollBehaviour);
+  globalThis.afterRender?.();
 }
 
 /** * @param {string} code */
@@ -127,7 +141,7 @@ function evalCapability(code) {
   return eval?.(code);
 }
 
-// compatibility shims for story code that reaches into `internal`
+// compatibility shims for story code that uses `internal`
 // TODO remove this after all stories are ported
 var internal = {
   scenes,
@@ -172,11 +186,15 @@ function last_choice() {
 
 // PERSISTENCE (the machine's history is the save)
 
-function saveGameOnInteract() {
+function saveCurrentChoices() {
   caps().storage.set({
     choices: machine().history(),
     seed: machine().seed(), // save the seed to improve determinism
   });
+}
+
+function clearSaveData() {
+  caps().storage.clear();
 }
 
 // TESTING
@@ -186,7 +204,7 @@ function randomly_test() {
     const cs = machine().choices();
     const c = randomFrom(cs);
     console.log("choice taken:", c.label);
-    caps().render(machine().choose(c.choiceId).events);
+    render(machine().choose(c.choiceId).events);
   }
   console.log(
     machine().status() === "stuck" ? "bug found" : "no links left",
@@ -197,7 +215,7 @@ function randomly_test() {
 /** @param {string[]} labels */
 function clickAll(...labels) {
   for (const l of labels) {
-    caps().render(machine().chooseByLabel(l).events);
+    render(machine().chooseByLabel(l).events);
   }
 }
 

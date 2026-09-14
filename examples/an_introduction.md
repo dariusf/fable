@@ -1,6 +1,6 @@
 Hello! Fable is a narrative scripting language which makes it easy to publish your interaction fiction on the web.
 
-Try it out on this page --- edit this text on the left and see your changes live on the right!
+Try it out on this page! Edit this text on the left and see your changes live on the right!
 
 You can get started writing immediately: regular prose is valid Fable.
 

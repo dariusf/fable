@@ -1,6 +1,6 @@
 
 - [Fable User Guide](#fable-user-guide)
-  - [Working with Fable](#working-with-fable)
+  - [Getting started with Fable](#getting-started-with-fable)
   - [Language Reference](#language-reference)
     - [Prose](#prose)
     - [Sections](#sections)
@@ -10,36 +10,41 @@
     - [Breaks and Spaces](#breaks-and-spaces)
     - [Links](#links)
     - [Semantics](#semantics)
-  - [Runtime](#runtime)
-    - [Story APIs](#story-apis)
-    - [Browser APIs](#browser-apis)
-    - [How code is run](#how-code-is-run)
+  - [Programming in Fable](#programming-in-fable)
+    - [Stories](#stories)
+    - [Browser](#browser)
+    - [Audio](#audio)
     - [Saving and loading](#saving-and-loading)
+    - [How code is run](#how-code-is-run)
   - [CLI](#cli)
     - [Exporting a standalone HTML page](#exporting-a-standalone-html-page)
     - [Writing](#writing)
     - [Visualising a story](#visualising-a-story)
     - [Expect tests](#expect-tests)
     - [Random testing](#random-testing)
+  - [Editor](#editor)
+  - [Fabula](#fabula)
   - [Design](#design)
   - [Other systems](#other-systems)
-- [Development](#development)
+- [Developing Fable](#developing-fable)
   - [Getting started](#getting-started)
-  - [Compiler and Runtime](#compiler-and-runtime)
-  - [Editor](#editor)
+  - [Compiler](#compiler)
+  - [Runtime](#runtime)
+  - [Initialization lifecycle](#initialization-lifecycle)
+  - [Editor](#editor-1)
     - [Restarting](#restarting)
 
 # Fable User Guide
 
-## Working with Fable
+## Getting started with Fable
 
-Fable consists of a browser-based [editor](https://dariusf.github.io/fable/), a CLI tool, and a library (Fabula).
+Welcome to Fable's user guide!
 
-- The editor is the most accessible way to get started. However, as it runs completely client-side, the only durable way to save your story is by encoding it in a URL. While works in theory[^url], you'll want to save longer stories manually. The editor also does not provide a way to package a story as a HTML file for deployment to e.g. itch.
-- To do that, you'll want at some point to write your story in a text editor, and use a build script to invoke the CLI tool.
-- The library, Fabula, is mostly intended for internal use in the above two frontends. Let me know your use cases for it.
+The easiest way to get started is the browser-based [editor](#editor) (which has an interactive tutorial).
 
-[^url]: The maximum length of a URL [varies a lot across browsers](https://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers), but modern browsers either do not limit it or have absurdly high limits. For comparison, The Lord of the Rings is 3MB of text, so you could in theory write that entirely on an iPhone in Safari.
+For more sophisticated use, you'll want to use the [CLI](#cli).
+
+Keep reading for a description of Fable-the-language.
 
 ## Language Reference
 
@@ -296,16 +301,17 @@ It's clear when a particular bit of prose "executes", allowing things like raw H
 The browser console is fully available, and the state of the story can be queried at any point without doing anything special.
 Necessary data structures, libraries, and language features can be used without any fanfare.
 
-## Runtime
+## Programming in Fable
 
-The runtime system supports the execution of Fable stories.
-It provides APIs to manipulate [stories](runtime.js) as well as their execution in [the browser](main_browser.js).
-The former are typically used when writing stories, while the latter are for writing code for the games supporting stories.
-Direct console access to both is supported.
+Fable provides a high-level programming model, and many APIs for common tasks.
 
-All other parts of the runtime not mentioned below are considered unstable.
+Everything not mentioned below should be considered unstable.
 
-### Story APIs
+<!-- TODO namespaces -->
+
+### Stories
+
+The following may be used when writing stories.
 
 - `local`: section-local state, may be mutated; initialise at the top of a section using
     ````markdown
@@ -348,7 +354,7 @@ All other parts of the runtime not mentioned below are considered unstable.
 - `clear()`: clears the page
 - `jump(label)`, `tunnel(label)`: builders for Fable fragments which may help reduce the amount of quoting required -->
 
-### Browser APIs
+### Browser
 
 <!-- - `putValueInSelect(id, val)`: set the value of a `<select>` element by id. For restoring widget state. Browser only -->
 <!-- - `enableResetDetector(elt, reset)`: tap the element 5 times in 2 seconds to prompt for a game reset, then call `reset`. An escape hatch for corrupt saves. Browser only -->
@@ -371,15 +377,26 @@ All other parts of the runtime not mentioned below are considered unstable.
   it without the parameter. A saved seed still takes precedence; combine with `reset=1`
   for a fully reproducible run. -->
 
-### How code is run
+### Audio
 
-Code is evaluated using [indirect `eval`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval), which means:
+Fable comes with a high-level, declarative audio system.
 
-- It runs in the global scope and cannot access local variables.
-- Local variables (from `let` and `const`) are effectively scoped to each code block or backticked span.
-- Any programming which involves story-wide state should be done with global variables, either by assigning to `window`, using `var`, or assigning to a variable without a prior declaration.
-    - This enables the use of the browser devtools to inspect or modify story state.
-    - By convention, user state is in `window.state`.
+- Hot reloading is fully supported. In most cases, music will continue playing as you edit your game, without skipping a beat!
+- Multiple tracks can be played concurrently, and you can fade smoothly between them.
+- Portions of a large soundtrack can be asynchronously loaded to keep the initial page load fast.
+
+See [the audio example](examples/audio/audio.md) for how it is used.
+
+Some caveats:
+
+- If you hot reload to some point in your game, and some music which is supposed to be playing then has not loaded yet (due to it loading asynchronously), it won't play, but it will continue playing upon the next interaction after it loads
+
+<!-- most cases = editing markdown only -->
+
+- [Browsers block audio from playing if it is not triggered by a user interaction](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices#autoplay_policy).
+Hence:
+  - On itch, the initial click to start your game in fullscreen suffices, so you can start playing music right away.
+  - When developing locally, or if you refresh the page, you'll have to make a choice for the music to start, but it will continue fine after that. Some hot reloads need to refresh the page, e.g. adding a .js file to your game, and this will also happen then.
 
 ### Saving and loading
 
@@ -388,6 +405,8 @@ In short, if you don't do anything, your game will behave reasonably when the pa
 Caveats below.
 
 It's advisable to at least set `local_storage_key`, so multiple games don't clobber each other's data.
+
+<!-- TODO update this -->
 
 ```js
 // define this on window, as it must run before the game is started;
@@ -448,8 +467,19 @@ how twine sugarcube works. 1-7 days, depends on settings
 https://old.reddit.com/r/twinegames/comments/pmh9d7/itchio_wont_retain_save_data_twine_sugarcube/
 -->
 
+### How code is run
+
+Code is evaluated using [indirect `eval`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval), which means:
+
+- It runs in the global scope and cannot access local variables.
+- Local variables (from `let` and `const`) are effectively scoped to each code block or backticked span.
+- Any programming which involves story-wide state should be done with global variables, either by assigning to `window`, using `var`, or assigning to a variable without a prior declaration.
+    - This enables the use of the browser devtools to inspect or modify story state.
+    - By convention, user state is in `window.state`.
 
 ## CLI
+
+<!-- TODO installation -->
 
 ### Exporting a standalone HTML page
 
@@ -564,6 +594,22 @@ Custom testing oracles can be added by pushing functions which return `true` on 
 
 To stop, remove the URL hash property or evaluate `stop_testing()` in the console.
 
+## Editor
+
+Fable has a browser-based [editor](https://dariusf.github.io/fable/).
+It is the most accessible way to get started.
+However, as it runs completely client-side, the only durable way to save your story is by encoding it in a URL. While works in theory[^url], you'll want to save longer stories manually.
+
+To do that, you'll want at some point to write your story in a text editor, and use a build script to invoke the [CLI](#cli).
+
+[^url]: The maximum length of a URL [varies a lot across browsers](https://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers), but modern browsers either do not limit it or have absurdly high limits. For comparison, The Lord of the Rings is 3MB of text, so you could in theory write that entirely on an iPhone in Safari.
+
+## Fabula
+
+Fable is also available as an OCaml library, Fabula.
+It is mostly intended for internal use in the [editor](#editor) and [CLI](#cli).
+Let me know your use cases for it.
+
 ## Design
 
 Fable's design is guided by a number of desiderata:
@@ -584,7 +630,9 @@ Ink is a scripting language: it is interpreted at runtime by a separate game eng
 - In Ink, you attach tags to bits of text and rely on the engine interpreting them the way you want, whereas in Fable you can directly evaluate code as part of the flow of the story to make something happen/appear in the game.
 - Fable's authoring language is simpler and smaller. It is a Markdown dialect, so e.g. inline HTML can be used to tag things, there is already syntax for images, etc. It relies _unquoting_ to JavaScript to dynamically generate bits of Fable, compared to having special syntax for e.g. conditionals.
 
-# Development
+<!-- TODO dendry. hot reloading? -->
+
+# Developing Fable
 
 ## Getting started
 
@@ -593,17 +641,44 @@ opam install --deps-only .
 npm i -g playwright @playwright/browser-chromium prettier
 ```
 
-## Compiler and Runtime
+## Compiler
 
 A Fable story is compiled into a map of sequences of instructions. Instructions are high-level and may be nested.
 
-Instructions are executed by a yielding abstract [machine](fabula/machine.mli) with an explicit frame stack. Its output is a sequence of events, which are further [interpreted](runtime.js) to [render the story in a browser](main_browser.js).
+## Runtime
+
+Instructions are executed by a yielding [abstract machine](fabula/machine.mli) with an explicit frame stack.
+It is designed to support all execution of Fable stories headlessly.
+
+The initial inputs to a machine are a Fable story, a seed, and the capability to evaluate JS.
+Other inputs as it runs are choices, and meta things like rewind and hot reload, which also update the machine.
+The main output is a sequence of events, to be interpreted by e.g. the browser.
+
+The [runtime](runtime.js) maintains a machine ref and provides frontend-agnostic JS support for executing stories, e.g. `local` state, and other JS APIs stories use.
+It is used by both the [testing](test/machine.t/main_test.js) and [browser](main_browser.js) frontends.
+
+The main [browser frontend](main_browser.js) takes care of efficiently turning a sequence of events into DOM updates.
+
+## Initialization lifecycle
+
+Scripts in the `<head>` of [story.html](story.html) load, along with extra ones from the `head` frontmatter.
+
+- `fablejs.bc.js` defines the `Fable` global
+- `story.js` defines the `story` global, containing the compiled story
+- `runtime.js` and `main_browser.js` define their APIs
+- `main_browser.js`'s `main()` runs
+  - The runtime is initialised
+  - Saved data is read
+  - `init` is called asynchronously, if defined
+  - The story is rendered, possibly with saved data
 
 ## Editor
 
-The editor can be used to share Fable stories, so it [sandboxes JS evaluation using an iframe](https://web.dev/articles/sandboxed-iframes#safely_sandboxing_eval).
+The editor can be used to share simple Fable stories, so it [sandboxes JS evaluation using an iframe](https://web.dev/articles/sandboxed-iframes#safely_sandboxing_eval).
 
-It simulates hot reloading on edit by _restarting_ and replaying choices made since the last restart, stopping short if a choice can no longer be taken in a new version.
+Parity with the CLI is a goal. Not everything is supported today.
+
+The editor simulates hot reloading on edit by _restarting_ and replaying choices made since the last restart, stopping short if a choice can no longer be taken in a new version.
 
 <details>
 
@@ -693,4 +768,4 @@ A safe but slow alternative is to reload the iframe on every edit, relying on th
 This guarantees that hot reloading will not result in "spooky" executions (`[A, reload, B]` would crash), but transfers quite a bit of data. See the previous section for other reasons why this isn't the default.
 -->
 
-[^2]: A helpful analogy is the execution model of a REPL. If the same closed block of code is pasted every time, it should always execute the same way, as it only relies on definitions given in the block itself. Idempotency of definitions can be ensured by using `var`.
+[^2]: An analogy is the execution model of a REPL. If the same closed block of code is pasted every time, it should always execute the same way, as it only relies on definitions given in the block itself. Idempotency of definitions can be ensured by using `var`.

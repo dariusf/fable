@@ -12,9 +12,11 @@ default:
 	npx -y -p typescript tsc -p editor/jsconfig.json
 
 .PHONY: example
-example: default
+example: # default
 	@rm -rf _build/story
-	./fable -s examples/wash.md -o _build/story
+# 	./fable -s examples/wash.md -o _build/story
+	./fable -s examples/audio/audio.md -o _build/story
+	cp examples/audio/main.js _build/story
 	python -m http.server 8005 --directory  _build/story
 
 .PHONY: test

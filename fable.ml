@@ -38,15 +38,20 @@ let write_standalone dir (prog : Fabula.Ast.program) =
       substitute_vars
         [
           ("title", get_fm prog.frontmatter "title" "Fable");
-          ( "extra",
+          ( "head",
             (* this relies on extra being at the end of <head>, after default.css *)
-            style_override ^ get_fm prog.frontmatter "extra" "" );
+            (* TODO head doesn't work in the editor *)
+            style_override ^ get_fm prog.frontmatter "head" "" );
+          ( "init",
+            (* TODO init doesn't work in the editor *)
+            get_fm prog.frontmatter "init" "" );
         ]
         Embedded.index
     end;
   write_file (fmt "%s/default.css" dir) Embedded.default_css;
   write_file (fmt "%s/runtime.js" dir) Embedded.runtime;
   write_file (fmt "%s/main_browser.js" dir) Embedded.main_browser;
+  write_file (fmt "%s/audio.js" dir) Embedded.audio;
   write_file (fmt "%s/fablejs.bc.js" dir) Embedded.fablejs;
   write_file (fmt "%s/graph.dot" dir)
     (Fabula.Graph.(program_graph graphviz_renderer) prog);

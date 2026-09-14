@@ -77,7 +77,8 @@ These topics are best read in order, but feel free to jump around as you please.
   <b>I am a writer; will I like Fable?</b>
 
   Fable is designed around the idea that your writing should be front and center.
-  Once you're done writing, there is no engine to configure, and no need to think about the scaffolding --- click Publish and you can upload to itch.
+  Once you're done writing, there is no engine to configure, and no need to think about the scaffolding.
+  Click Publish and you can upload to itch.
 
   You don't have to do any programming to use Fable, though the minimalism of writing in plain text might take some getting used to. Recipes are provided in this tutorial for common things which would ordinarily require programming. `->`
 
