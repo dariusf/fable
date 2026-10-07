@@ -20,12 +20,38 @@ import { styleText } from "node:util";
 
 */
 
+// wraps an async fn so that calls made while it is running are merged into a single follow-up call once it finishes.
+// e.g. a rebuild occurs, fable runs. subsequent rebuilds set pending. then when the first rebuild is done, a second run (only one) is started for all the pending ones.
+function coalesce(fn, merge) {
+  let running = false;
+  let pending = null;
+  return async function run(arg) {
+    if (running) {
+      pending = pending === null ? arg : merge(pending, arg);
+      return;
+    }
+    running = true;
+    try {
+      await fn(arg);
+    } finally {
+      running = false;
+      if (pending !== null) {
+        const next = pending;
+        pending = null;
+        run(next);
+      }
+    }
+  };
+}
+
 export default function markdownCompilerPlugin(options = {}) {
   const {
     input,
     outDir,
     command, // debounce: debounceMs = 120
-    // extensions of referenced files that should also trigger a rebuild
+    // extensions of files that should also trigger a rebuild.
+    // this is not tied to what the story actually references: any file
+    // under the watched directories with one of these extensions counts
     watchExtensions = [".js", ".css", ".mp3"],
   } = options;
 
@@ -168,6 +194,9 @@ export default function markdownCompilerPlugin(options = {}) {
     }
   }
 
+  // running fable may take time. if more events arrive then, we should re-run fable and merge the results
+  const rebuildCoalesced = coalesce(rebuild, (a, b) => a && b);
+
   const hmrId = "virtual:fable-hmr";
   const resolvedHmrId = "\0" + hmrId;
   // import.meta.hot exists only in a page with vite's dev client.
@@ -222,7 +251,8 @@ if (import.meta.hot) {
     configureServer(server) {
       viteServer = server;
 
-      server.watcher.add(srcFile);
+      // vite only watches its root by default, so also watch the story and its directory in case referenced files live outside the root. this is still a heuristic
+      server.watcher.add([srcFile, path.dirname(srcFile)]);
 
       server.watcher.on("change", (changedPath) => {
         const resolved = path.resolve(changedPath);
@@ -231,7 +261,7 @@ if (import.meta.hot) {
         if (resolved === buildDir || resolved.startsWith(buildDir + path.sep))
           return;
 
-        // rebuild on the source markdown, or on any referenced file whose
+        // rebuild on the source markdown, or on any file whose
         // extension we watch (js/css/mp3 by default)
         const isSrc = resolved === srcFile;
         const isWatchedRef = watchExtensions.includes(
@@ -244,10 +274,9 @@ if (import.meta.hot) {
         // debounceTimer = setTimeout(() => {
         // log(`"${input}" changed — rebuilding…`);
 
-        // it's possible this triggers again before the compiler finishes.
-        // it seems too rare to matter though, and it seems like it should converge eventually.
-        // debounce lowers the chance of this.
-        rebuild(isSrc);
+        // with coalesce (which guarantees no overlapping builds), we don't need debounce for correctness, only to avoid double builds for when multiple file events arrive at once
+
+        rebuildCoalesced(isSrc);
 
         // }, debounceMs);
       });
