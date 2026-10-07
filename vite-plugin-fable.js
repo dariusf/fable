@@ -1,5 +1,12 @@
 import { spawn } from "node:child_process";
-import { createReadStream, existsSync, statSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import {
+  createReadStream,
+  existsSync,
+  statSync,
+  readFileSync,
+  readdirSync,
+} from "node:fs";
 import path from "node:path";
 import { styleText } from "node:util";
 
@@ -9,6 +16,7 @@ import { styleText } from "node:util";
 
   - It makes vite watch the input markdown file. When it changes, the plugin runs Fable and reloads the page.
   - It registers middleware which intercepts requests and serves them from Fable's build directory. This is different from how Vite works by default: Vite serves requests from the project root, where it expects to find an index.html, and lazily transforms and serves referenced files.
+  - If only the markdown changes, the editor's fast hot reload path is used.
 
 */
 
@@ -124,19 +132,84 @@ export default function markdownCompilerPlugin(options = {}) {
     });
   }
 
-  async function rebuild() {
+  const storyOutputs = ["story.js", "graph.dot", "graph.mmd"];
+  function fingerprintBuildDir() {
+    const hash = createHash("sha1");
+    if (!existsSync(buildDir)) return hash.digest("hex");
+    for (const name of readdirSync(buildDir).sort()) {
+      // ignore outputs in the fingerprint, because we only want to detect if the inputs have changed
+      if (storyOutputs.includes(name)) continue;
+      const file = path.join(buildDir, name);
+      if (!statSync(file).isFile()) continue;
+      hash.update(name).update(readFileSync(file));
+    }
+    return hash.digest("hex");
+  }
+
+  // isSrc is true if the main story.md changed
+  async function rebuild(isSrc) {
     try {
+      const before = fingerprintBuildDir();
       await runFable();
       // log("build succeeded, triggering reload");
-      viteServer.ws.send({ type: "full-reload" });
+      if (isSrc && before === fingerprintBuildDir()) {
+        // only src md changed, so take the fast path
+        viteServer.ws.send({
+          type: "custom",
+          event: "fable:edit",
+          data: { md: readFileSync(srcFile, "utf-8") },
+        });
+      } else {
+        // it wasn't the src md that changed, or it was and also other files were added
+        viteServer.ws.send({ type: "full-reload" });
+      }
     } catch {
       // error already printed by runCompiler
     }
   }
 
+  const hmrId = "virtual:fable-hmr";
+  const resolvedHmrId = "\0" + hmrId;
+  // import.meta.hot exists only in a page with vite's dev client.
+  const hmrClient = `
+if (import.meta.hot) {
+  import.meta.hot.on("fable:edit", ({ md }) => {
+    try {
+      postStatus(applyEdit(Fable.parse(md)));
+    } catch (e) {
+      console.error("fable:edit", e);
+    }
+  });
+}
+`;
+
   // plugin object
   return {
     name: "fable",
+
+    // runs when something is imported
+    resolveId(id) {
+      if (id === hmrId) return resolvedHmrId;
+    },
+
+    // runs when vite needs the source code for an unresolved id
+    load(id) {
+      if (id === resolvedHmrId) return hmrClient;
+    },
+
+    // called when vite processes a html page.
+    // see other call to transformIndexHtml
+    transformIndexHtml() {
+      // injects our module into the page.
+      // __x00__ is vite's URL-safe encoding of the \0 prefix
+      return [
+        {
+          tag: "script",
+          attrs: { type: "module", src: "/@id/__x00__" + hmrId },
+          injectTo: "head",
+        },
+      ];
+    },
 
     async buildStart() {
       if (!existsSync(srcFile)) {
@@ -174,7 +247,7 @@ export default function markdownCompilerPlugin(options = {}) {
         // it's possible this triggers again before the compiler finishes.
         // it seems too rare to matter though, and it seems like it should converge eventually.
         // debounce lowers the chance of this.
-        rebuild();
+        rebuild(isSrc);
 
         // }, debounceMs);
       });
