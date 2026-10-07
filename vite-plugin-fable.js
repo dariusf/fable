@@ -104,7 +104,7 @@ export default function markdownCompilerPlugin(options = {}) {
     // things like vite's internal /@ files go in here
     if (!existsSync(filePath) || statSync(filePath).isDirectory()) {
       // log(`not handled: ${urlPath}`);
-      return next();
+      return next(); // falls back to vite's static file server for the project root
     }
 
     const ext = path.extname(filePath).toLowerCase();

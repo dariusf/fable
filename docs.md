@@ -502,27 +502,44 @@ fable examples/crime.md > story.js
 
 ### Writing
 
-A script (call it `write.sh`) for a nice offline writing setup with live reloading.
+A [vite plugin](vite-plugin-fable.js) is provided to support a writing workflow with hot reloading.
+Copy it into your project and add a vite.config.js to the root, like this.
+
+```js
+import fablePlugin from "./vite-plugin-fable.js";
+
+export default {
+  plugins: [
+    fablePlugin({
+      input: "story.md",
+      outDir: "_build",
+      command: "fable --stats -s",
+    }),
+  ],
+};
+```
+
+You will need vite.
 
 ```sh
-#!/usr/bin/env bash
-
-build() {
-  fable -s story.md -o _build
-}
-
-if [ -z $1 ]; then
-  vite _build &
-
-  # kill child processes on interrupt
-  procs="$(jobs -p | tr '\n' ' ')"
-  trap "kill $procs" 2
-
-  git ls | entr -ccr ./write.sh build
-else
-  "$1"
-fi
+npm install -g vite
 ```
+
+You can then do
+
+```sh
+vite --host --clearScreen=false
+```
+
+and your story, and .js, .css, and .mp3 files beside it, will be watched for changes.
+
+vite will serve your compiled game from the build directory, falling back to the root for files it doesn't find.
+
+> [!WARNING]
+> If your deployment script copies such files into the build directory, stale ones may be served due to the fallback, making it appear like they are not being reloaded.
+> For now, users should delete the build directory after deploying and before developing further.
+
+<!-- TODO find a way to fix this gotcha -->
 
 ### Visualising a story
 
