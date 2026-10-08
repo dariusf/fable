@@ -16,9 +16,11 @@
     - [Audio](#audio)
     - [Saving and loading](#saving-and-loading)
     - [How code is run](#how-code-is-run)
+    - [Frontmatter](#frontmatter)
   - [CLI](#cli)
-    - [Exporting a standalone HTML page](#exporting-a-standalone-html-page)
+    - [Getting started](#getting-started)
     - [Writing](#writing)
+    - [Publishing](#publishing)
     - [Visualising a story](#visualising-a-story)
     - [Expect tests](#expect-tests)
     - [Random testing](#random-testing)
@@ -27,7 +29,7 @@
   - [Design](#design)
   - [Other systems](#other-systems)
 - [Developing Fable](#developing-fable)
-  - [Getting started](#getting-started)
+  - [Installing dependencies](#installing-dependencies)
   - [Compiler](#compiler)
   - [Runtime](#runtime)
   - [Initialization lifecycle](#initialization-lifecycle)
@@ -398,6 +400,8 @@ Hence:
   - On itch, the initial click to start your game in fullscreen suffices, so you can start playing music right away.
   - When developing locally, or if you refresh the page, you'll have to make a choice for the music to start, but it will continue fine after that. Some hot reloads need to refresh the page, e.g. adding a .js file to your game, and this will also happen then.
 
+- General tip for iOS: audio won't play unless you disable silent mode.
+
 ### Saving and loading
 
 By default, Fable persists reader choices in local storage.
@@ -477,30 +481,62 @@ Code is evaluated using [indirect `eval`](https://developer.mozilla.org/en-US/do
     - This enables the use of the browser devtools to inspect or modify story state.
     - By convention, user state is in `window.state`.
 
+### Frontmatter
+
+Story metadata is specified using frontmatter.
+
+```markdown
+---
+title: My Story
+head: |
+    <link href="extensions.css" rel="stylesheet">
+    <script src="modal.js"></script>
+---
+```
+
+- `title`: this sets the title of the HTML page when publishing
+- `head`: this adds additional files to the `<head>` section of the output HTML page.
+
+<!-- TODO others -->
+
 ## CLI
 
 <!-- TODO installation -->
 
-### Exporting a standalone HTML page
+<!-- ### Basic use
+
+<!-- TODO maybe this should be inverted -->
+
+<!-- Fable's CLI compiles a story into instructions for its runtime. -->
+
+<!-- ```sh
+fable examples/crime.md > story.js
+``` -->
+
+### Getting started
+
+The primary use of the CLI is to convert a story into a publishable HTML page.
 
 ```sh
 fable -s examples/crime.md -o _build
 open _build/index.html
-
-# add other files to _build before deploying, e.g. to itch
-cd _build
-zip -r game.zip *
-butler push game.zip $USER/$GAME:html5
 ```
-<!--
-### Compiling a Fable story
+
+For a simple story, you may now zip the contents of `_build` and upload it somewhere.
 
 ```sh
-fable examples/crime.md > story.js
+cd _build
+zip -r game.zip *
+
+# itch
+butler push game.zip $USER/$GAME:html5
 ```
--->
+
+See [Publishing](#publishing) if your story requires additional assets, such as code or music.
 
 ### Writing
+
+<!-- unfortunately the plugin is pretty much needed for a good writing workflow here, there's no first-order way -->
 
 A [vite plugin](vite-plugin-fable.js) is provided to support a writing workflow with hot reloading.
 Copy it into your project and add a vite.config.js to the root, like this.
@@ -531,15 +567,48 @@ You can then do
 vite --host --clearScreen=false
 ```
 
-and your story, and .js, .css, and .mp3 files beside it, will be watched for changes.
+and open your story in the browser.
+Your story js/css/mp3 files alongside it will be watched for changes, reloading as you edit them.
 
-vite will serve your compiled game from the build directory, falling back to the root for files it doesn't find.
+vite will serve files from the build directory, falling back to the project root for files it doesn't find.
 
-> [!WARNING]
-> If your deployment script copies such files into the build directory, stale ones may be served due to the fallback, making it appear like they are not being reloaded.
-> For now, users should delete the build directory after deploying and before developing further.
+### Publishing
 
-<!-- TODO find a way to fix this gotcha -->
+<!-- it's good to have a first-order way, so there's no magic -->
+
+Stories may be accompanied by assets, such as code or music.
+A simple way to handle them is to copy them manually into the build directory:
+
+```sh
+# add other files to _build before deploying
+cp music.mp3 _build
+```
+
+You can then zip and publish `_build` as before.
+
+<!-- this is the recommended way, though -->
+
+If you use the [vite plugin](#writing), do not copy files manually, as this may lead to stale files in the build directory and cause problems with hot reloading.
+Instead, use `vite build`, which will go a step further and bundle and minify the output.
+The output will end up in `dist`, which you can zip and publish.
+
+<!-- > [!WARNING]
+> If you publishing script copies such files into the build directory, stale ones may be served due to the fallback, making it appear like they are not being reloaded.
+> For now, users should delete the build directory after deploying and before developing further. -->
+
+<!-- TODO find a way to fix this gotcha, or streamline this whole workflow -->
+
+- Files referenced from the resulting HTML page (e.g. things you added to [`head`](#frontmatter); you can see `index.html` in `_build`) will automatically be included.
+- Files only referenced from scripts (e.g. music) must be listed in vite.config.js under `assets`.
+
+  ```js
+  fablePlugin({
+    ..., // other things, see Writing
+
+    // can be files or directories
+    assets: ["music.mp3", "other_music"],
+  })
+  ```
 
 ### Visualising a story
 
@@ -553,10 +622,21 @@ dot -Tsvg -o _build/graph.svg _build/graph.dot
 mmdc -i _build/graph.mmd -o _build/graph-mm.svg
 ```
 
-Because of Fable's expressiveness and dynamic nature, it is not possible to show a perfectly accurate graph, so the output is a best-effort overapproximation. Dotted edges indicate dynamic edges, indicating that it *may be possible* to jump between the connected sections. Following these rules of thumb will help produce a more accurate graph:
+Because of Fable's dynamic nature, it is not possible to show a perfectly accurate graph, so the output is a best-effort overapproximation.
+Dotted edges indicate dynamic edges, indicating that it *may be possible* to jump between the connected sections.
+
+Following these rules of thumb will help produce a more accurate graph:
 
 - If you only use `` `->SCENE` `` to jump, the output will be completely accurate.
-- If you jump dynamically, avoid dynamically constructing section names. Instead, invoke `jump` directly on constant section names, and put those in branches. That will produce accurate dotted edges.
+- If you jump dynamically, use `jump` and constant section names in branches, rather than dynamically constructing section names.
+  ```js
+  if (points > 5) {
+    jump('well_done')
+  } else {
+    jump('oops')
+  }
+  ```
+  That will produce accurate dotted edges.
 
 ### Expect tests
 
@@ -651,7 +731,7 @@ Ink is a scripting language: it is interpreted at runtime by a separate game eng
 
 # Developing Fable
 
-## Getting started
+## Installing dependencies
 
 ```sh
 opam install --deps-only .
@@ -671,8 +751,9 @@ The initial inputs to a machine are a Fable story, a seed, and the capability to
 Other inputs as it runs are choices, and meta things like rewind and hot reload, which also update the machine.
 The main output is a sequence of events, to be interpreted by e.g. the browser.
 
-The [runtime](runtime.js) maintains a machine ref and provides frontend-agnostic JS support for executing stories, e.g. `local` state, and other JS APIs stories use.
+The [runtime](runtime.js) maintains a machine ref and provides environment-agnostic JS support for executing stories, e.g. `local` state, and other JS APIs stories use.
 It is used by both the [testing](test/machine.t/main_test.js) and [browser](main_browser.js) frontends.
+This is the _imperative shell_ to the machine's _functional core_.
 
 The main [browser frontend](main_browser.js) takes care of efficiently turning a sequence of events into DOM updates.
 
