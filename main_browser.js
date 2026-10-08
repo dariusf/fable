@@ -339,7 +339,7 @@ window.addEventListener("keydown", (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key >= "1" && e.key <= "9") {
     e.preventDefault();
   }
-  if (e.key >= "1" && e.key <= "9") {
+  if (e.key >= "1" && e.key <= "9" && !document.querySelector("dialog[open]")) {
     chooseNth(+e.key);
   }
 });
