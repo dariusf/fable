@@ -15,6 +15,7 @@
     - [Browser](#browser)
     - [Audio](#audio)
     - [Randomness](#randomness)
+    - [Initialization](#initialization)
     - [Saving and loading](#saving-and-loading)
     - [How code is run](#how-code-is-run)
     - [Frontmatter](#frontmatter)
@@ -416,43 +417,110 @@ Given these, the random seed needs to be an input to the game somehow.
 - By default, a seed is chosen randomly, and saved, to support both hot reloading (in development) and loading saved games (on release).
 - For authors who want to use regression testing, the seed should be fixed by giving it in the [frontmatter](#frontmatter).
 
-### Saving and loading
+### Initialization
 
-By default, Fable persists reader choices in local storage.
-In short, if you don't do anything, your game will behave reasonably when the page is reloaded.
-Caveats below.
+Often we will want to run some code after Fable, its libraries, and any saved data load, but before the story first renders (and its prelude runs).
+Use cases include:
 
-It's advisable to at least set `local_storage_key`, so multiple games don't clobber each other's data.
+- [Loading assets](#audio)
+- [Migrating saved data](#saving-and-loading)
 
-<!-- TODO update this -->
+<!-- - Configuring Fable -->
+
+The `init` function can be defined for this purpose.
 
 ```js
-// define this on window, as it must run before the game is started;
-// Fable calls it automatically
-function beforeGameLoad() {
-  internal.local_storage_key += ".your-game"; // advised
-
-  // optional
-  internal.local_storage_version = 1; // the default
-  internal.on_game_load.push((data, _version) => {
-    state.your_data = data.your_data ?? 0;
-  });
-  internal.on_game_save = () => ({ your_data: do_something() });
+async function init() {
+  // load music
 }
 ```
 
+See [the lifecycle docs](#initialization-lifecycle) for more details.
+
+<!-- TODO editor does not do this yet -->
+
+### Saving and loading
+
+By default, Fable persists story progress to local storage.
+Readers can refresh the page, close their browser, etc., and everything will behave reasonably when they return, without needing to do anything special.
+
+**Kinds of state**
+There are three kinds of state in a Fable story.
+
+1. **History**, the choices made by readers. These are saved automatically.
+2. **Story state**, the state within a playthrough, e.g. mutations to JS variables which occur as the story unfolds. This is not saved, but can be derived from replaying history, assuming things are [deterministic](#randomness).
+3. **External state**, e.g. playtime, endings reached. This state is external to the story and persists across multiple playthroughs.
+
+Authors only need to specify how to save external state.
+That can be done using the following pattern.
+We'll use the example of computing playtime.
+
+```js
+async function init() {
+  const priorPlayTime = saveData.play_time ?? 0;
+  const sessionStart = Date.now();
+  beforeSave = () => {
+    saveData.play_time = priorPlayTime + (Date.now() - sessionStart);
+  };
+}
+```
+
+1. Load the baseline value from `saveData`, a special global, giving it a default. We can do this in `init` because [saved data has loaded by then](#initialization).
+2. Accumulate the value using story state. Here we don't do this, because playtime is implicitly accumulated by us computing it from the initial timestamp.
+3. Write the new value as _baseline + accumulated_, using `beforeSave`, a callback which runs before Fable saves.
+
+For idempotent updates, we can skip the accumulation and just do:
+
+```markdown
+# Good ending
+
+`saveData.good_ending = true`
+```
+
+**Versioning and migrating saved data**
+When releasing a new version of a game which changes what/how data is saved, we'll be faced with the problem of what to do with old saved data.
+
+The simplest thing to do is to _invalidate_ old data.
+By default, saved data is versioned under the story's [`title` and `version`](#frontmatter), so simply bumping the version will accomplish this, causing all players to harmlessly start over without affecting the old data.
+
+As the old data will still be present under the version it was saved at, another thing that can be done is to _migrate_ it.
+We can do this in `init` as well, accessing it using `previousSave(version)`.
+For example, this changes how some data relating to endings is stored.
+
+```js
+async function init() {
+  const old = previousSave(0);
+  if (old && saveData.endings === undefined) {
+    saveData.endings = old.data?.endings ?? {};
+  }
+}
+```
+
+**Removing saved data**
+The `clearSaveData` function will remove saved data for the current version. Use this for in-game controls to let the player start over.
+
 <!-- TODO note that Fable's own data (choice-history) is not versioned -->
 
-The rest is for persisting user-defined data.
+**Divergence**
+History is saved automatically.
+This is all well and good for finished stories.
+However, what happens if you remove or reword some choices in a new version of a story?
+When the new version loads the old history, it will just stop at the first choice which can no longer be taken; this is called *divergence* from the previous history.
 
-- Save data can optionally be versioned, to give the option of invalidating or migrating old save data.
-- When Fable wants to save data, it will call `on_game_save`, where you can supply what data should be saved.
-- When Fable wants to load data, it will call all the functions in `on_game_load`, passing the data you saved, as well as the version.
+This is a reasonable, best-effort default, in that it is often better than always starting over completely.
+The tradeoff is that it may leave the player somewhere odd, so it may appear like a glitch.
+However, it will be at a point they reached through their own choices.
 
-Caveats:
+If this is undesired, you must invalidate the history by bumping the version.
 
-- **Race conditions** If your game is open in multiple tabs, the last one the user takes an action in will have its data saved
-- **When does saving/loading occur?** You generally shouldn't rely on this, but in case, saving currently happens after interactions, and loading happens before the game starts or when the back button is pressed. If the user closes the tab or switches app and never returns, nothing will saved.
+**Other caveats and info:**
+
+- **Race conditions** If your game is open in multiple tabs, the last one the user takes an action in will have its data saved.
+- **When does saving occur?** Saving currently happens after every interaction, after a hot reload, and when the back button is pressed. Note that this means external state changes after the last interaction will be lost, e.g. playtime, if the tab is closed before making another choice. For such cases you can call `saveGame` explicitly after mutating `saveData`.
+- **When does loading occur?** Loading happens once, before `init` runs.
+
+<!--
+
 - **Escape hatches** In case something goes wrong with the save data (data corruption, bug), the game could become unable to start, depending on how you're handling it. To mitigate this, there are two escape hatches:
   1. The query parameter `?reset=1` can be appended to the URL. This is your means of ensuring a reader's game has its state reset.
   2. An escape hatch can be placed on text in the game like this:
@@ -467,14 +535,9 @@ Caveats:
 
     Tapping it 5 times in 2 seconds will prompt the user for confirmation on whether they want to reset.
 
-- **Divergence** Persisting the reader's game state *just works* by saving their history of choices and playing through the entire sequence on reload. However, what happens if you remove or reword some of those choices? This is called *divergence* from the previous history; when it happens, the game will just stop at the point of divergence. This is a reasonable, best-effort default, in that it seems better than starting over completely. It also goes through the hot reloading flow so it's well-tested. The tradeoff is that it may leave the player somewhere odd, so it may appear like a glitch. However, it will be at a point they reached through their own choices.
-- The save file will not be versioned. if it's invalid, i'll just throw it away and not attempt to migrate it. or write code to migrate and never break old fields.
-- **Guarantees on persistence** Unfortunately there are no guarantees on how long saved data will be persisted; it varies a lot across browsers, platforms, settings, and *time*. It is best to assume that the saved data is transient: it survives refreshes, but you probably shouldn't rely on it surviving beyond a few days. As of the time of writing, it works this way on itch in mobile and desktop browsers.
-  - It has historically not worked at all on mobile Safari and itch
-  - It appears to work now, but I've seen reports that the data is cleared after 7 days, as well as upon killing the browser app
+-->
 
-<!-- - different browsers remove the save at different times. safari apparently does it when the app is killed, or in 7 days. who knows -->
-
+- **Guarantees on persistence** There are unfortunately no guarantees on how long saved data will be persisted in local storage. It varies a lot across browsers, platforms, settings, and time. It is best to assume that the saved data is transient: it survives refreshes, but you probably shouldn't rely on it surviving beyond a few days. As of the time of writing, it works this way on itch in iOS and desktop browsers.
 
 <!--
 Apr 2026 ios safari itch loses save data on quit
@@ -502,6 +565,7 @@ Story metadata is specified using frontmatter.
 ```markdown
 ---
 title: My Story
+version: 1
 head: |
     <link href="extensions.css" rel="stylesheet">
     <script src="modal.js"></script>
@@ -510,6 +574,7 @@ seed: 12345
 ```
 
 - `title`: this sets the title of the HTML page when publishing
+- `version`: the version of the game; bumping this resets the [saved data](#saving-and-loading)
 - `head`: this adds additional files to the `<head>` section of the output HTML page.
 - `seed`: fix the random [seed](#randomness)
 

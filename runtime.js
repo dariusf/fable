@@ -17,8 +17,13 @@ function initRuntime(c) {
   caps_ = c;
 }
 
-/** @type {FableMachine | null} */
+/** A reference to the machine
+ * @type {FableMachine | null} */
 var handle_ = null;
+
+/** The current story, after a load or edit
+ * @type {Story} */
+var currentStory_;
 
 /** @returns {FableMachine} */
 function machine() {
@@ -45,6 +50,7 @@ var scenes = {};
 
 /** @param {Story} s */
 function initStoryState(s) {
+  currentStory_ = s;
   caps().configure?.(s.frontmatter);
   for (const k of Object.keys(scenes)) {
     delete scenes[k];
@@ -55,19 +61,48 @@ function initStoryState(s) {
   resetLocalSectionState();
 }
 
+/** User-facing object which is mutated to save things,
+ * persisted transparently.
+ * @type {Record<string, any>} */
+var saveData = {};
+
+/** Build the storage key for a story.
+ * Enables bumping the version to start over with fresh saved data.
+ * @param {Story} s @param {string=} version */
+function storageKey(s, version) {
+  const title = s.frontmatter.title ?? "untitled";
+  return `fable:${title}:${version ?? s.frontmatter.version ?? "0"}`;
+}
+
+/** Read the saved data and sync it to the global saveData
+ * @param {Story} s @returns {SaveData} */
+function restoreSave(s) {
+  const save = caps().storage.get(storageKey(s)) ?? { choices: [] };
+  for (const k of Object.keys(saveData)) {
+    delete saveData[k];
+  }
+  Object.assign(saveData, save.data ?? {});
+  return save;
+}
+
+/** For accessing previous versions of the saved data to migrate it.
+ * @param {string | number} version @returns {SaveData | null} */
+function previousSave(version) {
+  return caps().storage.get(storageKey(currentStory_, String(version)));
+}
+
 /** @param {Story} s @returns {number | undefined} */
 function frontmatterSeed(s) {
   const n = parseInt(s.frontmatter.seed);
   return Number.isNaN(n) ? undefined : n;
 }
 
-// fresh machine over a story, resuming a save if one applies
-/** @param {Story} s @returns {string | undefined} */
-function loadStory(s) {
+// Fresh machine over a story, resuming a save if one applies
+/** @param {Story} s @param {SaveData} save @returns {string | undefined} */
+function loadStory(s, save) {
   initStoryState(s);
   caps().clear();
 
-  const save = caps().storage.get() ?? { choices: [] };
   const seed = save.seed ?? frontmatterSeed(s) ?? caps().defaultSeed();
   handle_ = Machine.create(s, { eval: evalCapability, seed });
 
@@ -95,7 +130,7 @@ function applyEdit(s) {
   const divergedAt = rerender(machine().hotReload(s));
 
   // when reloading, we want to see the updated, diverged state
-  saveCurrentChoices();
+  saveGame();
 
   return divergedAt;
 }
@@ -116,13 +151,15 @@ function rerender(res) {
 // rewind: truncate-history + headless replay + one rebuild
 function handleBack() {
   resetLocalSectionState();
-  return rerender(machine().rewind(1));
+  const divergedAt = rerender(machine().rewind(1));
+  saveGame();
+  return divergedAt;
 }
 
 /** Response to a user interaction (choose/activate)
  * @param {Result} res */
 function interacted(res) {
-  saveCurrentChoices();
+  saveGame();
   caps().afterInteract?.();
   render(res.events);
 }
@@ -192,15 +229,17 @@ function last_choice() {
 
 // PERSISTENCE (the machine's history is the save)
 
-function saveCurrentChoices() {
-  caps().storage.set({
+function saveGame() {
+  globalThis.beforeSave?.();
+  caps().storage.set(storageKey(currentStory_), {
     choices: machine().history(),
     seed: machine().seed(), // save the seed to improve determinism
+    data: saveData,
   });
 }
 
 function clearSaveData() {
-  caps().storage.clear();
+  caps().storage.clear(storageKey(currentStory_));
 }
 
 // TESTING

@@ -23,10 +23,12 @@ initRuntime({
   storage: {
     get: () => null,
     set: () => {},
+    clear: () => {},
   },
 });
 
-loadStory(Fable.parse(md));
+const story = Fable.parse(md);
+loadStory(story, restoreSave(story));
 
 for (const label of choices) {
   const isChoice =

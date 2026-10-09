@@ -231,50 +231,53 @@ function scrollToLastOld(behavior = "smooth") {
   }
 }
 
-// PERSISTENCE (localStorage)
+// PERSISTENCE
 
-const local_storage_key = "fable";
-const local_storage_version = 2;
-
-/** @type {RuntimeCapabilities["storage"]} */
-const localStorageBacked = {
-  get() {
+/** a generic interface to localStorage
+ * @type {RuntimeCapabilities["storage"]} */
+const localStorageBackend = {
+  get(key) {
     const params = new URLSearchParams(window.location.search);
     if (params.get("reset") === "1") {
-      localStorage.removeItem(local_storage_key);
+      localStorage.removeItem(key);
       return null;
     }
     const choices = params.get("choices");
     if (choices) {
       return { choices: choices.split("|") };
     }
+
+    // editor can't use local storage
     if (!isStandalone()) return null;
+
     try {
-      const raw = localStorage.getItem(local_storage_key);
+      const raw = localStorage.getItem(key);
       if (!raw) {
         return null;
       }
       const save = JSON.parse(raw);
-      return save ? { choices: save.choices, seed: save.seed } : null;
+      return save
+        ? { choices: save.choices, seed: save.seed, data: save.data }
+        : null;
     } catch (e) {
       console.error("error loading game", e);
       return null;
     }
   },
-  set(save) {
+  set(key, save) {
+    // editor can't use local storage
     if (!isStandalone()) return;
-    localStorage.setItem(
-      local_storage_key,
-      JSON.stringify({ version: local_storage_version, ...save }),
-    );
+    localStorage.setItem(key, JSON.stringify(save));
   },
-  clear() {
-    localStorage.removeItem(local_storage_key);
+  clear(key) {
+    localStorage.removeItem(key);
   },
 };
 
-// back button
+// the back button
 window.onpopstate = function () {
+  // is only for development, not for the editor,
+  // and ignored before a machine is created
   if (!isInDev() || !isStandalone() || !handle_) return;
   handleBack();
 };
@@ -292,7 +295,10 @@ function chooseNth(n) {
 
 /** @type {{[T in EditorMsg["type"]]: (msg: Extract<EditorMsg, {type: T}>) => string | undefined | void}} */
 const editorCommands = {
-  LOAD: (msg) => loadStory(Fable.parse(msg.md)),
+  LOAD: (msg) => {
+    const s = Fable.parse(msg.md);
+    return loadStory(s, restoreSave(s));
+  },
   EDIT: (msg) => applyEdit(Fable.parse(msg.md)),
   BACK: () => handleBack(),
   CHOOSE: (msg) => chooseNth(msg.index),
@@ -350,7 +356,7 @@ async function main() {
     clear: clearContent,
     defaultSeed: () =>
       isDeterministic() ? 1 : Math.floor(Math.random() * 2 ** 31),
-    storage: localStorageBacked,
+    storage: localStorageBackend,
     configure: (frontmatter) => {
       tweet_style_choices = frontmatter.twine_mode === "true";
     },
@@ -362,8 +368,9 @@ async function main() {
       postStatus();
     },
   });
+  const save = restoreSave(story);
   await window.init?.();
-  loadStory(story);
+  loadStory(story, save);
 }
 
 // ENVIRONMENT PREDICATES

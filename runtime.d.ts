@@ -1,6 +1,8 @@
 interface SaveData {
   choices: string[];
+  // every write includes a seed, some paths initialising this don't include a seed
   seed?: number;
+  data?: Record<string, any>;
 }
 
 // Capabilities the runtime needs from its environment (browser or test harness)
@@ -9,9 +11,9 @@ interface RuntimeCapabilities {
   clear(): void;
   defaultSeed(): number;
   storage: {
-    get(): SaveData | null;
-    set(save: SaveData): void;
-    clear(): void;
+    get(key: string): SaveData | null;
+    set(key: string, save: SaveData): void;
+    clear(key: string): void;
   };
   configure?(frontmatter: Record<string, string>): void;
   afterInteract?(): void;
@@ -21,3 +23,5 @@ interface RuntimeCapabilities {
 declare var init: (() => Promise<void> | void) | undefined;
 
 declare var afterRender: (() => void) | undefined;
+
+declare var beforeSave: (() => void) | undefined;
