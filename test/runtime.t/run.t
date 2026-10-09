@@ -271,6 +271,13 @@ This has to be checked dynamically because jumps may be produced by meta blocks.
     ><span>y</span><span>, float below one:</span><span> </span><span>true</span>
   </div>
 
+  $ run ../programs/api-random-seed.md
+  <div class="para">
+    <span>roll:</span><span> </span><span>5</span><span>, coin:</span
+    ><span> </span><span>true</span><span>, pick:</span><span> </span
+    ><span>y</span>
+  </div>
+
   $ run ../programs/api-last-choice.md second
   <div class="para"><span>you chose</span><span> </span><span>second</span></div>
 

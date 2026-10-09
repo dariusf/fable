@@ -14,6 +14,7 @@
     - [Stories](#stories)
     - [Browser](#browser)
     - [Audio](#audio)
+    - [Randomness](#randomness)
     - [Saving and loading](#saving-and-loading)
     - [How code is run](#how-code-is-run)
     - [Frontmatter](#frontmatter)
@@ -22,7 +23,7 @@
     - [Writing](#writing)
     - [Publishing](#publishing)
     - [Visualising a story](#visualising-a-story)
-    - [Expect tests](#expect-tests)
+    - [Regression tests](#regression-tests)
     - [Random testing](#random-testing)
   - [Editor](#editor)
   - [Fabula](#fabula)
@@ -326,7 +327,6 @@ The following may be used when writing stories.
 - `seen.SECTION`: the number of times SECTION has been seen; can be used in a truthy manner
 - `turns_since(SECTION)`: turns elapsed since SECTION was last visited
 - `last_choice()`: label of the most recent choice made
-- Replay-safe randomness: `random()`, `randomFrom(xs)`, `coin()`, `randomIncl(lo, hi)`, `randomExcl(lo, hi)`
 - `clickAll(...labels)`: take a sequence of choices by label
 - Builders for Fable fragments in interpolations: `jump(label)`, `tunnel(label)`
 
@@ -400,7 +400,21 @@ Hence:
   - On itch, the initial click to start your game in fullscreen suffices, so you can start playing music right away.
   - When developing locally, or if you refresh the page, you'll have to make a choice for the music to start, but it will continue fine after that. Some hot reloads need to refresh the page, e.g. adding a .js file to your game, and this will also happen then.
 
-- General tip for iOS: audio won't play unless you disable silent mode.
+- General tip for iOS: audio won't play unless you disable silent mode. This often needs to be communicated to players too.
+
+### Randomness
+
+Fable provides a number of [APIs](runtime.js) for deterministic randomness: `random()`, `randomFrom(xs)`, `coin()`, `randomIncl(lo, hi)`, `randomExcl(lo, hi)`.
+
+These should be used instead of Math.random because of
+
+1. Hot reloading: when editing a story and replaying it back to wherever it is, all the same random choices should be made.
+2. [Regression testing](#regression-tests): we don't want captured output to change when nothing in the story has changed.
+
+Given these, the random seed needs to be an input to the game somehow.
+
+- By default, a seed is chosen randomly, and saved, to support both hot reloading (in development) and loading saved games (on release).
+- For authors who want to use regression testing, the seed should be fixed by giving it in the [frontmatter](#frontmatter).
 
 ### Saving and loading
 
@@ -491,11 +505,13 @@ title: My Story
 head: |
     <link href="extensions.css" rel="stylesheet">
     <script src="modal.js"></script>
+seed: 12345
 ---
 ```
 
 - `title`: this sets the title of the HTML page when publishing
 - `head`: this adds additional files to the `<head>` section of the output HTML page.
+- `seed`: fix the random [seed](#randomness)
 
 <!-- TODO others -->
 
@@ -638,7 +654,7 @@ Following these rules of thumb will help produce a more accurate graph:
   ```
   That will produce accurate dotted edges.
 
-### Expect tests
+### Regression tests
 
 When writing an extensive story, it's very useful to guard against regressions by recording the result of a playthrough and comparing it against what you get in subsequent versions.
 
@@ -747,7 +763,7 @@ A Fable story is compiled into a map of sequences of instructions. Instructions 
 Instructions are executed by a yielding [abstract machine](fabula/machine.mli) with an explicit frame stack.
 It is designed to support all execution of Fable stories headlessly.
 
-The initial inputs to a machine are a Fable story, a seed, and the capability to evaluate JS.
+The initial inputs to a machine are a Fable story, a [seed](#randomness), and the capability to evaluate JS.
 Other inputs as it runs are choices, and meta things like rewind and hot reload, which also update the machine.
 The main output is a sequence of events, to be interpreted by e.g. the browser.
 

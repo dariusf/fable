@@ -55,6 +55,12 @@ function initStoryState(s) {
   resetLocalSectionState();
 }
 
+/** @param {Story} s @returns {number | undefined} */
+function frontmatterSeed(s) {
+  const n = parseInt(s.frontmatter.seed);
+  return Number.isNaN(n) ? undefined : n;
+}
+
 // fresh machine over a story, resuming a save if one applies
 /** @param {Story} s @returns {string | undefined} */
 function loadStory(s) {
@@ -62,7 +68,7 @@ function loadStory(s) {
   caps().clear();
 
   const save = caps().storage.get() ?? { choices: [] };
-  const seed = save.seed ?? caps().defaultSeed();
+  const seed = save.seed ?? frontmatterSeed(s) ?? caps().defaultSeed();
   handle_ = Machine.create(s, { eval: evalCapability, seed });
 
   if (save.choices.length > 0) {
