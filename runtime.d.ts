@@ -1,5 +1,5 @@
 interface SaveData {
-  choices: string[];
+  choices: HistoryEntry[];
   // every write includes a seed, some paths initialising this don't include a seed
   seed?: number;
   data?: Record<string, any>;
@@ -17,6 +17,7 @@ interface RuntimeCapabilities {
   };
   configure?(frontmatter: Record<string, string>): void;
   afterInteract?(): void;
+  readWidgets?(): Record<string, string>;
 }
 
 // The user defines this to load assets and such

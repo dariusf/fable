@@ -33,10 +33,22 @@ module FromJv = struct
           (* objects etc.: JS string coercion, as `v + ""` today *)
           M.VString
             (Jv.apply (Jv.get Jv.global "String") [| v |] |> Jv.to_string)
+
+  let history_entry (v : Jv.t) : M.history_entry =
+    let widget = Jv.get v "widget" in
+    if Jv.is_none widget then M.Choice (Jv.get v "choice" |> Jv.to_string)
+    else
+      M.Widget
+        { key = Jv.to_string widget; value = Jv.get v "value" |> Jv.to_string }
 end
 
 (* Hand-written event conversion (hot path; no yojson round trip). *)
 module ToJv = struct
+  let history_entry : M.history_entry -> Jv.t = function
+    | M.Choice label -> Jv.obj [| ("choice", Jv.of_string label) |]
+    | M.Widget { key; value } ->
+      Jv.obj [| ("widget", Jv.of_string key); ("value", Jv.of_string value) |]
+
   let obj ty fields =
     Jv.obj (Array.of_list (("type", Jv.of_string ty) :: fields))
 
@@ -110,7 +122,7 @@ exception Eval_error of string
 let () =
   Printexc.register_printer (function Eval_error s -> Some s | _ -> None)
 
-let eval_with_caps caps stref =
+let eval caps stref =
   let f = Jv.get caps "eval" in
   fun game code ->
     (* upon eval, make the current game state visible *)
@@ -124,6 +136,11 @@ let eval_with_caps caps stref =
            (Jstr.to_string (Jv.Error.name e)
            ^ ": "
            ^ Jstr.to_string (Jv.Error.message e)))
+
+let set_widget caps =
+  let f = Jv.get caps "setWidget" in
+  fun key value ->
+    ignore (Jv.apply f [| Jv.of_string key; Jv.of_string value |])
 
 (* The handle is a stateful reference to a machine which wraps the functional core written in OCaml *)
 let machine_handle (st : state) : Jv.t =
@@ -179,13 +196,19 @@ let machine_handle (st : state) : Jv.t =
             let mach = st.machine in
             reseed ();
             produce_result (M.rewind ~n mach)) );
+      ( "widgetInput",
+        Jv.callback ~arity:2 (fun key value ->
+            let key = Jv.to_string key in
+            let value = Jv.to_string value in
+            st.machine <- M.widget_input st.machine ~key ~value;
+            st.game <- M.game st.machine) );
       ( "loadSaved",
         (* headless replay of a saved history over the same program *)
-        Jv.callback ~arity:1 (fun labels ->
-            let labels = Jv.to_list Jv.to_string labels in
+        Jv.callback ~arity:1 (fun entries ->
+            let entries = Jv.to_list FromJv.history_entry entries in
             let mach = st.machine in
             reseed ();
-            replay_result (M.load_saved mach labels)) );
+            replay_result (M.load_saved mach entries)) );
       ( "hotReload",
         (* replay the session history against a newly parsed story *)
         Jv.callback ~arity:1 (fun story ->
@@ -204,6 +227,9 @@ let machine_handle (st : state) : Jv.t =
             | None -> Jv.null
             | Some s -> Jv.of_string s) );
       ( "history",
+        Jv.callback ~arity:1 (fun () ->
+            Jv.of_list ToJv.history_entry (M.history st.game)) );
+      ( "choiceHistory",
         Jv.callback ~arity:1 (fun () ->
             Jv.of_list Jv.of_string (M.choice_history st.game)) );
       ( "turnsSince",
@@ -244,7 +270,13 @@ let () =
                let stref = ref None in
                let m =
                  (* only the ref is passed in here (i.e. a knot); it's not read! *)
-                 M.create { M.program; eval = eval_with_caps caps stref; seed }
+                 M.create
+                   {
+                     M.program;
+                     eval = eval caps stref;
+                     seed;
+                     set_widget = set_widget caps;
+                   }
                in
                let st =
                  {

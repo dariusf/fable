@@ -298,3 +298,22 @@ Sections created in meta blocks do not make it out.
   $ run ../programs/error-dynamic-section.md
   <div class="para"><span>hello</span></div>
   <div class="para error" style="color: red">Jump: section a not found</div>
+
+Widget values are recorded before a choice and readable by story code.
+
+  $ run ../programs/widgets-select.md 'select:mood:tense' Continue Again
+  <div class="para old"><span>How do you feel?</span></div>
+  <div class="para old">
+    <span
+      ><select id="mood">
+        <option>calm</option>
+        <option>tense</option>
+      </select></span
+    >
+  </div>
+  <div class="para old">
+    <span>You felt</span><span> </span><span>tense</span><span>.</span>
+  </div>
+  <div class="para">
+    <span>You felt</span><span> </span><span>tense</span><span>.</span>
+  </div>

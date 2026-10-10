@@ -16,6 +16,7 @@
     - [Audio](#audio)
     - [Randomness](#randomness)
     - [Initialization](#initialization)
+    - [Widgets](#widgets)
     - [Saving and loading](#saving-and-loading)
     - [How code is run](#how-code-is-run)
     - [Frontmatter](#frontmatter)
@@ -35,6 +36,7 @@
   - [Compiler](#compiler)
   - [Runtime](#runtime)
   - [Initialization lifecycle](#initialization-lifecycle)
+  - [Replay and widgets](#replay-and-widgets)
   - [Editor](#editor-1)
     - [Restarting](#restarting)
 
@@ -349,11 +351,10 @@ The following may be used when writing stories.
 
 <!-- - `internal`: internal state of the runtime system -->
 <!-- - `internal.bug_detectors`: push oracles in here -->
-<!-- - `internal.history_interpretations`: push functions of type `(string) => boolean`. They should return true (and perform side effects) to indicate that an ad hoc history item is handled upon hot reload
+<!--
     - Hooks: these are lists of callbacks, typically of type `() => void`; exceptions are noted
       - `internal.on_scene_visit`
       - `internal.on_interact`: called at some point when a choice is made
-      - `pre_push_history`: called before a choice history item is pushed; may be used to add ad hoc history items, whose meaning can then be defined using `history_interpretations`. Return `true` to make the callback one-shot.
 - `clear()`: clears the page
 - `jump(label)`, `tunnel(label)`: builders for Fable fragments which may help reduce the amount of quoting required -->
 
@@ -438,6 +439,39 @@ async function init() {
 See [the lifecycle docs](#initialization-lifecycle) for more details.
 
 <!-- TODO editor does not do this yet -->
+
+### Widgets
+
+Widgets are HTML elements whose values the story can depend on.
+
+For example, a `<select>` is used here to get an input from the reader. It must be given an `id`.
+Its value will then be available in the rest of the story as `widgets.<id>`.
+
+```markdown
+How do you feel?
+
+<select id="mood">
+  <option>calm</option>
+  <option>tense</option>
+</select>
+
+- Continue `->next`
+
+# next
+
+You felt `$widgets.mood`.
+```
+
+Note that `widgets.mood` will be `undefined` until a choice has been taken with that `<select>` present.
+It should either be given a default on use
+
+```markdown
+`$widgets.mood ?? "calm"`
+```
+
+or you should ensure that there is no way to reach it without going through the `<select>`.
+
+Only `<select>` elements are currently supported.
 
 ### Saving and loading
 
@@ -826,15 +860,15 @@ A Fable story is compiled into a map of sequences of instructions. Instructions 
 ## Runtime
 
 Instructions are executed by a yielding [abstract machine](fabula/machine.mli) with an explicit frame stack.
-It is designed to support all execution of Fable stories headlessly.
+The machine is designed to support execution of Fable stories headlessly.
 
-The initial inputs to a machine are a Fable story, a [seed](#randomness), and the capability to evaluate JS.
-Other inputs as it runs are choices, and meta things like rewind and hot reload, which also update the machine.
-The main output is a sequence of events, to be interpreted by e.g. the browser.
+The initial inputs to a machine are a Fable story, a [seed for determinism](#randomness), and a set of environment-agnostic _capabilities_ (to evaluate JS, mutate the DOM, etc.).
+Other inputs it receives as it runs are choices, and commands like to rewind and hot reload, which also change the state of the machine.
+The machine conceptually outputs a sequence of events, which is interpreted to render to the DOM.
 
 The [runtime](runtime.js) maintains a machine ref and provides environment-agnostic JS support for executing stories, e.g. `local` state, and other JS APIs stories use.
-It is used by both the [testing](test/machine.t/main_test.js) and [browser](main_browser.js) frontends.
-This is the _imperative shell_ to the machine's _functional core_.
+It is in turn used by both the [testing](test/machine.t/main_test.js) and [browser](main_browser.js) frontends.
+This is the [_imperative shell_](https://www.destroyallsoftware.com/screencasts/catalog/functional-core-imperative-shell) to the machine's _functional core_.
 
 The main [browser frontend](main_browser.js) takes care of efficiently turning a sequence of events into DOM updates.
 
@@ -850,6 +884,25 @@ Scripts in the `<head>` of [story.html](story.html) load, along with extra ones 
   - Saved data is read
   - `init` is called asynchronously, if defined
   - The story is rendered, possibly with saved data
+
+## Replay and widgets
+
+Like choices, [widget](#widgets) inputs need to be replayed as the machine runs.
+
+- The machine represents such inputs abstractly, as `Widget { key; value }`.
+- Players may interact with the widgets in the DOM however they like. Nothing happens at this point.
+- On choice/link, the state of the DOM is read, and the values of widgets which differ from `widgets` are supplied to the machine as widget inputs ([`widgetInput`](fable.d.ts)).
+  - This happens before the choice itself, so the choice's instructions can depend on them.
+  - Widget inputs also precede the choice in history.
+- When a widget input is received, the machine uses its [`set_widget` capability](fabula/machine.mli) to set the [`widgets` global](runtime.js) (which also only records key and value).
+  - The story then refers to the inputs of widgets via `widgets`.
+  - Because the story depends only on `widgets` and not the DOM, it can be replayed headlessly.
+  - `loadSaved`, `hotReload`, and `rewind` all use `widgetInput` to rebuild `widgets`.
+- Rewinding acts on _turns_, which are `w* c` (`c` for choice, `w` for widget). Upon rewinding one turn, assuming the history is `c w w w c`, we will get a history of just `c`.
+- When rendering widgets (e.g. on replay after loading from save, hot reload, or rewind), their values are updated from `widgets` ([`writeWidgets`](main_browser.js)), closing the loop.
+
+Only `<select>` elements are currently recognised.
+Other elements can be added in `readWidgets`/`writeWidgets`, which are the only places that need to be changed.
 
 ## Editor
 

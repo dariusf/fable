@@ -226,17 +226,25 @@ type game = {
   last_visited_turn : int SMap.t;
   current_section : string option;
   choice_state : SSet.t; (* consumed Consumable ids *)
-  choice_history : string Acc.t; (* in order *)
+  choice_history : history_entry Acc.t; (* in order *)
 }
 
-type origin = {
+and history_entry =
+  | Choice of string
+  | Widget of {
+      key : string;
+      value : string;
+    }
+
+type inputs = {
   program : program;
   seed : int;
   eval : game -> string -> value;
+  set_widget : string -> string -> unit;
 }
 
 type machine = {
-  origin : origin;
+  inputs : inputs;
   sections : cmd list SMap.t;
   stack : frame list;
       (** Reified continuation as stack of frames. Top = current *)
@@ -289,7 +297,7 @@ let halt m msg =
 let fresh_id m = ({ m with next_id = m.next_id + 1 }, m.next_id)
 
 let eval_safe m code =
-  match m.origin.eval m.game code with
+  match m.inputs.eval m.game code with
   | v -> Ok v
   | exception e -> Error (describe_exn e)
 
@@ -326,17 +334,17 @@ let default_game =
     choice_history = Acc.empty;
   }
 
-let create (origin : origin) : machine =
+let create (inputs : inputs) : machine =
   let sections =
     (* first occurrence wins, as with the old assoc list *)
     List.fold_left
       (fun acc (s : scene) ->
         if SMap.mem s.name acc then acc else SMap.add s.name s.cmds acc)
-      SMap.empty origin.program.scenes
+      SMap.empty inputs.program.scenes
   in
   let m =
     {
-      origin;
+      inputs;
       sections;
       stack = [];
       open_runs = [];
@@ -347,7 +355,7 @@ let create (origin : origin) : machine =
       events = Acc.empty;
     }
   in
-  match origin.program.scenes with
+  match inputs.program.scenes with
   | [] -> m
   | section :: _ ->
     let m = visit_section m section.name in
@@ -648,7 +656,7 @@ let choose (m : machine) (choice_id : int) : machine * Event.t list =
           game =
             {
               m.game with
-              choice_history = Acc.add m.game.choice_history o.label;
+              choice_history = Acc.add m.game.choice_history (Choice o.label);
               choice_state =
                 (match o.consumable with
                 | Some id -> SSet.add id m.game.choice_state
@@ -667,6 +675,17 @@ let choose (m : machine) (choice_id : int) : machine * Event.t list =
       in
       run m)
   | _ -> run (halt m "not awaiting a choice")
+
+let widget_input (m : machine) ~key ~value : machine =
+  m.inputs.set_widget key value;
+  {
+    m with
+    game =
+      {
+        m.game with
+        choice_history = Acc.add m.game.choice_history (Widget { key; value });
+      };
+  }
 
 let choose_by_label (m : machine) (label : string) : machine * Event.t list =
   match m.status with
@@ -712,12 +731,14 @@ type replay_result = {
   diverged_at : string option;
 }
 
-let choose_many (m : machine) (labels : string list) : replay_result =
+let choose_many (m : machine) (entries : history_entry list) : replay_result =
   let m, events = run m in
-  let rec loop m events labels =
-    match labels with
+  let rec loop m events entries =
+    match entries with
     | [] -> { machine = m; events; diverged_at = None }
-    | label :: rest ->
+    | Widget { key; value } :: rest ->
+      loop (widget_input m ~key ~value) events rest
+    | Choice label :: rest ->
       let offered =
         match m.status with
         | Awaiting { items; _ } ->
@@ -732,21 +753,34 @@ let choose_many (m : machine) (labels : string list) : replay_result =
         loop m (events @ evs) rest
       end
   in
-  loop m events labels
+  loop m events entries
 
-let load_saved (m : machine) (labels : string list) : replay_result =
-  choose_many (create m.origin) labels
+let load_saved (m : machine) (entries : history_entry list) : replay_result =
+  choose_many (create m.inputs) entries
 
 let hot_reload (m : machine) (program : program) : replay_result =
   choose_many
-    (create { m.origin with program })
+    (create { m.inputs with program })
     (Acc.to_list m.game.choice_history)
+
+(* a turn is the widget entries recorded for a choice, followed by the choice *)
+let drop_turns n (history : history_entry list) : history_entry list =
+  let rec drop n rev =
+    if n = 0 then rev
+    else
+      match rev with
+      | [] -> []
+      | Choice _ :: rest -> drop (n - 1) (drop_widgets rest)
+      | Widget _ :: rest -> drop n rest
+  and drop_widgets = function
+    | Widget _ :: rest -> drop_widgets rest
+    | rest -> rest
+  in
+  List.rev (drop n (List.rev history))
 
 let rewind ?(n = 1) (m : machine) : machine * Event.t list =
   let history = Acc.to_list m.game.choice_history in
-  let keep = max 0 (List.length history - n) in
-  let truncated = List.filteri (fun i _ -> i < keep) history in
-  let { machine; events; diverged_at } = load_saved m truncated in
+  let { machine; events; diverged_at } = load_saved m (drop_turns n history) in
   match diverged_at with
   | None -> (machine, events)
   | Some at ->
@@ -787,7 +821,12 @@ let status m = m.status
 let game m = m.game
 let turns (g : game) = g.turns
 let current_section (g : game) = g.current_section
-let choice_history (g : game) = Acc.to_list g.choice_history
+let history (g : game) = Acc.to_list g.choice_history
+
+let choice_history (g : game) =
+  List.filter_map
+    (function Choice l -> Some l | Widget _ -> None)
+    (Acc.to_list g.choice_history)
 
 let turns_since (g : game) section =
   g.turns - Option.value ~default:0 (SMap.find_opt section g.last_visited_turn)
@@ -821,7 +860,9 @@ let run_and_capture ?(canned = []) src =
     in
     if m.status = Running then step m |> loop captured else (captured, m)
   in
-  let captured, m = loop None (create { program; seed = 0; eval }) in
+  let captured, m =
+    loop None (create { program; seed = 0; eval; set_widget = (fun _ _ -> ()) })
+  in
   (captured, Acc.to_list m.events)
 
 let check_spacing ?(canned = []) src =
@@ -978,7 +1019,9 @@ let%expect_test "space events land inside the right container" =
      inner spacing is computed within the emph's own event list *)
   let program = program_of_str {|a *b `$x` d*|} in
   let eval _ _code = VString "c" in
-  let _m, events = run (create { program; seed = 0; eval }) in
+  let _m, events =
+    run (create { program; seed = 0; eval; set_widget = (fun _ _ -> ()) })
+  in
   List.iter (fun e -> print_endline (Event.show e)) events;
   [%expect
     {|
@@ -989,7 +1032,13 @@ let%expect_test "space events land inside the right container" =
 
 let drive ?(canned = []) src labels =
   let m =
-    create { program = program_of_str src; eval = canned_eval canned; seed = 0 }
+    create
+      {
+        program = program_of_str src;
+        eval = canned_eval canned;
+        seed = 0;
+        set_widget = (fun _ _ -> ());
+      }
   in
   let m, events = run m in
   List.fold_left
@@ -1173,9 +1222,11 @@ let%expect_test "replay divergence" =
 |};
         eval = canned_eval [];
         seed = 0;
+        set_widget = (fun _ _ -> ());
       }
   in
-  print_endline ([%show: string option] (choose_many m ["No"]).diverged_at);
+  print_endline
+    ([%show: string option] (choose_many m [Choice "No"]).diverged_at);
   [%expect {| (Some "No") |}]
 
 let%expect_test "rewind" =
@@ -1218,6 +1269,67 @@ Hi
 
     1. Onward
     2. Stop
+    |}]
+
+let%expect_test "widgets are recorded per turn and rewound with it" =
+  let src = {|# start
+
+Hi
+
+- `sticky` Onward `->start`
+- Stop
+
+  Done.
+|} in
+  let applied = ref [] in
+  let m =
+    create
+      {
+        program = program_of_str src;
+        eval = canned_eval [];
+        seed = 0;
+        set_widget = (fun k v -> applied := (k, v) :: !applied);
+      }
+  in
+  let show_history g =
+    String.concat ","
+      (List.map
+         (function Choice l -> l | Widget { key; value } -> key ^ "=" ^ value)
+         (history g))
+  in
+  let { machine = m; diverged_at; _ } =
+    choose_many m
+      [
+        Widget { key = "mood"; value = "calm" };
+        Choice "Onward";
+        Widget { key = "mood"; value = "tense" };
+        Widget { key = "name"; value = "x" };
+        Choice "Onward";
+      ]
+  in
+  Format.printf "diverged %a@."
+    (Format.pp_print_option Format.pp_print_string)
+    diverged_at;
+  Format.printf "history %s, turns %d@."
+    (show_history (game m))
+    (turns (game m));
+  Format.printf "applied %s@."
+    (String.concat "," (List.rev_map (fun (k, v) -> k ^ "=" ^ v) !applied));
+  let m', _ = rewind ~n:1 m in
+  Format.printf "history %s, turns %d@."
+    (show_history (game m'))
+    (turns (game m'));
+  let m'', _ = rewind ~n:1 m' in
+  Format.printf "history %s, turns %d@."
+    (show_history (game m''))
+    (turns (game m''));
+  [%expect
+    {|
+    diverged
+    history mood=calm,Onward,mood=tense,name=x,Onward, turns 2
+    applied mood=calm,mood=tense,name=x
+    history mood=calm,Onward, turns 1
+    history , turns 0
     |}]
 
 let%expect_test "section-visit and turn bookkeeping" =

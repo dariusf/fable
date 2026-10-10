@@ -12,16 +12,25 @@ type value =
   | VString of string
   | VCmds of Ast.cmds  (** result of a Meta *)
 
+type history_entry =
+  | Choice of string
+  | Widget of {
+      key : string;
+      value : string;
+    }
+
 (** A machine is created from an [origin]: the inputs required to build its
     initial state. *)
-type origin = {
+type inputs = {
   program : Ast.program;
   seed : int;  (** for determinism *)
   eval : game -> string -> value;
       (** the capability to evaluate JS, which may observe some game state *)
+  set_widget : string -> string -> unit;
+      (** the capability to set a widget's value *)
 }
 
-val create : origin -> machine
+val create : inputs -> machine
 
 (** Instead of performing side effects, the machine emits a trace of events, to
     be consumed by a renderer. It runs synchronously and stops when the program
@@ -63,6 +72,9 @@ val choose : machine -> int -> machine * Event.t list
 
 val choose_by_label : machine -> string -> machine * Event.t list
 
+(** Provide a widget input. *)
+val widget_input : machine -> key:string -> value:string -> machine
+
 (** Takes a link_id *)
 val activate : machine -> int -> machine * Event.t list
 
@@ -85,17 +97,18 @@ type replay_result = {
     sense, not nontermination), where a choice which was made in a previous
     version of the program can no longer be made. Other operations are built on
     this. *)
-val choose_many : machine -> string list -> replay_result
+val choose_many : machine -> history_entry list -> replay_result
 
 (** Load from a saved history, typically at startup. *)
-val load_saved : machine -> string list -> replay_result
+val load_saved : machine -> history_entry list -> replay_result
 
 (** Replay this machine's choice history against a new program, usually the
     result of an edit *)
 val hot_reload : machine -> Ast.program -> replay_result
 
-(** Go back [n] choices. Produces a machine in that state, and the entire trace
-    required to render it, so re-rendering will replay side effects. *)
+(** Go back [n] turns. A turn is a choice and the widget values recorded for it.
+    Produces a machine in that state, as well as the entire trace required to
+    render it, so re-rendering will replay side effects. *)
 val rewind : ?n:int -> machine -> machine * Event.t list
 
 (** Ways to query the state of the machine *)
@@ -126,6 +139,7 @@ val game : machine -> game
 val turns : game -> int
 
 val current_section : game -> string option
+val history : game -> history_entry list
 val choice_history : game -> string list
 
 (** Turns elapsed since a section was last visited *)

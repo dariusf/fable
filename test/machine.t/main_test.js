@@ -38,10 +38,10 @@ for (const label of choices) {
       .some((c) => c.label.trim() === label.trim());
   if (isChoice) {
     console.log(`--- choose: ${label}`);
-    interacted(machine().chooseByLabel(label));
+    interacted(() => machine().chooseByLabel(label));
   } else {
     console.log(`--- activate: ${label}`);
-    interacted(machine().activateByLabel(label));
+    interacted(() => machine().activateByLabel(label));
   }
 }
 console.log(`--- status: ${machine().status()}, turns: ${machine().turns()}`);

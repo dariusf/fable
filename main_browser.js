@@ -92,7 +92,7 @@ function renderInline(i) {
       a.textContent = smartypants(i.label);
       a.onclick = (ev) => {
         ev.preventDefault();
-        interacted(machine().activate(i.linkId));
+        interacted(() => machine().activate(i.linkId));
       };
       return a;
     }
@@ -162,7 +162,7 @@ function interpretEvents(events, scrollBehavior = "smooth") {
           }
           a.onclick = (ev) => {
             ev.preventDefault();
-            interacted(machine().choose(item.choiceId));
+            interacted(() => machine().choose(item.choiceId));
           };
           li.appendChild(a);
           ul.appendChild(li);
@@ -215,7 +215,33 @@ function interpretEvents(events, scrollBehavior = "smooth") {
   }
 
   content.appendChild(fragment);
+  writeWidgets();
   scrollToLastOld(scrollBehavior);
+}
+
+// WIDGETS
+
+/** @returns {Record<string, string>} */
+function readWidgets() {
+  /** @type {Record<string, string>} */
+  const out = {};
+  for (const elt of document.querySelectorAll("#content [id]")) {
+    if (elt instanceof HTMLSelectElement) {
+      out[elt.id] = elt.value;
+    }
+    // TODO input, textarea, checkbox, radio
+  }
+  return out;
+}
+
+function writeWidgets() {
+  for (const [key, value] of Object.entries(widgets)) {
+    const elt = document.getElementById(key);
+    if (elt instanceof HTMLSelectElement) {
+      elt.value = value;
+    }
+    // TODO input, textarea, checkbox, radio
+  }
 }
 
 // scroll the last .old block to the top of the screen
@@ -233,6 +259,13 @@ function scrollToLastOld(behavior = "smooth") {
 
 // PERSISTENCE
 
+/** Parse a history entry encoded as a string for e.g. query params
+ * @param {string} s @returns {HistoryEntry} */
+function parseHistoryEntry(s) {
+  const m = /^select:([^:]*):(.*)$/s.exec(s);
+  return m ? { widget: m[1], value: m[2] } : { choice: s };
+}
+
 /** a generic interface to localStorage
  * @type {RuntimeCapabilities["storage"]} */
 const localStorageBackend = {
@@ -244,7 +277,7 @@ const localStorageBackend = {
     }
     const choices = params.get("choices");
     if (choices) {
-      return { choices: choices.split("|") };
+      return { choices: choices.split("|").map(parseHistoryEntry) };
     }
 
     // editor can't use local storage
@@ -326,7 +359,7 @@ function postStatus(divergedAt) {
   /** @type {StoryMsg} */
   const msg = {
     type: "STATUS",
-    historyLength: machine().history().length,
+    historyLength: machine().choiceHistory().length,
     divergedAt,
   };
   window.parent.postMessage(msg, "*");
@@ -357,6 +390,7 @@ async function main() {
     defaultSeed: () =>
       isDeterministic() ? 1 : Math.floor(Math.random() * 2 ** 31),
     storage: localStorageBackend,
+    readWidgets,
     configure: (frontmatter) => {
       tweet_style_choices = frontmatter.twine_mode === "true";
     },

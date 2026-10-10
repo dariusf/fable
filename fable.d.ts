@@ -37,8 +37,11 @@ interface Result {
 // Capabilities the machine needs from its environment
 interface MachineCapabilities {
   eval(code: string): unknown;
+  setWidget(key: string, value: string): void;
   seed: number;
 }
+
+type HistoryEntry = { choice: string } | { widget: string; value: string };
 
 interface FableMachine {
   start(): Result;
@@ -46,14 +49,16 @@ interface FableMachine {
   chooseByLabel(label: string): Result;
   activate(linkId: LinkId): Result;
   activateByLabel(label: string): Result;
+  widgetInput(key: string, value: string): void;
   rewind(n?: number): Result;
-  loadSaved(labels: string[]): Result;
+  loadSaved(entries: HistoryEntry[]): Result;
   hotReload(story: Story): Result;
   status(): Status;
   choices(): { choiceId: ChoiceId; label: string }[];
   turns(): number;
   currentScene(): string | null;
-  history(): string[];
+  history(): HistoryEntry[];
+  choiceHistory(): string[];
   turnsSince(scene: string): number;
   seen(scene: string): number;
   seed(): number;

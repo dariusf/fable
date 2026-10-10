@@ -48,6 +48,10 @@ function resetLocalSectionState() {
  * @type {Record<string, unknown[]>} */
 var scenes = {};
 
+/** Widget values recorded in the history, applied by the machine
+ * @type {Record<string, string>} */
+var widgets = {};
+
 /** @param {Story} s */
 function initStoryState(s) {
   currentStory_ = s;
@@ -57,6 +61,9 @@ function initStoryState(s) {
   }
   for (const scene of s.scenes) {
     scenes[scene.name] = scene.cmds;
+  }
+  for (const k of Object.keys(widgets)) {
+    delete widgets[k];
   }
   resetLocalSectionState();
 }
@@ -104,7 +111,13 @@ function loadStory(s, save) {
   caps().clear();
 
   const seed = save.seed ?? frontmatterSeed(s) ?? caps().defaultSeed();
-  handle_ = Machine.create(s, { eval: evalCapability, seed });
+  handle_ = Machine.create(s, {
+    eval: evalCapability,
+    setWidget: (key, value) => {
+      widgets[key] = value;
+    },
+    seed,
+  });
 
   if (save.choices.length > 0) {
     // headless replay, then one render of the buffered log
@@ -156,9 +169,21 @@ function handleBack() {
   return divergedAt;
 }
 
+function recordWidgets() {
+  const current = caps().readWidgets?.() ?? {};
+  for (const [key, value] of Object.entries(current)) {
+    if (widgets[key] !== value) {
+      machine().widgetInput(key, value);
+    }
+  }
+}
+
 /** Response to a user interaction (choose/activate)
- * @param {Result} res */
-function interacted(res) {
+ * @param {() => Result} act */
+function interacted(act) {
+  recordWidgets();
+  // the widget inputs have to be recorded in history before the user interaction records the choice
+  const res = act();
   saveGame();
   caps().afterInteract?.();
   render(res.events);
@@ -196,7 +221,7 @@ var internal = {
     return machine().currentScene();
   },
   get choice_history() {
-    return machine().history();
+    return machine().choiceHistory();
   },
 };
 
@@ -223,7 +248,7 @@ var seen = new Proxy(
   },
 );
 function last_choice() {
-  const h = machine().history();
+  const h = machine().choiceHistory();
   return h[h.length - 1];
 }
 
