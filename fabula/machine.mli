@@ -24,7 +24,7 @@ type history_entry =
 type inputs = {
   program : Ast.program;
   seed : int;  (** for determinism *)
-  eval : game -> string -> value;
+  eval : game -> [ `Value | `Effect ] -> string -> value;
       (** the capability to evaluate JS, which may observe some game state *)
   set_widget : string -> string -> unit;
       (** the capability to set a widget's value *)

@@ -1,0 +1,7 @@
+
+```js
+local.a = [1, 2, 3];
+
+function unused() {
+}
+```

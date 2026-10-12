@@ -317,3 +317,5 @@ Widget values are recorded before a choice and readable by story code.
   <div class="para">
     <span>You felt</span><span> </span><span>tense</span><span>.</span>
   </div>
+
+  $ run ../programs/run-undefined-result.md

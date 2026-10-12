@@ -239,7 +239,7 @@ and history_entry =
 type inputs = {
   program : program;
   seed : int;
-  eval : game -> string -> value;
+  eval : game -> [ `Value | `Effect ] -> string -> value;
   set_widget : string -> string -> unit;
 }
 
@@ -296,8 +296,8 @@ let halt m msg =
 
 let fresh_id m = ({ m with next_id = m.next_id + 1 }, m.next_id)
 
-let eval_safe m code =
-  match m.inputs.eval m.game code with
+let eval_safe m want code =
+  match m.inputs.eval m.game want code with
   | v -> Ok v
   | exception e -> Error (describe_exn e)
 
@@ -413,7 +413,7 @@ let rec label_inlines m (cmds : cmd list) :
           | Ok (m, inner) -> Ok (m, IEmph inner :: is)
           | Error m -> Error m)
         | Interpolate code ->
-          (match eval_safe m code with
+          (match eval_safe m `Value code with
           | Ok v -> Ok (m, IText (value_to_string v) :: is)
           | Error e ->
             Error
@@ -458,7 +458,7 @@ let offer_choice m (c : choice) : machine =
       internal_ok
       && List.for_all
            (fun g ->
-             match eval_safe !m g with
+             match eval_safe !m `Value g with
              | Ok v -> truthy v
              | Error e ->
                raise
@@ -526,7 +526,7 @@ let do_meta m kind code =
   let err m e =
     halt m (Format.sprintf "%s: error when executing %s: %s" kind_s code e)
   in
-  match eval_safe m code with
+  match eval_safe m `Value code with
   | Error e -> err m e
   | Ok v ->
     let cmds_result =
@@ -597,12 +597,12 @@ let step (m : machine) : machine =
     | Break -> m (* as today: space insertion takes care of it *)
     | VerbatimBlock s -> emit m (Event.Verbatim_block s)
     | Run code ->
-      (match eval_safe m code with
+      (match eval_safe m `Effect code with
       | Ok _ -> m
       | Error e ->
         halt m (Format.sprintf "Run: error when executing %s: %s" code e))
     | Interpolate code ->
-      (match eval_safe m code with
+      (match eval_safe m `Value code with
       | Ok v -> push_inline m (IText (value_to_string v))
       | Error e ->
         halt m
@@ -616,7 +616,7 @@ let step (m : machine) : machine =
       push_inline m (ILink { link_id = id; label })
     | Jump section -> do_jump m "Jump" section
     | JumpDynamic code ->
-      (match eval_safe m code with
+      (match eval_safe m `Value code with
       | Ok v -> do_jump m "JumpDynamic" (value_to_string v)
       | Error e ->
         halt m
@@ -707,7 +707,7 @@ let activate (m : machine) (link_id : int) : machine * Event.t list =
     (match link_kind with
     | `Code ->
       (* as today: link code is `dest()`; output-free, choices stay live *)
-      (match eval_safe m (dest ^ "()") with
+      (match eval_safe m `Effect (dest ^ "()") with
       | Ok _ -> run m
       | Error e ->
         run
@@ -840,7 +840,7 @@ let seen (g : game) section =
 (** Parses Fable source and runs the machine with it, capturing buffered
     ainlines at the point when the In_para frame is exhausted, right before
     popping *)
-let canned_eval canned _g code =
+let canned_eval canned _g _want code =
   match List.assoc_opt code canned with
   | Some v -> v
   | None -> failwith (Format.sprintf "eval stub: unknown code %S" code)
@@ -1018,7 +1018,7 @@ let%expect_test "space events land inside the right container" =
   (* structurally: the space before the emph belongs to the outer run, and
      inner spacing is computed within the emph's own event list *)
   let program = program_of_str {|a *b `$x` d*|} in
-  let eval _ _code = VString "c" in
+  let eval _ _ _code = VString "c" in
   let _m, events =
     run (create { program; seed = 0; eval; set_widget = (fun _ _ -> ()) })
   in

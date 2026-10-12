@@ -124,12 +124,12 @@ let () =
 
 let eval caps stref =
   let f = Jv.get caps "eval" in
-  fun game code ->
+  fun game want code ->
     (* upon eval, make the current game state visible *)
     Option.iter (fun st -> st.game <- game) !stref;
     (* this apply will invoke the handle methods, which read stref *)
     match Jv.apply f [| Jv.of_string code |] with
-    | v -> FromJv.value v
+    | v -> (match want with `Value -> FromJv.value v | `Effect -> VUndefined)
     | exception Jv.Error e ->
       raise
         (Eval_error
