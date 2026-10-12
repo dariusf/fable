@@ -229,12 +229,22 @@ var internal = {
 // Randomness is handle-owned; the handle reseeds its own RNG before any
 // replay/rewind, so draws re-roll identically. Math.random in story
 // code would not.
+
+/** @type {() => number} */
 var random = () => machine().random();
 /** @type {(l: number, h: number) => number} */
 var randomIncl = (l, h) => machine().randomIncl(l, h);
 /** @type {(l: number, h: number) => number} */
 var randomExcl = (l, h) => machine().randomExcl(l, h);
 var coin = () => machine().coin();
+
+/** @template T * @param {T[]} arr * @returns {T[]} */
+function shuffle(arr) {
+  return arr
+    .map((value) => ({ value, sort: random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+}
 
 /** @param {string} scene */
 function turns_since(scene) {
