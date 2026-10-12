@@ -17,6 +17,7 @@
     - [Randomness](#randomness)
     - [Initialization](#initialization)
     - [Widgets](#widgets)
+    - [Making choices automatically](#making-choices-automatically)
     - [Saving and loading](#saving-and-loading)
     - [How code is run](#how-code-is-run)
     - [Frontmatter](#frontmatter)
@@ -330,12 +331,7 @@ The following may be used when writing stories.
 - `seen.SECTION`: the number of times SECTION has been seen; can be used in a truthy manner
 - `turns_since(SECTION)`: turns elapsed since SECTION was last visited
 - `last_choice()`: label of the most recent choice made
-- `clickAll(...labels)`: take a sequence of choices by label
 - Builders for Fable fragments in interpolations: `jump(label)`, `tunnel(label)`
-
-<!-- - `randomly_test()`: play the story by making random choices until it ends or gets stuck -->
-
-<!-- `stop_testing` didn't survive rewrite -->
 
 <!-- All other parts of the runtime are considered unstable and not part of the API. -->
 
@@ -472,6 +468,19 @@ It should either be given a default on use
 or you should ensure that there is no way to reach it without going through the `<select>`.
 
 Only `<select>` elements are currently supported.
+
+### Making choices automatically
+
+It can be useful to write scripts to skip through the story, for manual or automated testing, or providing a reference solution.
+This can be done headlessly in Fable.
+
+`play(...inputs)` supplies a sequence of inputs.
+Plain strings are choices to make.
+`select:id:value` instead sets the `value` of the `<select>` widget with id `id`.
+
+<!-- TODO document ?choice=... here? -->
+
+`skipUntil(TEXT)` picks the first available choice until `TEXT` appears anywhere, in a paragraph, link, etc.
 
 ### Saving and loading
 
@@ -798,6 +807,10 @@ You can then `promote` the output out of the build directory, so you have a reco
 The simplest way to make Playwright available is to install it globally and link it into the build directory right before running the tests.
 
 ### Random testing
+
+<!-- - `randomly_test()`: play the story by making random choices until it ends or gets stuck -->
+
+<!-- `stop_testing` didn't survive rewrite -->
 
 Standalone stories can be tested randomly in the browser by evaluating `randomly_test()` in the console.
 

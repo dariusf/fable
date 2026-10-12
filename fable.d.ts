@@ -47,8 +47,8 @@ interface FableMachine {
   start(): Result;
   choose(choiceId: ChoiceId): Result;
   chooseByLabel(label: string): Result;
-  chooseAll(labels: string[]): Result;
-  chooseUntil(text: string): Result;
+  applyInputs(entries: HistoryEntry[]): Result;
+  skipUntil(text: string): Result;
   activate(linkId: LinkId): Result;
   activateByLabel(label: string): Result;
   widgetInput(key: string, value: string): void;

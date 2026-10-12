@@ -788,7 +788,7 @@ let rewind ?(n = 1) (m : machine) : machine * Event.t list =
     let machine, evs = run machine in
     (machine, events @ evs)
 
-let automatically_make_choices_until needle m =
+let skip_until needle m =
   (* why this "lasso" structure? because the machine is not initially waiting, so there's no choice to start the loop with until after first running it *)
   let m, evs = run m in
   let found = contains_substring ~sub:needle (Rendering.events_to_string evs) in
@@ -817,13 +817,17 @@ let automatically_make_choices_until needle m =
     let m, acc = loop needle [] m in
     (m, evs @ List.concat (List.rev acc))
 
-let choose_all (m : machine) (labels : string list) : machine * Event.t list =
+let apply_inputs (m : machine) (entries : history_entry list) :
+    machine * Event.t list =
   let m, evs =
     List.fold_left
-      (fun (m, acc) label ->
-        let m, evs = choose_by_label m label in
-        (m, Acc.add_all evs acc))
-      (m, Acc.empty) labels
+      (fun (m, acc) entry ->
+        match entry with
+        | Widget { key; value } -> (widget_input m ~key ~value, acc)
+        | Choice label ->
+          let m, evs = choose_by_label m label in
+          (m, Acc.add_all evs acc))
+      (m, Acc.empty) entries
   in
   (m, Acc.to_list evs)
 
@@ -1279,6 +1283,43 @@ Hi
 
     1. Onward
     2. Stop
+    |}]
+
+let%expect_test "apply_inputs applies widget entries before the choice" =
+  let src = {|# start
+
+<select id="mood"></select>
+
+- Continue
+
+You felt `$widgets.mood`.
+|} in
+  let applied = ref [] in
+  let m =
+    create
+      {
+        program = program_of_str src;
+        eval = canned_eval [ ("widgets.mood", VString "tense") ];
+        seed = 0;
+        set_widget = (fun k v -> applied := (k, v) :: !applied);
+      }
+  in
+  let m, _ = run m in
+  let m, evs =
+    apply_inputs m [ Widget { key = "mood"; value = "tense" }; Choice "Continue" ]
+  in
+  Format.printf "applied %s@."
+    (String.concat "," (List.rev_map (fun (k, v) -> k ^ "=" ^ v) !applied));
+  Format.printf "history %s@."
+    (String.concat ","
+       (List.map
+          (function Choice l -> l | Widget { key; value } -> key ^ "=" ^ value)
+          (history (game m))));
+  print_string (Rendering.events_to_string evs);
+  [%expect {|
+    applied mood=tense
+    history mood=tense,Continue
+    You felt tense.
     |}]
 
 let%expect_test "widgets are recorded per turn and rewound with it" =

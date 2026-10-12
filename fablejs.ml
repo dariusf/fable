@@ -183,14 +183,15 @@ let machine_handle (st : state) : Jv.t =
         Jv.callback ~arity:1 (fun label ->
             produce_result (M.choose_by_label st.machine (Jv.to_string label)))
       );
-      ( "chooseAll",
-        Jv.callback ~arity:1 (fun labels ->
+      ( "applyInputs",
+        Jv.callback ~arity:1 (fun entries ->
             produce_result
-              (M.choose_all st.machine (Jv.to_list Jv.to_string labels))) );
-      ( "chooseUntil",
+              (M.apply_inputs st.machine
+                 (Jv.to_list FromJv.history_entry entries))) );
+      ( "skipUntil",
         Jv.callback ~arity:1 (fun text ->
             produce_result
-              (M.automatically_make_choices_until (Jv.to_string text) st.machine))
+              (M.skip_until (Jv.to_string text) st.machine))
       );
       ( "activate",
         Jv.callback ~arity:1 (fun id ->

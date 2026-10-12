@@ -292,14 +292,29 @@ function randomly_test() {
   );
 }
 
-/** @param {string[]} labels */
-function clickAll(...labels) {
-  render(machine().chooseAll(labels).events, "instant");
+/** Parse a history entry encoded as a string for e.g. query params
+ * @param {string} s @returns {HistoryEntry} */
+function parseHistoryEntry(s) {
+  const m = /^select:([^:]*):(.*)$/s.exec(s);
+  return m ? { widget: m[1], value: m[2] } : { choice: s };
+}
+
+/** @param {string[]} entries */
+function play(...entries) {
+  render(
+    machine().applyInputs(entries.map(parseHistoryEntry)).events,
+    "instant",
+  );
+}
+
+/** @param {string} id @param {string} value @returns {string} */
+function select(id, value) {
+  return `select:${id}:${value}`;
 }
 
 /** @param {string} text */
-function automaticallyMakeChoicesUntil(text) {
-  render(machine().chooseUntil(text).events, "instant");
+function skipUntil(text) {
+  render(machine().skipUntil(text).events, "instant");
 }
 
 // STORY HELPERS

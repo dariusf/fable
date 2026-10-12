@@ -72,8 +72,9 @@ val choose : machine -> int -> machine * Event.t list
 
 val choose_by_label : machine -> string -> machine * Event.t list
 
-(** Takes several choices by label in sequence, concatenating the events *)
-val choose_all : machine -> string list -> machine * Event.t list
+(** Takes several choices by label in sequence, concatenating the events.
+    Widget entries are applied as inputs before the choices that follow them. *)
+val apply_inputs : machine -> history_entry list -> machine * Event.t list
 
 (** Provide a widget input. *)
 val widget_input : machine -> key:string -> value:string -> machine
@@ -85,7 +86,7 @@ val activate : machine -> int -> machine * Event.t list
 val activate_by_label : machine -> string -> machine * Event.t list
 
 (** Runs until the string is found or the machine gets stuck *)
-val automatically_make_choices_until :
+val skip_until :
   string -> machine -> machine * Event.t list
 
 (** * Replay and rewind *)

@@ -205,7 +205,7 @@
         try {
           p = play(name, loop, startTime);
         } catch (e) {
-          console.error(`failed to play ${name}; may not have loaded.`, e);
+          console.log(`failed to play ${name}; may not have loaded.`);
           continue;
         }
         if (!muted) {

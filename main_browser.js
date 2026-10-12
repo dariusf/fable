@@ -259,13 +259,6 @@ function scrollToLastOld(behavior = "smooth") {
 
 // PERSISTENCE
 
-/** Parse a history entry encoded as a string for e.g. query params
- * @param {string} s @returns {HistoryEntry} */
-function parseHistoryEntry(s) {
-  const m = /^select:([^:]*):(.*)$/s.exec(s);
-  return m ? { widget: m[1], value: m[2] } : { choice: s };
-}
-
 /** a generic interface to localStorage
  * @type {RuntimeCapabilities["storage"]} */
 const localStorageBackend = {
