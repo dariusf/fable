@@ -72,6 +72,9 @@ val choose : machine -> int -> machine * Event.t list
 
 val choose_by_label : machine -> string -> machine * Event.t list
 
+(** Takes several choices by label in sequence, concatenating the events *)
+val choose_all : machine -> string list -> machine * Event.t list
+
 (** Provide a widget input. *)
 val widget_input : machine -> key:string -> value:string -> machine
 

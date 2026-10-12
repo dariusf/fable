@@ -294,9 +294,12 @@ function randomly_test() {
 
 /** @param {string[]} labels */
 function clickAll(...labels) {
-  for (const l of labels) {
-    render(machine().chooseByLabel(l).events);
-  }
+  render(machine().chooseAll(labels).events, "instant");
+}
+
+/** @param {string} text */
+function automaticallyMakeChoicesUntil(text) {
+  render(machine().chooseUntil(text).events, "instant");
 }
 
 // STORY HELPERS

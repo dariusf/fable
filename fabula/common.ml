@@ -14,9 +14,9 @@ end = struct
   type 'a t = 'a list
 
   let empty = []
-  let add xs x = List.cons x xs
+  let add xs a = List.cons a xs
   let single x = add empty x
-  let add_all xs t = List.fold_left (Fun.flip List.cons) t xs
+  let add_all xs a = List.fold_left (Fun.flip List.cons) a xs
   let plus = ( @ )
   let to_list = List.rev
   let change_last f xs = match xs with [] -> [] | x :: ys -> f x :: ys
@@ -82,10 +82,7 @@ let fresh =
 exception InputError of string
 
 let fail fmt = Format.kasprintf (fun a -> raise (InputError a)) fmt
-
-let describe_exn = function
-  | InputError s -> s
-  | e -> Printexc.to_string e
+let describe_exn = function InputError s -> s | e -> Printexc.to_string e
 
 let inline_text_folder =
   let open Cmarkit in

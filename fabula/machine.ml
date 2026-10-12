@@ -817,6 +817,16 @@ let automatically_make_choices_until needle m =
     let m, acc = loop needle [] m in
     (m, evs @ List.concat (List.rev acc))
 
+let choose_all (m : machine) (labels : string list) : machine * Event.t list =
+  let m, evs =
+    List.fold_left
+      (fun (m, acc) label ->
+        let m, evs = choose_by_label m label in
+        (m, Acc.add_all evs acc))
+      (m, Acc.empty) labels
+  in
+  (m, Acc.to_list evs)
+
 let status m = m.status
 let game m = m.game
 let turns (g : game) = g.turns
