@@ -907,13 +907,15 @@ Like choices, [widget](#widgets) inputs need to be replayed as the machine runs.
 - Players may interact with the widgets in the DOM however they like. Nothing happens at this point.
 - On choice/link, the state of the DOM is read, and the values of widgets which differ from `widgets` are supplied to the machine as widget inputs ([`widgetInput`](fable.d.ts)).
   - This happens before the choice itself, so the choice's instructions can depend on them.
-  - Widget inputs also precede the choice in history.
-- When a widget input is received, the machine uses its [`set_widget` capability](fabula/machine.mli) to set the [`widgets` global](runtime.js) (which also only records key and value).
+  - Widget inputs also precede the choice in history. See how rewinding acts on _turns_ below.
+- The machine "outputs" widget updates using its [`set_widget` capability](fabula/machine.mli), which sets the [`widgets` global](runtime.js) (which also only records key and value).
   - The story then refers to the inputs of widgets via `widgets`.
   - Because the story depends only on `widgets` and not the DOM, it can be replayed headlessly.
   - `loadSaved`, `hotReload`, and `rewind` all use `widgetInput` to rebuild `widgets`.
-- Rewinding acts on _turns_, which are `w* c` (`c` for choice, `w` for widget). Upon rewinding one turn, assuming the history is `c w w w c`, we will get a history of just `c`.
-- When rendering widgets (e.g. on replay after loading from save, hot reload, or rewind), their values are updated from `widgets` ([`writeWidgets`](main_browser.js)), closing the loop.
+- The loop is closed by rendering, which reflects the state of `widgets` to the DOM ([`writeWidgets`](main_browser.js)).
+  - This happens after replay on loading from save, hot reload, or rewind.
+
+Rewinding acts on _turns_, which are `w* c` (`c` for choice, `w` for widget). Upon rewinding one turn, assuming the history is `c w w w c`, we will get a history of just `c`.
 
 Only `<select>` elements are currently recognised.
 Other elements can be added in `readWidgets`/`writeWidgets`, which are the only places that need to be changed.
