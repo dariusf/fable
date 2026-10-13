@@ -397,7 +397,18 @@ async function main() {
   });
   const save = restoreSave(story);
   await window.init?.();
+
+  // firefox restores scroll position on reload, so scroll back to where the story should be after, on the first frame. the hiding is to ensure a flicker is not shown
+  container.style.visibility = "hidden";
+
   loadStory(story, save);
+
+  requestAnimationFrame(() =>
+    setTimeout(() => {
+      scrollToLastOld("instant");
+      container.style.visibility = "";
+    }),
+  );
 }
 
 // ENVIRONMENT PREDICATES

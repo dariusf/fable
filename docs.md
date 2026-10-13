@@ -887,7 +887,7 @@ The main [browser frontend](main_browser.js) takes care of efficiently turning a
 
 ## Initialization lifecycle
 
-Scripts in the `<head>` of [story.html](story.html) load, along with extra ones from the `head` frontmatter.
+During HTML parsing, scripts in [story.html](story.html) load, along with extra ones from the `head` frontmatter.
 
 - `fablejs.bc.js` defines the `Fable` global
 - `story.js` defines the `story` global, containing the compiled story
@@ -895,7 +895,7 @@ Scripts in the `<head>` of [story.html](story.html) load, along with extra ones 
 - `main_browser.js`'s `main()` runs
   - The runtime is initialised
   - Saved data is read
-  - `init` is called asynchronously, if defined
+  - `init` (which may be async) is awaited, if defined
   - The story is rendered, possibly with saved data
 
 ## Replay and widgets
