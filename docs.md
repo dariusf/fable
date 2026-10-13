@@ -692,9 +692,10 @@ vite --host --clearScreen=false
 ```
 
 and open your story in the browser.
-Your story js/css/mp3 files alongside it will be watched for changes, reloading as you edit them.
 
-vite will serve files from the build directory, falling back to the project root for files it doesn't find.
+- Files in the project directory will be watched for changes, causing the browser page to be hot-reloaded as you edit them.
+- Edits to only the story can often hot reload efficiently, without reloading the page.
+- vite will serve files from the build directory, falling back to the project directory for files it doesn't find.
 
 ### Publishing
 

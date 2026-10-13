@@ -116,12 +116,12 @@ export default function markdownCompilerPlugin(options = {}) {
 
   return [devPlugin(), buildPlugin()];
 
-  /* The dev plugin
-    - In short, it makes vite watch the input markdown file for changes, running Fable and reloading the page.
-    - Any js/css/mp3 files under (not just in) the project root or the input file's directory are also watched for changes.
-    - Fable is run once on starting.
-    - The plugin registers middleware which intercepts requests and serves them from Fable's build directory. This is different from how Vite works by default: Vite serves requests from the project root, where it expects to find an index.html, and lazily transforms and serves referenced files. Vite's default behaviour is a fallback for files which can't be found, e.g. js and css in the project root.
-    - If only the markdown changes, the editor's fast hot reload path is used. */
+  /* The dev plugin takes charge of running Fable, serving its outputs, and rerunning Fable and triggering hot reloads when files in the project directory change.
+
+    - Files are served (via middleware) from the build directory, then the project directory (vite's default).
+    - Files in the project directory (and subdirectories) are watched. The build/dist directories are outputs and are ignored.
+    - If only the story md changes, the editor's fast hot reload path is used. The build directory is hashed to determine if this is safe.
+  */
   function devPlugin() {
     let server = null;
     // let debounceTimer = null;
@@ -238,6 +238,21 @@ if (import.meta.hot) {
       name: "fable:dev",
       apply: "serve",
 
+      // ignore build and dist
+      config() {
+        const glob = (dir) => dir.split(path.sep).join("/") + "/**";
+        return {
+          server: {
+            watch: {
+              ignored: [
+                glob(buildDir),
+                glob(path.resolve(projectRoot, "dist")),
+              ],
+            },
+          },
+        };
+      },
+
       // runs when something is imported
       resolveId(id) {
         if (id === hmrId) return resolvedHmrId;
@@ -269,9 +284,6 @@ if (import.meta.hot) {
 
       configureServer(s) {
         server = s;
-
-        // vite only watches its root by default, so also watch the story and its directory in case referenced files live outside the root. this is still a heuristic
-        server.watcher.add([srcFile, path.dirname(srcFile)]);
 
         server.watcher.on("change", (changedPath) => {
           const resolved = path.resolve(changedPath);
