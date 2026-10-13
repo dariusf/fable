@@ -616,9 +616,9 @@ seed: 12345
 ---
 ```
 
-- `title`: this sets the title of the HTML page when publishing
+- `title`: sets the title of the HTML page when publishing
 - `version`: the version of the game; bumping this resets the [saved data](#saving-and-loading)
-- `head`: this adds additional files to the `<head>` section of the output HTML page.
+- `head`: adds to the `<head>` section of the output HTML page. You can use this to change the `font-family`, for example.
 - `seed`: fix the random [seed](#randomness)
 
 <!-- TODO others -->
