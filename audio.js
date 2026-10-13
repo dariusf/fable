@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  let LOG = false;
+
   // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext
   let ctx;
 
@@ -102,6 +104,7 @@
             }
             const ab = await res.arrayBuffer();
             tracks[name] = await ctx.decodeAudioData(ab);
+            if (LOG) console.log("audio", name, "loaded");
             return;
           } catch (e) {
             if (i >= ATTEMPTS) throw e;
@@ -205,7 +208,7 @@
         try {
           p = play(name, loop, startTime);
         } catch (e) {
-          console.log(`failed to play ${name}; may not have loaded.`);
+          if (LOG) console.log(`failed to play ${name}; may not have loaded.`);
           continue;
         }
         if (!muted) {
@@ -228,6 +231,10 @@
   function set(next, { fadeOut = 0.4, fadeIn = 0 } = {}) {
     scene = { ...normaliseNameArray(next) };
     transition = { fadeOut, fadeIn };
+  }
+
+  function silence(config) {
+    set([], config);
   }
 
   function add(partial, t = transition) {
@@ -256,17 +263,6 @@
     withMuted(names, false, t);
   }
 
-  window.FableAudio = {
-    loadManifest,
-    initialize,
-    set,
-    add,
-    remove,
-    mute,
-    unmute,
-    reconcile,
-  };
-
   function normaliseNameArray(ns) {
     if (Array.isArray(ns)) {
       const r = {};
@@ -277,4 +273,21 @@
     }
     return ns;
   }
+
+  function enableLogging() {
+    LOG = true;
+  }
+
+  window.FableAudio = {
+    loadManifest,
+    initialize,
+    set,
+    silence,
+    add,
+    remove,
+    mute,
+    unmute,
+    reconcile,
+    enableLogging,
+  };
 })();
