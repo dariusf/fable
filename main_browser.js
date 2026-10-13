@@ -237,6 +237,10 @@ function readWidgets() {
 function writeWidgets() {
   for (const [key, value] of Object.entries(widgets)) {
     const elt = document.getElementById(key);
+    // this check would be helpful, but doesn't work if widgets are removed by the story
+    // if (elt === null) {
+    //   console.warn("attempt to set nonexistent widget", key, value);
+    // } else
     if (elt instanceof HTMLSelectElement) {
       elt.value = value;
     }
