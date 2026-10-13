@@ -794,27 +794,29 @@ let skip_until needle m =
   let found = contains_substring ~sub:needle (Rendering.events_to_string evs) in
   if found then (m, evs)
   else
-    let rec loop needle acc m =
-      match m.status with
-      | Awaiting { items; node_id = _ } ->
-        (* hd is safe since Awaiting guarantees not empty *)
-        (* always picks first item *)
-        let it = List.hd items in
-        let m, evs = choose m it.choice_id in
-        (* Matching is per-segment for efficiency. This means matches cannot span segments (okay because typical use is to match non-choice text). Also can match choice text which might later be removed from the full transcript *)
-        let found =
-          contains_substring ~sub:needle (Rendering.events_to_string evs)
-        in
-        if found then (m, evs :: acc)
-        else
-          (* possible nontermination, which is accepted *)
-          loop needle (evs :: acc) m
-      | Running -> assert false
-      | Done | Stuck _ ->
-        (* does not guarantee finding the text, does not match errors *)
-        (m, acc)
+    let rec loop fuel needle acc m =
+      if fuel <= 0 then (m, acc)
+      else
+        match m.status with
+        | Awaiting { items; node_id = _ } ->
+          (* hd is safe since Awaiting guarantees not empty *)
+          (* always picks first item *)
+          let it = List.hd items in
+          let m, evs = choose m it.choice_id in
+          (* Matching is per-segment for efficiency. This means matches cannot span segments (okay because typical use is to match non-choice text). Also can match choice text which might later be removed from the full transcript *)
+          let found =
+            contains_substring ~sub:needle (Rendering.events_to_string evs)
+          in
+          if found then (m, evs :: acc)
+          else
+            (* possible nontermination, which is accepted *)
+            loop (fuel - 1) needle (evs :: acc) m
+        | Running -> assert false
+        | Done | Stuck _ ->
+          (* does not guarantee finding the text, does not match errors *)
+          (m, acc)
     in
-    let m, acc = loop needle [] m in
+    let m, acc = loop 1000 needle [] m in
     (m, evs @ List.concat (List.rev acc))
 
 let apply_inputs (m : machine) (entries : history_entry list) :
@@ -1286,37 +1288,41 @@ Hi
     |}]
 
 let%expect_test "apply_inputs applies widget entries before the choice" =
-  let src = {|# start
+  let src =
+    {|# start
 
 <select id="mood"></select>
 
 - Continue
 
 You felt `$widgets.mood`.
-|} in
+|}
+  in
   let applied = ref [] in
   let m =
     create
       {
         program = program_of_str src;
-        eval = canned_eval [ ("widgets.mood", VString "tense") ];
+        eval = canned_eval [("widgets.mood", VString "tense")];
         seed = 0;
         set_widget = (fun k v -> applied := (k, v) :: !applied);
       }
   in
   let m, _ = run m in
   let m, evs =
-    apply_inputs m [ Widget { key = "mood"; value = "tense" }; Choice "Continue" ]
+    apply_inputs m [Widget { key = "mood"; value = "tense" }; Choice "Continue"]
   in
   Format.printf "applied %s@."
     (String.concat "," (List.rev_map (fun (k, v) -> k ^ "=" ^ v) !applied));
   Format.printf "history %s@."
     (String.concat ","
        (List.map
-          (function Choice l -> l | Widget { key; value } -> key ^ "=" ^ value)
+          (function
+            | Choice l -> l | Widget { key; value } -> key ^ "=" ^ value)
           (history (game m))));
   print_string (Rendering.events_to_string evs);
-  [%expect {|
+  [%expect
+    {|
     applied mood=tense
     history mood=tense,Continue
     You felt tense.
