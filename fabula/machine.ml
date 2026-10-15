@@ -86,14 +86,28 @@ end = struct
     | IEmph is -> String.concat "" (List.map inline_text is)
     | ILink { label; _ } -> label
 
-  let starts_with_no_space_punctuation s =
-    String.length s > 0 && String.contains ".,!:'\"" s.[0]
+  let is_space c = c = ' ' || c = '\t' || c = '\n'
 
-  let ends_with_quote s =
+  let count_char c s =
+    String.fold_left (fun n d -> if c = d then n + 1 else n) 0 s
+
+  (* double quotes alternate between opening and closing across the run;
+     a leading one attaches to the previous word only when it closes *)
+  let starts_with_no_space_punctuation ~in_quote s =
     String.length s > 0
     &&
-    let c = s.[String.length s - 1] in
-    c = '"' || c = '\''
+    let c = s.[0] in
+    if c = '"' then in_quote else String.contains ".,!?:;'" c
+
+  (* an element ending in an opening quote suppresses the space after it.
+     an apostrophe opens if it starts the element or follows a space *)
+  let ends_with_opening_quote ~in_quote s =
+    let n = String.length s in
+    n > 0
+    &&
+    let c = s.[n - 1] in
+    if c = '"' then in_quote
+    else c = '\'' && (n = 1 || is_space s.[n - 2] || s.[n - 2] = '(')
 
   (* Renders a closed inline run, inserting [Space] entries per the spacing
    rules. Each container (paragraph, emph) tracks its own needs-space
@@ -106,23 +120,27 @@ end = struct
       | ILink { link_id; label } -> Link { link_id; label }
       | IEmph is -> Emph (render_run is)
     in
-    let _, evs =
+    let _, _, evs =
       List.fold_left
-        (fun (needs_space, acc) i ->
+        (fun (needs_space, in_quote, acc) i ->
           let text = inline_text i in
           let has_no_text = text = "" in
           let add_space =
-            (not (starts_with_no_space_punctuation text))
+            (not (starts_with_no_space_punctuation ~in_quote text))
             && needs_space && not has_no_text
           in
+          let in_quote' =
+            if count_char '"' text mod 2 = 1 then not in_quote else in_quote
+          in
           let needs_space' =
-            if has_no_text then needs_space else not (ends_with_quote text)
+            if has_no_text then needs_space
+            else not (ends_with_opening_quote ~in_quote:in_quote' text)
           in
           let evs =
             if add_space then [emit_one i; Event.Space] else [emit_one i]
           in
-          (needs_space', evs @ acc))
-        (false, []) run
+          (needs_space', in_quote', evs @ acc))
+        (false, false, []) run
     in
     List.rev evs
 
@@ -946,6 +964,88 @@ let%expect_test "opening quote hugs the next word" =
     (Para [(Text "back in the '"); (Text "90s")])
     ---
     back in the '90s
+    |}]
+
+let%expect_test "closing quote keeps the following space" =
+  check_spacing {|"But how are you so sure of it?" She asked.|};
+  [%expect
+    {|
+    [(IText "\"But how are you so sure of it?\" She asked.")]
+    ---
+    (Para [(Text "\"But how are you so sure of it?\" She asked.")])
+    ---
+    "But how are you so sure of it?" She asked.
+    |}];
+  check_spacing ~canned:[("q", VString "He said \"no.\"")] {|`$q` Then left.|};
+  [%expect
+    {|
+    [(IText "He said \"no.\""); (IText "Then left.")]
+    ---
+    (Para [(Text "He said \"no.\""); Space; (Text "Then left.")])
+    ---
+    He said "no." Then left.
+    |}];
+  check_spacing ~canned:[("x", VString "wow")] {|*He said* "`$x`!"|};
+  [%expect
+    {|
+    [(IEmph [(IText "He said")]); (IText "\""); (IText "wow"); (IText "!\"")]
+    ---
+    (Para
+       [(Emph [(Text "He said")]); Space; (Text "\""); (Text "wow"); (Text "!\"")
+         ])
+    ---
+    He said "wow!"
+    |}]
+
+let%expect_test "single quotes" =
+  (* A leading apostrophe always attaches, so possessives and contractions
+     work. A trailing one after a letter is a closing quote. *)
+  check_spacing ~canned:[("x", VString "Bob")] {|`$x`'s thing|};
+  [%expect
+    {|
+    [(IText "Bob"); (IText "'s thing")]
+    ---
+    (Para [(Text "Bob"); (Text "'s thing")])
+    ---
+    Bob's thing
+    |}];
+  check_spacing ~canned:[("x", VString "dogs")] {|the `$x`' bowls|};
+  [%expect
+    {|
+    [(IText "the"); (IText "dogs"); (IText "' bowls")]
+    ---
+    (Para [(Text "the"); Space; (Text "dogs"); (Text "' bowls")])
+    ---
+    the dogs' bowls
+    |}];
+  check_spacing ~canned:[("x", VString "wow")] {|'`$x`' she said|};
+  [%expect
+    {|
+    [(IText "'"); (IText "wow"); (IText "' she said")]
+    ---
+    (Para [(Text "'"); (Text "wow"); (Text "' she said")])
+    ---
+    'wow' she said
+    |}];
+  (* known limitation: a leading apostrophe always attaches, so an opening
+     single quote after an element joins it. a workaround is to use an interpolated space. this produces 2 spaces and leaves rendering to collapse them. other workarounds using interpolation are possible. *)
+  check_spacing {|*He said* 'wow' and left|};
+  [%expect
+    {|
+    [(IEmph [(IText "He said")]); (IText "'wow' and left")]
+    ---
+    (Para [(Emph [(Text "He said")]); (Text "'wow' and left")])
+    ---
+    He said'wow' and left
+    |}];
+  check_spacing ~canned:[("sp", VString " ")] {|*He said* `$sp`'wow' and left|};
+  [%expect
+    {|
+    [(IEmph [(IText "He said")]); (IText " "); (IText "'wow' and left")]
+    ---
+    (Para [(Emph [(Text "He said")]); Space; (Text " "); (Text "'wow' and left")])
+    ---
+    He said  'wow' and left
     |}]
 
 let%expect_test "textless elements are transparent" =

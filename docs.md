@@ -171,9 +171,20 @@ This is also incompatible with `` `otherwise` ``.
 
 ### Breaks and Spaces
 
-Like in Markdown, double linebreaks delimit paragraphs, and single linebreaks are turned into spaces.
+Like in Markdown, double linebreaks delimit paragraphs.
 
-Spaces are inserted between inline elements according to the _spacing rules_.
+Unlike in Markdown, single linebreaks delimit elements, and whitespace between elements is not significant.
+Spaces are instead inserted between elements according to the _spacing rules_, which look at the surrounding text.
+
+<details>
+<summary>Why is this done?</summary>
+
+- There should be flexibility in where whitespace and line breaks can appear, like normal Markdown
+- It should be possible for text using interpolations to disappear, rather than just leaving a hole. We should err on the side of adding too few spaces, so the missing ones can be added
+- We want to use ASCII quotes instead of LaTeX-like ``ligatures'', or Unicode
+- The right thing is still doable in most cases
+
+</details>
 
 1. By default, a space is inserted between adjacent elements.
 
@@ -181,50 +192,141 @@ Spaces are inserted between inline elements according to the _spacing rules_.
    You have `$n` coins.
    ```
 
-   where n = 3 produces
+   where n = `3` produces
 
    ```
    You have 3 coins.
    ```
 
-2. Punctuation and closing quotes attach to the previous word.
+   A run of text is a single element, so spaces there are retained.
+
+   ```markdown
+   You have   3   coins.
+   ```
+
+   However, browsers collapse runs of spaces, so this renders like the example above.
+
+2. Punctuation attaches to the previous word.
 
    ```markdown
    Very `$status`!
    ```
 
-   where status = "good" produces
+   where status = `good` produces
 
    ```
    Very good!
    ```
 
-3. Opening quotes attach to the next word.
-   <!-- A trailing quote suppresses the next space. -->
+3. Double quotes are paired, and alternate between _opening_ and _closing_.
+
+   An opening double quote attaches to the next word.
 
    ```markdown
    "`$suspect` did it!"
    ```
 
-   where suspect = "Bob" produces
+   where suspect = `Bob` produces
 
    ```
    "Bob did it!"
    ```
 
-4. Textless elements are transparent.
+   A closing one attaches to the previous word.
+
+   ```markdown
+   "But how are you so sure of it?"
+   He asked.
+   ```
+
+   produces
+
+   ```
+   "But how are you so sure of it?" He asked.
+   ```
+
+4. Single quotes are not paired, since they also serve as apostrophes.
+
+   A leading single quote attaches to the previous word.
+
+   ```markdown
+   `$suspect`'s alibi
+   ```
+
+   ```
+   Bob's alibi
+   ```
+
+   A trailing single quote attaches to the next word if it is the whole element or is preceded by a space.
+
+   ```markdown
+   back in the '`$decade`
+   ```
+
+   where decade = `90s` produces
+
+   ```
+   back in the '90s
+   ```
+
+   Otherwise it attaches to the previous word, as in a plural possessive.
+
+   ```markdown
+   the `$animals`' bowls
+   ```
+
+   where animals = `dogs` produces
+
+   ```
+   the dogs' bowls
+   ```
+
+   <details>
+   <summary>An edge case</summary>
+
+   Since a leading single quote always attaches, an opening single quote right after an element joins it.
+
+   ```markdown
+   *He said* 'wow' and left.
+   ```
+
+   produces
+
+   ```
+   He said'wow' and left.
+   ```
+
+   A simple workaround is to interpolate a space.
+
+   ```markdown
+   *He said* `$sp`'wow' and left.
+   ```
+
+   where sp is a single space produces
+
+   ```
+   He said 'wow' and left.
+   ```
+
+   Other setups with interpolation are possible.
+
+   To avoid this, try not to use single quotes in a paired manner.
+
+   </details>
+
+5. Textless elements are transparent.
 
    ```markdown
    before $x after
    ```
 
-   where x = "" produces
+   where x is the empty string produces
 
    ```
    before after
    ```
 
-5. Spacing uses visible text.
+6. Spacing depends on rendered text (not markup).
 
    ```markdown
    some <b>bold</b> text
@@ -236,7 +338,7 @@ Spaces are inserted between inline elements according to the _spacing rules_.
    some bold text
    ```
 
-6. Containers are spaced on their own.
+7. Containers are spaced independently of their parent.
 
    ```markdown
    very *important, truly* so.
