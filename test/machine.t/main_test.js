@@ -28,7 +28,7 @@ initRuntime({
 });
 
 const story = Fable.parse(md);
-loadStory(story, restoreSave(story));
+loadStory(story, restoreSaveData(story));
 
 for (const label of choices) {
   const isChoice =

@@ -58,11 +58,7 @@ let write_standalone dir (prog : Fabula.Ast.program) =
   write_file (fmt "%s/graph.mmd" dir)
     (Fabula.Graph.(program_graph mermaid_renderer) prog);
   (* testing *)
-  if !testing then begin
-    write_file (fmt "%s/test.js" dir) Embedded.test;
-    write_file (fmt "%s/dune-project" dir) "(lang dune 3.15)";
-    write_file (fmt "%s/dune" dir) "(cram (deps (glob_files *)))"
-  end;
+  if !testing then write_file (fmt "%s/test_driver.js" dir) Embedded.test;
   (* done *)
   if !show_stats then Format.printf "%s@." (Fabula.collate_stats prog);
   Out_channel.with_open_text (fmt "%s/story.js" dir) (fun out ->

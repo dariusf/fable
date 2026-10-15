@@ -26,7 +26,7 @@
     - [Writing](#writing)
     - [Publishing](#publishing)
     - [Visualising a story](#visualising-a-story)
-    - [Regression tests](#regression-tests)
+    - [Golden tests](#golden-tests)
     - [Random testing](#random-testing)
   - [Editor](#editor)
   - [Fabula](#fabula)
@@ -363,7 +363,7 @@ The following may be used when writing stories.
 - `chooseNth(n)`: click the nth offered choice, as the digit keys do
 <!-- - `isStandalone()`: true in a published page or on itch; false in the editor -->
 <!-- - `isInDev()`: true on localhost or a `file:` page -->
-<!-- - `isDeterministic()`: true under test automation or with `?det=1`. The seed is fixed to 1 -->
+- `isTesting()`: true under test automation (`navigator.webdriver`)
 
 <!-- - `choices_disappear`: if true (default), a choice list is removed after a choice is taken. If false, the choices remain but are de-linked -->
 
@@ -372,10 +372,9 @@ The following may be used when writing stories.
   - `?choices=a|b|c` — start from a given history: the listed choice labels, separated by
   `|`, are replayed at load. Overrides the localStorage save without deleting it.
   Carries no seed, so random draws are not reproduced from the original session.
-  - `?det=1` — deterministic mode: a fresh session starts with seed 1 instead of a random
-  seed. Any non-empty value works, and test automation (`navigator.webdriver`) enables
-  it without the parameter. A saved seed still takes precedence; combine with `reset=1`
-  for a fully reproducible run. -->
+  - `?replay=NAME` — once the story has loaded, call the global function `NAME`
+  defined by the story, which plays through it with `play` and `skipUntil`.
+  -->
 
 ### Audio
 
@@ -407,7 +406,7 @@ Fable provides a number of [APIs](runtime.js) for deterministic randomness: `ran
 These should be used instead of Math.random because of
 
 1. Hot reloading: when editing a story and replaying it back to wherever it is, all the same random choices should be made.
-2. [Regression testing](#regression-tests): we don't want captured output to change when nothing in the story has changed.
+2. [Golden testing](#golden-tests): we don't want captured output to change when nothing in the story has changed.
 
 Given these, the random seed needs to be an input to the game somehow.
 
@@ -474,13 +473,32 @@ Only `<select>` elements are currently supported.
 It can be useful to write scripts to skip through the story, for manual or automated testing, or providing a reference solution.
 This can be done headlessly in Fable.
 
-`play(...inputs)` supplies a sequence of inputs.
+- `play(...inputs)` supplies a sequence of inputs.
 Plain strings are choices to make.
-`select:id:value` instead sets the `value` of the `<select>` widget with id `id`.
+`select(id, value)` instead sets the `value` of the `<select>` widget with id `id`.
+- `skipUntil(TEXT)` picks the first available choice until `TEXT` appears anywhere, in a paragraph, link, etc.
+
+Both are synchronous, so all you have to do is call them after the story is loaded, perhaps on clicking a button.
+
+```js
+function pickIceCreamFlavour() {
+  play(select("flavour", "raspberry"));
+  skipUntil("A strange series of events");
+  play("Eat");
+}
+```
+
+You can compose these actions by calling them in functions normally.
+This can be used to build a reference solution for an entire story with hundreds of choices.
+
+```js
+function skipPastIceCreamShop() {
+  pickIceCreamFlavour();
+  play("Leave");
+}
+```
 
 <!-- TODO document ?choice=... here? -->
-
-`skipUntil(TEXT)` picks the first available choice until `TEXT` appears anywhere, in a paragraph, link, etc.
 
 ### Saving and loading
 
@@ -763,49 +781,115 @@ Following these rules of thumb will help produce a more accurate graph:
   ```
   That will produce accurate dotted edges.
 
-### Regression tests
+### Golden tests
 
-When writing an extensive story, it's very useful to guard against regressions by recording the result of a playthrough and comparing it against what you get in subsequent versions.
+Making changes to long and complex stories can be onerous, as it risks introducing bugs.
+A simple technique for guarding against this is *golden testing*.
+<!-- (though incomplete) -->
 
-First, generate your story with tests.
+<details>
+<summary>What is golden testing?</summary>
+
+The idea is to record a "golden" playthrough, then compare subsequent playthroughs against it after making changes.
+This ensures that your changes do not have any unintended side effects.
+When you are satisfied that the new playthrough is good, you can make it the new golden one.
+
+</details>
+
+To start, we will need to add some code to our story.
+
+- **Specifying a playthrough** Write a function to [play through the story automatically](#making-choices-automatically). This is a useful thing to do for your future self, regardless of how you want to test things.
+- **Deterministic randomness** Fix the [seed](#randomness) in the frontmatter so random choices in the playthrough are deterministic.
+- **Determinism in general** There may be other sources of nondeterminism in a story which don't come from random choices, for example if you [record playtime](#saving-and-loading). To deal with these, you can either `isTesting()`, which is true when the story is being run in Playwright, or strip it from the output as a postprocessing pass. More on this later.
+
+Now to capture and replay playthroughs. Fable supports this using scrut and Playwright.
+
+<details>
+<summary>Installation</summary>
+
+Install [Playwright](https://playwright.dev/docs/intro) globally:
+
+```sh
+npm i -g playwright
+npm i -g @playwright/browser-chromium
+```
+
+To install scrut, follow the instructions [here](https://facebookincubator.github.io/scrut/docs/getting-started/installation/).
+
+</details>
+
+Compile your story with support for testing.
 
 ```sh
 fable -s examples/crime.md -o _build -t
 ```
 
-This will produce a minimal dune project in the build directory with [cram](https://dune.readthedocs.io/en/stable/reference/dune/cram.html) tests set up.
+This adds `test_driver.js`, a script for recording playthroughs as HTML, to the build directory.
 
-Next, add your tests.
+Create a scrut file in your project.
+This is where the recording will go.
+For the sake of the running example, we'll put it in `tests/e2e.md`.
+
+````markdown
+```scrut
+$ $TESTDIR/run_test.sh
+```
+````
+
+All that's left is to define `run_test.sh`.
+Its job is to use the driver script to dump the playthrough to stdout.
+
+This is likely game- and configuration-specific.
+Here's an example from a real game using the vite plugin.
 
 ```sh
-code tests.t # first time
-cp tests.t _build # subsequent times
-```
+#!/bin/bash
 
-`tests.t` should be a cram test file which invokes the `test.js` script, passing it a sequence of choices to execute against the story. Example:
+# start vite and wait for it to be ready
+vite --strictPort & trap 'kill $$!' EXIT
+until curl -sf 'http://localhost:5173' > /dev/null; do
+  sleep 0.2
+done
 
-```cram
-  $ node test.js /abs/path/to/index.html 'Go to Scene 1' 'Apple'
-```
-
-Finally, invoke `dune test` in the build directory.
-
-```sh
-# npm i -g playwright
-# npm i -g @playwright/browser-chromium
+# link global playwright,
+# in _build to not pollute the project dir
 cd _build
-npm link playwright
-dune test
+npm link playwright > /dev/null
 
-# if anything changes
-dune promote && cp tests.t ..
+# record the playthrough
+node $TESTDIR/../_build/test_driver.js \
+    'http://localhost:5173?replay=skipPastIceCreamShop' | \
+  prettier --parser html | \
+  sed -E 's@<span>[0-9]+ seconds</span>@@'
 ```
 
-This will play through your story headlessly using Playwright and output the raw HTML of the resulting page to the test file.
+The name of the function to play through the story is given in the `replay` query parameter.
 
-You can then `promote` the output out of the build directory, so you have a record of how the choices played out to compare against in future.
+Some postprocessing of the recording may be needed before it is persisted.
 
-The simplest way to make Playwright available is to install it globally and link it into the build directory right before running the tests.
+- It is highly useful to normalise the output so it diffs well.
+We can use prettier for that.
+- We can also strip any nondeterministic values from from the HTML if we don't want to use `isTesting`.
+
+If everything was set up correctly, you can then do
+
+```sh
+scrut update -ry tests/e2e.md
+```
+
+and see a full playthrough appear in the scrut file!
+
+After making some changes, use
+
+```sh
+scrut test tests/e2e.md
+```
+
+to see a diff.
+
+If you use version control, or when you're happy with the changes, use the same `scrut update` invocation to update the file directly (then use `git diff` to check it).
+
+Enjoy your newfound ability to make changes!
 
 ### Random testing
 
@@ -819,6 +903,10 @@ The default oracle looks for unhandled exceptions.
 Custom testing oracles can be added by pushing functions which return `true` on error into `internal.bug_detectors`.
 
 To stop, remove the URL hash property or evaluate `stop_testing()` in the console.
+
+<!-- ### Verification -->
+
+<!-- TODO -->
 
 ## Editor
 
@@ -898,6 +986,8 @@ During HTML parsing, scripts in [story.html](story.html) load, along with extra 
   - Saved data is read
   - `init` (which may be async) is awaited, if defined
   - The story is rendered, possibly with saved data
+  - `replay` occurs for testing
+  - We wait one frame for the Firefox scroll fix before everything is `ready`
 
 ## Replay and widgets
 

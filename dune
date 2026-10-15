@@ -30,7 +30,7 @@
        (cat audio.js)
        (echo "|fable}")
        (echo "let test = {fable|")
-       (cat test/runtime.t/test.js)
+       (cat test/runtime.t/test_driver.js)
        (echo "|fable}")))))
 
 (executable

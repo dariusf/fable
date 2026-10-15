@@ -327,7 +327,7 @@ function chooseNth(n) {
 const editorCommands = {
   LOAD: (msg) => {
     const s = Fable.parse(msg.md);
-    return loadStory(s, restoreSave(s));
+    return loadStory(s, restoreSaveData(s));
   },
   EDIT: (msg) => applyEdit(Fable.parse(msg.md)),
   BACK: () => handleBack(),
@@ -384,8 +384,7 @@ async function main() {
   initRuntime({
     render: interpretEvents,
     clear: clearContent,
-    defaultSeed: () =>
-      isDeterministic() ? 1 : Math.floor(Math.random() * 2 ** 31),
+    defaultSeed: () => Math.floor(Math.random() * 2 ** 31),
     storage: localStorageBackend,
     readWidgets,
     configure: (frontmatter) => {
@@ -399,18 +398,28 @@ async function main() {
       postStatus();
     },
   });
-  const save = restoreSave(story);
-  await window.init?.();
-
   // firefox restores scroll position on reload, so scroll back to where the story should be after, on the first frame. the hiding is to ensure a flicker is not shown
   container.style.visibility = "hidden";
 
+  const save = restoreSaveData(story);
+  await window.init?.();
+
   loadStory(story, save);
+
+  const replay = new URLSearchParams(window.location.search).get("replay");
+  if (replay) {
+    /** @type {() => void} */
+    const fn = /** @type {any} */ (window)[replay];
+    fn();
+  }
 
   requestAnimationFrame(() =>
     setTimeout(() => {
       scrollToLastOld("instant");
       container.style.visibility = "";
+
+      // can be awaited; this is done in tests
+      document.body.dataset.ready = "1";
     }),
   );
 }
@@ -439,9 +448,8 @@ function inIFrame() {
   }
 }
 
-function isDeterministic() {
-  const p = new URLSearchParams(window.location.search);
-  return navigator.webdriver || p.get("det") === "1";
+function isTesting() {
+  return !!navigator.webdriver;
 }
 
 // TEXT

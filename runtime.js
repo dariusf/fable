@@ -83,7 +83,7 @@ function storageKey(s, version) {
 
 /** Read the saved data and sync it to the global saveData
  * @param {Story} s @returns {SaveData} */
-function restoreSave(s) {
+function restoreSaveData(s) {
   const save = caps().storage.get(storageKey(s)) ?? { choices: [] };
   for (const k of Object.keys(saveData)) {
     delete saveData[k];
