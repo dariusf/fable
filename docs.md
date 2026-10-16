@@ -751,12 +751,6 @@ Here's an example from a real game using the vite plugin.
 ```sh
 #!/bin/bash
 
-# start vite and wait for it to be ready
-vite --strictPort & trap 'kill $$!' EXIT
-until curl -sf 'http://localhost:5173' > /dev/null; do
-  sleep 0.2
-done
-
 # link global playwright,
 # in _build to not pollute the project dir
 cd _build
@@ -765,19 +759,24 @@ npm link playwright > /dev/null
 # record the playthrough
 node $TESTDIR/../_build/test_driver.js \
     'http://localhost:5173?replay=skipPastIceCreamShop' | \
-  prettier --parser html | \
-  sed -E 's@<span>[0-9]+ seconds</span>@@'
+  sed -E 's@<span>[0-9]+ seconds</span>@@' | \
+  prettier --parser html
 ```
 
 The name of the function to play through the story is given in the `replay` query parameter.
 
 Some postprocessing of the recording may be needed before it is persisted.
 
-- It is highly useful to normalise the output so it diffs well.
-We can use prettier for that.
-- We can also strip any nondeterministic values from from the HTML if we don't want to use `isTesting`.
+- We can strip any nondeterministic values from from the HTML if we don't want to use `isTesting`.
+- It is highly useful to normalise the output so it diffs well. We can use prettier for that.
 
-If everything was set up correctly, you can then do
+If everything was set up correctly, you can start the server (to make this a true end-to-end test),
+
+```sh
+vite
+```
+
+then do
 
 ```sh
 scrut update -ry tests/e2e.md
