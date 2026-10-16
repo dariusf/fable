@@ -175,13 +175,6 @@ Like in Markdown, double linebreaks delimit paragraphs.
 Single line breaks are treated as spaces.
 Spaces are kept as written, and will render the way Markdown usually renders, e.g. having runs of spaces collapsed without `white-space: pre`.
 
-<!-- A minor extension is the quoted semicolon `` `;` ``.
-This acts as a paragraph break wherever it appears, i.e. the equivalent of two newlines, followed by matching the indentation of the context.
-This is especially useful in places where paragraph breaks are frequent but cumbersome, e.g. dialogue inside a choice item, where paragraphs are used to signal new speakers.
-For block-level things like nested choices, indentation is preferable.
-
-The quoted semicolon is used for putting paragraph breaks between things like dialogue. For blocks, nested choices indent is better -->
-
 ### Links
 
 > [!WARNING]

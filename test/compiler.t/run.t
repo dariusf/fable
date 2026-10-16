@@ -13,9 +13,6 @@
   $ compile ../programs/breaks.md
   {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Para",[["Text","a"],["Verbatim","<br>"],["Break"],["Text","b"],["Verbatim","<br/>"],["Break"],["Text","c"]]]]}]}
 
-  $ compile ../programs/paragraph-break.md
-  {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Para",[["Text","a "]]],["Para",[["Text"," b"]]],["Choice",{"more":[],"fallthrough":false,"items":[{"guard":[],"otherwise":false,"initial":[["Text","c"]],"code":[["Run",""]],"rest":[["Para",[["Text","haha"]]],["Para",[["Text"," b "],["Run",";;"],["Text"," this should not be expanded"]]]],"kind":["Consumable","c0"]}]}]]}]}
-
   $ compile ../programs/emphasis.md
   {"frontmatter":{},"scenes":[{"name":"prelude","cmds":[["Para",[["Emph",[["Text","text"]]],["Text"," from "],["Emph",[["Text","Scene"]]],["Text"," 1"]]]]}]}
 

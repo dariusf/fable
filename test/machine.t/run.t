@@ -16,17 +16,6 @@
   {"type":"para","content":[{"type":"text","text":"a"},{"type":"verbatim","html":"<br>"},{"type":"text","text":" "},{"type":"text","text":"b"},{"type":"verbatim","html":"<br/>"},{"type":"text","text":" "},{"type":"text","text":"c"}]}
   --- status: done, turns: 0
 
-  $ node main_test.js ../programs/paragraph-break.md c
-  {"type":"para","content":[{"type":"text","text":"a "}]}
-  {"type":"para","content":[{"type":"text","text":" b"}]}
-  {"type":"choices","nodeId":1,"items":[{"choiceId":0,"content":[{"type":"text","text":"c"}]}]}
-  --- choose: c
-  {"type":"markOld"}
-  {"type":"removeChoices","nodeId":1}
-  {"type":"para","content":[{"type":"text","text":"haha"}]}
-  {"type":"para","content":[{"type":"text","text":" b "},{"type":"text","text":" this should not be expanded"}]}
-  --- status: done, turns: 1
-
   $ node main_test.js ../programs/emphasis.md
   {"type":"para","content":[{"type":"emph","content":[{"type":"text","text":"text"}]},{"type":"text","text":" from "},{"type":"emph","content":[{"type":"text","text":"Scene"}]},{"type":"text","text":" 1"}]}
   --- status: done, turns: 0

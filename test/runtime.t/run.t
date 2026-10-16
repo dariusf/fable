@@ -15,14 +15,6 @@
     ><span><br /></span><span> </span><span>c</span>
   </div>
 
-  $ run ../programs/paragraph-break.md c
-  <div class="para old"><span>a </span></div>
-  <div class="para old"><span> b</span></div>
-  <div class="para"><span>haha</span></div>
-  <div class="para">
-    <span> b </span><span> this should not be expanded</span>
-  </div>
-
   $ run ../programs/emphasis.md
   <div class="para">
     <i><span>text</span></i
