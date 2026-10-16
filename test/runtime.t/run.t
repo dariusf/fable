@@ -16,24 +16,24 @@
   </div>
 
   $ run ../programs/paragraph-break.md c
-  <div class="para old"><span>a</span></div>
-  <div class="para old"><span>b</span></div>
+  <div class="para old"><span>a </span></div>
+  <div class="para old"><span> b</span></div>
   <div class="para"><span>haha</span></div>
   <div class="para">
-    <span>b</span><span> </span><span>this should not be expanded</span>
+    <span> b </span><span> this should not be expanded</span>
   </div>
 
   $ run ../programs/emphasis.md
   <div class="para">
     <i><span>text</span></i
-    ><span> </span><span>from</span><span> </span><i><span>Scene</span></i
-    ><span> </span><span>1</span>
+    ><span> from </span><i><span>Scene</span></i
+    ><span> 1</span>
   </div>
 
   $ run ../programs/comments.md
   <div class="para">
-    <span>inline comments</span><span> </span><span><i>don’t</i></span
-    ><span> </span><span>appear</span>
+    <span>inline comments </span><span><i>don’t</i></span
+    ><span> appear</span>
   </div>
 
   $ run ../programs/jump-links.md jump
@@ -87,9 +87,9 @@
   <div class="para"><span>1</span></div>
 
   $ run ../programs/interpolation.md a c
-  <div class="para old"><span>Turns:</span><span> </span><span>0</span></div>
-  <div class="para old"><span>Turns:</span><span> </span><span>1</span></div>
-  <div class="para"><span>Turns:</span><span> </span><span>2</span></div>
+  <div class="para old"><span>Turns: </span><span>0</span></div>
+  <div class="para old"><span>Turns: </span><span>1</span></div>
+  <div class="para"><span>Turns: </span><span>2</span></div>
 
   $ run ../programs/choices-continue.md 'continue'
   <div class="para"><span>here</span></div>
@@ -129,9 +129,7 @@
   <div class="para"><span>text from Scene 1</span></div>
 
   $ run ../programs/meta-undefined.md
-  <div class="para">
-    <span>a</span><span> </span><span>b</span><span> </span><span>c</span>
-  </div>
+  <div class="para"><span>a </span><span> b </span><span> c</span></div>
   <div class="para"><span>after</span></div>
 
   $ run ../programs/tunnels.md
@@ -149,19 +147,17 @@
 
   $ run ../programs/spaces.md 'choice text'
   <div class="para"><span>code after</span></div>
-  <div class="para">
-    <span>“Hi,</span><span> </span><span>A</span><span>,” he said.</span>
-  </div>
+  <div class="para"><span>“Hi, </span><span>A</span><span>,” he said.</span></div>
   <div class="para"><span>“</span><span>Edge case</span><span>“ here</span></div>
   <div class="para"><span>A</span><span>’s thing</span></div>
 
   $ run ../programs/inline-and-block-meta.md
-  <div class="para"><span>interpolation</span><span> </span><span>1</span></div>
-  <div class="para"><span>inline meta</span><span> </span><span>1</span></div>
+  <div class="para"><span>interpolation </span><span>1</span></div>
+  <div class="para"><span>inline meta </span><span>1</span></div>
   <div class="para"><span>block meta</span></div>
 
   $ run ../programs/inline-meta-jump.md
-  <div class="para"><span>hi</span><span> </span><span>there</span></div>
+  <div class="para"><span>hi </span><span>there</span></div>
   <div class="para"><span>b</span></div>
 
   $ run ../programs/block-meta-jump.md
@@ -221,12 +217,12 @@ This has to be checked dynamically because jumps may be produced by meta blocks.
   $ run ../programs/choices-exhausted.md a b
 
   $ run ../programs/api-local-state.md b a b a b
-  <div class="para old"><span>ha’s state:</span><span> </span><span>0</span></div>
-  <div class="para old"><span>hb’s state:</span><span> </span><span>0</span></div>
-  <div class="para old"><span>ha’s state:</span><span> </span><span>1</span></div>
-  <div class="para old"><span>hb’s state:</span><span> </span><span>1</span></div>
-  <div class="para old"><span>ha’s state:</span><span> </span><span>2</span></div>
-  <div class="para"><span>hb’s state:</span><span> </span><span>2</span></div>
+  <div class="para old"><span>ha’s state: </span><span>0</span></div>
+  <div class="para old"><span>hb’s state: </span><span>0</span></div>
+  <div class="para old"><span>ha’s state: </span><span>1</span></div>
+  <div class="para old"><span>hb’s state: </span><span>1</span></div>
+  <div class="para old"><span>ha’s state: </span><span>2</span></div>
+  <div class="para"><span>hb’s state: </span><span>2</span></div>
   <ul class="choice fadein">
     <li>
       <a idx="1" href="#" class="choice" draggable="false"><span>a</span></a>
@@ -248,15 +244,13 @@ This has to be checked dynamically because jumps may be produced by meta blocks.
   </ul>
 
   $ run ../programs/api-turns-since.md go back go
-  <div class="para old"><span>since a:</span><span> </span><span>0</span></div>
+  <div class="para old"><span>since a: </span><span>0</span></div>
   <div class="para old">
-    <span>since a:</span><span> </span><span>1</span><span>, since b:</span
-    ><span> </span><span>0</span>
+    <span>since a: </span><span>1</span><span>, since b: </span><span>0</span>
   </div>
-  <div class="para old"><span>since a:</span><span> </span><span>0</span></div>
+  <div class="para old"><span>since a: </span><span>0</span></div>
   <div class="para">
-    <span>since a:</span><span> </span><span>1</span><span>, since b:</span
-    ><span> </span><span>0</span>
+    <span>since a: </span><span>1</span><span>, since b: </span><span>0</span>
   </div>
   <ul class="choice fadein">
     <li>
@@ -266,20 +260,19 @@ This has to be checked dynamically because jumps may be produced by meta blocks.
 
   $ run ../programs/api-random.md
   <div class="para">
-    <span>roll:</span><span> </span><span>3</span><span>, coin:</span
-    ><span> </span><span>false</span><span>, pick:</span><span> </span
-    ><span>y</span><span>, float below one:</span><span> </span><span>true</span>
+    <span>roll: </span><span>3</span><span>, coin: </span><span>false</span
+    ><span>, pick: </span><span>y</span><span>, float below one: </span
+    ><span>true</span>
   </div>
 
   $ run ../programs/api-random-seed.md
   <div class="para">
-    <span>roll:</span><span> </span><span>5</span><span>, coin:</span
-    ><span> </span><span>true</span><span>, pick:</span><span> </span
-    ><span>y</span>
+    <span>roll: </span><span>5</span><span>, coin: </span><span>true</span
+    ><span>, pick: </span><span>y</span>
   </div>
 
   $ run ../programs/api-last-choice.md second
-  <div class="para"><span>you chose</span><span> </span><span>second</span></div>
+  <div class="para"><span>you chose </span><span>second</span></div>
 
   $ run ../programs/jump-to-current-section.md a
   <div class="para old"><span>hello</span></div>
@@ -312,10 +305,8 @@ Widget values are recorded before a choice and readable by story code.
     >
   </div>
   <div class="para old">
-    <span>You felt</span><span> </span><span>tense</span><span>.</span>
+    <span>You felt </span><span>tense</span><span>.</span>
   </div>
-  <div class="para">
-    <span>You felt</span><span> </span><span>tense</span><span>.</span>
-  </div>
+  <div class="para"><span>You felt </span><span>tense</span><span>.</span></div>
 
   $ run ../programs/run-undefined-result.md

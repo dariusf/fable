@@ -55,7 +55,6 @@ module ToJv = struct
   let rec inline (i : M.Event.inline) : Jv.t =
     match i with
     | Text s -> obj "text" [("text", Jv.of_string s)]
-    | Space -> obj "space" []
     | Verbatim s -> obj "verbatim" [("html", Jv.of_string s)]
     | Link { link_id; label } ->
       obj "link" [("linkId", Jv.of_int link_id); ("label", Jv.of_string label)]
@@ -190,9 +189,7 @@ let machine_handle (st : state) : Jv.t =
                  (Jv.to_list FromJv.history_entry entries))) );
       ( "skipUntil",
         Jv.callback ~arity:1 (fun text ->
-            produce_result
-              (M.skip_until (Jv.to_string text) st.machine))
-      );
+            produce_result (M.skip_until (Jv.to_string text) st.machine)) );
       ( "activate",
         Jv.callback ~arity:1 (fun id ->
             produce_result (M.activate st.machine (Jv.to_int id))) );

@@ -76,11 +76,6 @@ function renderInline(i) {
       s.textContent = smartypants(i.text);
       return s;
     }
-    case "space": {
-      const s = document.createElement("span");
-      s.textContent = " ";
-      return s;
-    }
     case "verbatim": {
       const s = document.createElement("span");
       s.innerHTML = smartypantsHtml(i.html);

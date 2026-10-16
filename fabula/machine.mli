@@ -37,10 +37,9 @@ val create : inputs -> machine
     ends, or input is required. In the latter case, the events contain ids which
     allow providing responses. *)
 module Event : sig
-  (** Rendered inline content, with explicit spaces *)
+  (** Rendered inline content *)
   type inline =
     | Text of string
-    | Space
     | Verbatim of string
     | Link of {
         link_id : int;  (** link ids persist for the machine's lifetime *)
@@ -72,8 +71,8 @@ val choose : machine -> int -> machine * Event.t list
 
 val choose_by_label : machine -> string -> machine * Event.t list
 
-(** Takes several choices by label in sequence, concatenating the events.
-    Widget entries are applied as inputs before the choices that follow them. *)
+(** Takes several choices by label in sequence, concatenating the events. Widget
+    entries are applied as inputs before the choices that follow them. *)
 val apply_inputs : machine -> history_entry list -> machine * Event.t list
 
 (** Provide a widget input. *)
@@ -86,8 +85,7 @@ val activate : machine -> int -> machine * Event.t list
 val activate_by_label : machine -> string -> machine * Event.t list
 
 (** Runs until the string is found or the machine gets stuck *)
-val skip_until :
-  string -> machine -> machine * Event.t list
+val skip_until : string -> machine -> machine * Event.t list
 
 (** * Replay and rewind *)
 

@@ -32,7 +32,6 @@ let value_to_string = function
 module Event = struct
   type inline =
     | Text of string
-    | Space
     | Verbatim of string
     | Link of {
         link_id : int;
@@ -54,114 +53,48 @@ module Event = struct
   [@@deriving show { with_path = false }]
 end
 
-(** Abstract inlines: inline elements before spacing has been computed.
-
-    Buffering in a structured form lets us avoid the old retrospective space
-    fixes needed for inline Meta. *)
-type ainline =
-  | IText of string
-  | IVerbatim of string
-  | IEmph of ainline list
-  | ILink of {
-      link_id : int;
-      label : string;
-    }
-[@@deriving show { with_path = false }]
-
 module Rendering : sig
-  (** Applies the spacing rules *)
-  val render_run : ainline list -> Event.inline list
-
+  val trim_run : Event.inline list -> Event.inline list
   val events_to_string : Event.t list -> string
 
   (** For choice and link labels *)
   val einlines_text : Event.inline list -> string
 end = struct
-  let rec inline_text (i : ainline) : string =
-    match i with
-    | IText s -> s
-    | IVerbatim s ->
-      (* TODO use a proper parser *)
-      Str.global_replace (Str.regexp "<[^>]*>") "" s
-    | IEmph is -> String.concat "" (List.map inline_text is)
-    | ILink { label; _ } -> label
-
-  let is_space c = c = ' ' || c = '\t' || c = '\n'
-
-  let count_char c s =
-    String.fold_left (fun n d -> if c = d then n + 1 else n) 0 s
-
-  (* double quotes alternate between opening and closing across the run;
-     a leading one attaches to the previous word only when it closes *)
-  let starts_with_no_space_punctuation ~in_quote s =
-    String.length s > 0
-    &&
-    let c = s.[0] in
-    if c = '"' then in_quote else String.contains ".,!?:;'" c
-
-  (* an element ending in an opening quote suppresses the space after it.
-     an apostrophe opens if it starts the element or follows a space *)
-  let ends_with_opening_quote ~in_quote s =
-    let n = String.length s in
-    n > 0
-    &&
-    let c = s.[n - 1] in
-    if c = '"' then in_quote
-    else c = '\'' && (n = 1 || is_space s.[n - 2] || s.[n - 2] = '(')
-
-  (* Renders a closed inline run, inserting [Space] entries per the spacing
-   rules. Each container (paragraph, emph) tracks its own needs-space
-   state, matching the per-element state of the DOM version. *)
-  let rec render_run (run : ainline list) : Event.inline list =
-    let emit_one i : Event.inline =
-      match i with
-      | IText s -> Text s
-      | IVerbatim s -> Verbatim s
-      | ILink { link_id; label } -> Link { link_id; label }
-      | IEmph is -> Emph (render_run is)
+  let trim_run (run : Event.inline list) : Event.inline list =
+    let rec strip re = function
+      | Event.Text s :: rest when is_whitespace s -> strip re rest
+      | Event.Text s :: rest ->
+        Event.Text (Str.replace_first (Str.regexp re) "" s) :: rest
+      | l -> l
     in
-    let _, _, evs =
-      List.fold_left
-        (fun (needs_space, in_quote, acc) i ->
-          let text = inline_text i in
-          let has_no_text = text = "" in
-          let add_space =
-            (not (starts_with_no_space_punctuation ~in_quote text))
-            && needs_space && not has_no_text
-          in
-          let in_quote' =
-            if count_char '"' text mod 2 = 1 then not in_quote else in_quote
-          in
-          let needs_space' =
-            if has_no_text then needs_space
-            else not (ends_with_opening_quote ~in_quote:in_quote' text)
-          in
-          let evs =
-            if add_space then [emit_one i; Event.Space] else [emit_one i]
-          in
-          (needs_space', in_quote', evs @ acc))
-        (false, false, []) run
-    in
-    List.rev evs
+    run |> strip "^[ \t\n]+" |> List.rev |> strip "[ \t\n]+$" |> List.rev
 
-  (* The plain text of a rendered run *)
-  let rec einlines_text (es : Event.inline list) : string =
+  (* TODO use a proper parser *)
+  let strip_tags s = Str.global_replace (Str.regexp "<[^>]*>") "" s
+
+  (* The plain text of a run *)
+  let einlines_text (es : Event.inline list) : string =
     let buf = Buffer.create 32 in
-    List.iter
-      (fun (i : Event.inline) ->
-        match i with
-        | Text s -> Buffer.add_string buf s
-        | Space -> Buffer.add_char buf ' '
-        | Verbatim s -> Buffer.add_string buf (inline_text (IVerbatim s))
-        | Link { label; _ } -> Buffer.add_string buf label
-        | Emph is -> Buffer.add_string buf (einlines_text is))
-      es;
+    let rec go es =
+      List.iter
+        (fun (i : Event.inline) ->
+          match i with
+          | Text s -> Buffer.add_string buf s
+          | Verbatim s -> Buffer.add_string buf (strip_tags s)
+          | Link { label; _ } -> Buffer.add_string buf label
+          | Emph is -> go is)
+        es
+    in
+    go es;
     Buffer.contents buf
 
   let events_to_string (events : Event.t list) : string =
     (* blocks are tagged with a node id when removable (choice lists) *)
     let blocks : (int option * string) list ref = ref [] in
     let buf = Buffer.create 256 in
+    let collapse_spaces s =
+      Str.global_replace (Str.regexp "[ \t\n]+") " " s |> String.trim
+    in
     let close_block ?id () =
       if Buffer.length buf > 0 then begin
         blocks := (id, Buffer.contents buf) :: !blocks;
@@ -173,11 +106,11 @@ end = struct
         match e with
         | Mark_old -> ()
         | Para is ->
-          Buffer.add_string buf (einlines_text is);
+          Buffer.add_string buf (collapse_spaces (einlines_text is));
           close_block ()
         | Verbatim_block s ->
           close_block ();
-          Buffer.add_string buf (inline_text (IVerbatim s));
+          Buffer.add_string buf (strip_tags s);
           close_block ()
         | Choices { node_id; items } ->
           close_block ();
@@ -185,7 +118,8 @@ end = struct
             (fun i (_, content) ->
               if i > 0 then Buffer.add_char buf '\n';
               Buffer.add_string buf
-                (Format.sprintf "%d. %s" (i + 1) (einlines_text content)))
+                (Format.sprintf "%d. %s" (i + 1)
+                   (collapse_spaces (einlines_text content))))
             items;
           close_block ~id:node_id ()
         | Remove_choices node_id ->
@@ -266,11 +200,11 @@ type machine = {
   sections : cmd list SMap.t;
   stack : frame list;
       (** Reified continuation as stack of frames. Top = current *)
-  open_runs : ainline Acc.t list;
+  open_runs : Event.inline Acc.t list;
       (** A stack of buffered, partial outputs, with one entry corresponding to
           each open Para or Emph. There can be Splice (inline Meta in a
           paragraph) or Root (Tunnel) frames above, which is the reason this is
-          a separate field. Note the type: spacing has yet to be computed *)
+          a separate field *)
   status : status;
   game : game;
   links : link IMap.t; (* live across turns; machine-level rather than game *)
@@ -289,7 +223,7 @@ let flush_runs m =
   let rec loop frames runs carry =
     match (frames, runs) with
     | { ctx = In_emph; _ } :: fs, run :: rs ->
-      Acc.empty :: loop fs rs [IEmph (Acc.to_list run @ carry)]
+      Acc.empty :: loop fs rs [Event.Emph (Acc.to_list run @ carry)]
     | { ctx = In_para; _ } :: fs, run :: rs ->
       paras := (Acc.to_list run @ carry) :: !paras;
       Acc.empty :: loop fs rs []
@@ -302,7 +236,9 @@ let flush_runs m =
   let m =
     List.fold_left
       (fun m run ->
-        if run = [] then m else emit m (Event.Para (Rendering.render_run run)))
+        match Rendering.trim_run run with
+        | [] -> m
+        | run -> emit m (Event.Para run))
       m !paras
   in
   { m with open_runs = runs }
@@ -390,13 +326,15 @@ let pop_frame m frame rest =
     (match m.open_runs with
     | run :: runs ->
       let m = { m with stack = rest; open_runs = runs } in
-      emit m (Event.Para (Rendering.render_run (Acc.to_list run)))
+      (match Rendering.trim_run (Acc.to_list run) with
+      | [] -> m
+      | run -> emit m (Event.Para run))
     | [] -> failwith "machine invariant: In_para frame without open run")
   | In_emph ->
     (match m.open_runs with
     | run :: runs ->
       let m = { m with stack = rest; open_runs = runs } in
-      push_inline m (IEmph (Acc.to_list run))
+      push_inline m (Event.Emph (Acc.to_list run))
     | [] -> failwith "machine invariant: In_emph frame without open run")
 
 let do_jump m kind section_name =
@@ -416,23 +354,23 @@ let do_jump m kind section_name =
    inline machinery. Interpolations run; anything block-level is a
    compile-side impossibility. *)
 let rec label_inlines m (cmds : cmd list) :
-    (machine * ainline list, machine) result =
+    (machine * Event.inline list, machine) result =
   List.fold_left
     (fun acc c ->
       match acc with
       | Error _ -> acc
       | Ok (m, is) ->
         (match c with
-        | Text s -> Ok (m, IText s :: is)
-        | Verbatim s -> Ok (m, IVerbatim s :: is)
-        | Break -> Ok (m, is)
+        | Text s -> Ok (m, Event.Text s :: is)
+        | Verbatim s -> Ok (m, Event.Verbatim s :: is)
+        | Break -> Ok (m, Event.Text " " :: is)
         | Emph cs ->
           (match label_inlines m cs with
-          | Ok (m, inner) -> Ok (m, IEmph inner :: is)
+          | Ok (m, inner) -> Ok (m, Event.Emph inner :: is)
           | Error m -> Error m)
         | Interpolate code ->
           (match eval_safe m `Value code with
-          | Ok v -> Ok (m, IText (value_to_string v) :: is)
+          | Ok v -> Ok (m, Event.Text (value_to_string v) :: is)
           | Error e ->
             Error
               (halt m
@@ -490,7 +428,7 @@ let offer_choice m (c : choice) : machine =
         match label_inlines !m item.initial with
         | Ok (m', is) ->
           m := m';
-          Rendering.render_run is
+          Rendering.trim_run is
         | Error m' -> raise (Halt_exn m')
       in
       let m', id = fresh_id !m in
@@ -607,12 +545,13 @@ let step (m : machine) : machine =
         }
       else halt m "emphasis outside paragraph"
     | Text s ->
-      if inline_ctx then push_inline m (IText s)
+      if inline_ctx then push_inline m (Event.Text s)
+      else if is_whitespace s then m
       else halt m "text outside paragraph"
     | Verbatim s ->
-      if inline_ctx then push_inline m (IVerbatim s)
+      if inline_ctx then push_inline m (Event.Verbatim s)
       else emit m (Event.Verbatim_block s)
-    | Break -> m (* as today: space insertion takes care of it *)
+    | Break -> if inline_ctx then push_inline m (Event.Text " ") else m
     | VerbatimBlock s -> emit m (Event.Verbatim_block s)
     | Run code ->
       (match eval_safe m `Effect code with
@@ -621,7 +560,7 @@ let step (m : machine) : machine =
         halt m (Format.sprintf "Run: error when executing %s: %s" code e))
     | Interpolate code ->
       (match eval_safe m `Value code with
-      | Ok v -> push_inline m (IText (value_to_string v))
+      | Ok v -> push_inline m (Event.Text (value_to_string v))
       | Error e ->
         halt m
           (Format.sprintf "Interpolate: error when executing %s: %s" code e))
@@ -631,7 +570,7 @@ let step (m : machine) : machine =
       let m =
         { m with links = IMap.add id { link_kind; dest; label } m.links }
       in
-      push_inline m (ILink { link_id = id; label })
+      push_inline m (Event.Link { link_id = id; label })
     | Jump section -> do_jump m "Jump" section
     | JumpDynamic code ->
       (match eval_safe m `Value code with
@@ -868,12 +807,6 @@ let turns_since (g : game) section =
 let seen (g : game) section =
   Option.value ~default:0 (SMap.find_opt section g.seen_sections)
 
-(* * Spacing rule tests. Each element of a run (text, interpolation result,
-   verbatim, emph, link) is spaced independently at its boundaries. *)
-
-(** Parses Fable source and runs the machine with it, capturing buffered
-    ainlines at the point when the In_para frame is exhausted, right before
-    popping *)
 let canned_eval canned _g _want code =
   match List.assoc_opt code canned with
   | Some v -> v
@@ -882,268 +815,59 @@ let canned_eval canned _g _want code =
 let program_of_str src : program =
   { frontmatter = []; scenes = parse_sections src }
 
-let run_and_capture ?(canned = []) src =
+let check_inlines ?(canned = []) src =
   let eval = canned_eval canned in
   let program = program_of_str src in
-  let rec loop captured m =
-    let captured =
-      match (captured, m.stack) with
-      | None, { instrs = []; ctx = In_para } :: _ ->
-        Some (Acc.to_list (List.hd m.open_runs))
-      | _ -> captured
-    in
-    if m.status = Running then step m |> loop captured else (captured, m)
+  let _, ev =
+    run (create { program; seed = 0; eval; set_widget = (fun _ _ -> ()) })
   in
-  let captured, m =
-    loop None (create { program; seed = 0; eval; set_widget = (fun _ _ -> ()) })
-  in
-  (captured, Acc.to_list m.events)
-
-let check_spacing ?(canned = []) src =
-  let run, ev = run_and_capture ~canned src in
-  (match run with
-  | None -> print_endline "<no run>"
-  | Some r -> print_endline ([%show: ainline list] r));
-  Format.printf "---@.";
   ev |> List.iter (fun e -> print_endline (Event.show e));
   Format.printf "---@.";
   ev |> Rendering.events_to_string |> print_string
 
-let%expect_test "adjacent inlines are joined with a single space, none leading"
-    =
-  check_spacing ~canned:[("n", VNumber 3.)] {|You have `$n` coins.|};
+let%expect_test "spaces are kept as written across an interpolation" =
+  check_inlines ~canned:[("n", VNumber 3.)] {|You have `$n` coins.|};
   [%expect
     {|
-    [(IText "You have"); (IText "3"); (IText "coins.")]
-    ---
-    (Para [(Text "You have"); Space; (Text "3"); Space; (Text "coins.")])
+    (Para [(Text "You have "); (Text "3"); (Text " coins.")])
     ---
     You have 3 coins.
     |}]
 
-let%expect_test "punctuation hugs the previous word" =
-  (* an element starting with no-space punctuation suppresses the preceding space *)
-  check_spacing ~canned:[("x", VString "wow")] {|Cheers `$x`, mate|};
+let%expect_test "a soft break renders as a space" =
+  check_inlines "first line\nsecond line";
   [%expect
     {|
-    [(IText "Cheers"); (IText "wow"); (IText ", mate")]
+    (Para [(Text "first line"); (Text " "); (Text "second line")])
     ---
-    (Para [(Text "Cheers"); Space; (Text "wow"); (Text ", mate")])
-    ---
-    Cheers wow, mate
-    |}];
-  check_spacing ~canned:[("x", VString "wow")] {|Truly `$x`!|};
-  [%expect
-    {|
-    [(IText "Truly"); (IText "wow"); (IText "!")]
-    ---
-    (Para [(Text "Truly"); Space; (Text "wow"); (Text "!")])
-    ---
-    Truly wow!
+    first line second line
     |}]
 
-let%expect_test "opening quote hugs the next word" =
-  (* an element ending in a double or single quote emits no space after it,
-     so a quote opened in one element attaches to the word from the next.
-     (the quote lives in an interpolation because the markdown parser
-     smart-quotes literal quotes in source text) *)
-  check_spacing ~canned:[("q", VString "She said \"")] {|`$q`hi there|};
+let%expect_test
+    "breaks and spaces around code compile differently but render the same" =
+  check_inlines ~canned:[("0", VUndefined)] "a\n`0`\nc";
   [%expect
     {|
-    [(IText "She said \""); (IText "hi there")]
+    (Para [(Text "a"); (Text " "); (Text " "); (Text "c")])
     ---
-    (Para [(Text "She said \""); (Text "hi there")])
-    ---
-    She said "hi there
+    a c
     |}];
-  check_spacing ~canned:[("d", VString "90s")] {|back in the '`$d`|};
-  [%expect
-    {|
-    [(IText "back in the '"); (IText "90s")]
+  check_inlines ~canned:[("0", VUndefined)] "a `0` c";
+  [%expect {|
+    (Para [(Text "a "); (Text " c")])
     ---
-    (Para [(Text "back in the '"); (Text "90s")])
-    ---
-    back in the '90s
+    a c
     |}]
 
-let%expect_test "closing quote keeps the following space" =
-  check_spacing {|"But how are you so sure of it?" She asked.|};
+let%expect_test
+    "an empty interpolation leaves a double space that the text renderer \
+     collapses" =
+  check_inlines ~canned:[("nothing", VString "")] {|before `$nothing` after|};
   [%expect
     {|
-    [(IText "\"But how are you so sure of it?\" She asked.")]
-    ---
-    (Para [(Text "\"But how are you so sure of it?\" She asked.")])
-    ---
-    "But how are you so sure of it?" She asked.
-    |}];
-  check_spacing ~canned:[("q", VString "He said \"no.\"")] {|`$q` Then left.|};
-  [%expect
-    {|
-    [(IText "He said \"no.\""); (IText "Then left.")]
-    ---
-    (Para [(Text "He said \"no.\""); Space; (Text "Then left.")])
-    ---
-    He said "no." Then left.
-    |}];
-  check_spacing ~canned:[("x", VString "wow")] {|*He said* "`$x`!"|};
-  [%expect
-    {|
-    [(IEmph [(IText "He said")]); (IText "\""); (IText "wow"); (IText "!\"")]
-    ---
-    (Para
-       [(Emph [(Text "He said")]); Space; (Text "\""); (Text "wow"); (Text "!\"")
-         ])
-    ---
-    He said "wow!"
-    |}]
-
-let%expect_test "single quotes" =
-  (* A leading apostrophe always attaches, so possessives and contractions
-     work. A trailing one after a letter is a closing quote. *)
-  check_spacing ~canned:[("x", VString "Bob")] {|`$x`'s thing|};
-  [%expect
-    {|
-    [(IText "Bob"); (IText "'s thing")]
-    ---
-    (Para [(Text "Bob"); (Text "'s thing")])
-    ---
-    Bob's thing
-    |}];
-  check_spacing ~canned:[("x", VString "dogs")] {|the `$x`' bowls|};
-  [%expect
-    {|
-    [(IText "the"); (IText "dogs"); (IText "' bowls")]
-    ---
-    (Para [(Text "the"); Space; (Text "dogs"); (Text "' bowls")])
-    ---
-    the dogs' bowls
-    |}];
-  check_spacing ~canned:[("x", VString "wow")] {|'`$x`' she said|};
-  [%expect
-    {|
-    [(IText "'"); (IText "wow"); (IText "' she said")]
-    ---
-    (Para [(Text "'"); (Text "wow"); (Text "' she said")])
-    ---
-    'wow' she said
-    |}];
-  (* known limitation: a leading apostrophe always attaches, so an opening
-     single quote after an element joins it. a workaround is to use an interpolated space. this produces 2 spaces and leaves rendering to collapse them. other workarounds using interpolation are possible. *)
-  check_spacing {|*He said* 'wow' and left|};
-  [%expect
-    {|
-    [(IEmph [(IText "He said")]); (IText "'wow' and left")]
-    ---
-    (Para [(Emph [(Text "He said")]); (Text "'wow' and left")])
-    ---
-    He said'wow' and left
-    |}];
-  check_spacing ~canned:[("sp", VString " ")] {|*He said* `$sp`'wow' and left|};
-  [%expect
-    {|
-    [(IEmph [(IText "He said")]); (IText " "); (IText "'wow' and left")]
-    ---
-    (Para [(Emph [(Text "He said")]); Space; (Text " "); (Text "'wow' and left")])
-    ---
-    He said  'wow' and left
-    |}]
-
-let%expect_test "textless elements are transparent" =
-  (* an element with no visible text (empty interpolation result, tag-only
-     verbatim) neither consumes the pending space nor adds one *)
-  check_spacing ~canned:[("nothing", VString "")] {|before `$nothing` after|};
-  [%expect
-    {|
-    [(IText "before"); (IText ""); (IText "after")]
-    ---
-    (Para [(Text "before"); (Text ""); Space; (Text "after")])
+    (Para [(Text "before "); (Text ""); (Text " after")])
     ---
     before after
-    |}];
-  check_spacing {|before <span class="x"></span> after|};
-  [%expect
-    {|
-    [(IText "before"); (IVerbatim "<span class=\"x\"></span>"); (IText "after")]
-    ---
-    (Para
-       [(Text "before"); (Verbatim "<span class=\"x\"></span>"); Space;
-         (Text "after")])
-    ---
-    before after
-    |}];
-  (* leading textless element: still no leading space *)
-  check_spacing ~canned:[("nothing", VString "")] {|`$nothing` start|};
-  [%expect
-    {|
-    [(IText ""); (IText "start")]
-    ---
-    (Para [(Text ""); (Text "start")])
-    ---
-    start
-    |}];
-  (* trailing textless element: no trailing space *)
-  check_spacing ~canned:[("nothing", VString "")] {|end `$nothing`|};
-  [%expect
-    {|
-    [(IText "end"); (IText "")]
-    ---
-    (Para [(Text "end"); (Text "")])
-    ---
-    end
-    |}]
-
-let%expect_test "verbatim is measured with tags stripped" =
-  (* raw HTML around a word spaces like plain text; the tags are invisible.
-     (the parser splits this into tag-only verbatims around a plain text,
-     so the tags must be transparent on both sides of [bold]) *)
-  check_spacing {|some <b>bold</b> text|};
-  [%expect
-    {|
-    [(IText "some"); (IVerbatim "<b>bold</b>"); (IText "text")]
-    ---
-    (Para [(Text "some"); Space; (Verbatim "<b>bold</b>"); Space; (Text "text")])
-    ---
-    some bold text
-    |}]
-
-let%expect_test "emph and links are spaced by their whole text" =
-  (* the container is one element to its parent; inside it, the spacing
-     state restarts, so there is no space just after the opening emph *)
-  check_spacing {|very *important, truly* so.|};
-  [%expect
-    {|
-    [(IText "very"); (IEmph [(IText "important, truly")]); (IText "so.")]
-    ---
-    (Para
-       [(Text "very"); Space; (Emph [(Text "important, truly")]); Space;
-         (Text "so.")])
-    ---
-    very important, truly so.
-    |}];
-  check_spacing {|see [here](#start).|};
-  [%expect
-    {|
-    [(IText "see"); ILink {link_id = 0; label = "here"}; (IText ".")]
-    ---
-    (Para [(Text "see"); Space; Link {link_id = 0; label = "here"}; (Text ".")])
-    ---
-    see here.
-    |}]
-
-let%expect_test "space events land inside the right container" =
-  (* structurally: the space before the emph belongs to the outer run, and
-     inner spacing is computed within the emph's own event list *)
-  let program = program_of_str {|a *b `$x` d*|} in
-  let eval _ _ _code = VString "c" in
-  let _m, events =
-    run (create { program; seed = 0; eval; set_widget = (fun _ _ -> ()) })
-  in
-  List.iter (fun e -> print_endline (Event.show e)) events;
-  [%expect
-    {|
-    (Para
-       [(Text "a"); Space;
-         (Emph [(Text "b"); Space; (Text "c"); Space; (Text "d")])])
     |}]
 
 let drive ?(canned = []) src labels =
@@ -1225,7 +949,7 @@ let%expect_test "interpolate and run" =
 setup()
 ```
 
-Hello `$name` .
+Hello `$name`.
 |} [];
   [%expect {| Hello Iris. |}]
 

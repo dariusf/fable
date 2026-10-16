@@ -13,26 +13,26 @@
   --- status: done, turns: 0
 
   $ node main_test.js ../programs/breaks.md
-  {"type":"para","content":[{"type":"text","text":"a"},{"type":"verbatim","html":"<br>"},{"type":"space"},{"type":"text","text":"b"},{"type":"verbatim","html":"<br/>"},{"type":"space"},{"type":"text","text":"c"}]}
+  {"type":"para","content":[{"type":"text","text":"a"},{"type":"verbatim","html":"<br>"},{"type":"text","text":" "},{"type":"text","text":"b"},{"type":"verbatim","html":"<br/>"},{"type":"text","text":" "},{"type":"text","text":"c"}]}
   --- status: done, turns: 0
 
   $ node main_test.js ../programs/paragraph-break.md c
-  {"type":"para","content":[{"type":"text","text":"a"}]}
-  {"type":"para","content":[{"type":"text","text":"b"}]}
+  {"type":"para","content":[{"type":"text","text":"a "}]}
+  {"type":"para","content":[{"type":"text","text":" b"}]}
   {"type":"choices","nodeId":1,"items":[{"choiceId":0,"content":[{"type":"text","text":"c"}]}]}
   --- choose: c
   {"type":"markOld"}
   {"type":"removeChoices","nodeId":1}
   {"type":"para","content":[{"type":"text","text":"haha"}]}
-  {"type":"para","content":[{"type":"text","text":"b"},{"type":"space"},{"type":"text","text":"this should not be expanded"}]}
+  {"type":"para","content":[{"type":"text","text":" b "},{"type":"text","text":" this should not be expanded"}]}
   --- status: done, turns: 1
 
   $ node main_test.js ../programs/emphasis.md
-  {"type":"para","content":[{"type":"emph","content":[{"type":"text","text":"text"}]},{"type":"space"},{"type":"text","text":"from"},{"type":"space"},{"type":"emph","content":[{"type":"text","text":"Scene"}]},{"type":"space"},{"type":"text","text":"1"}]}
+  {"type":"para","content":[{"type":"emph","content":[{"type":"text","text":"text"}]},{"type":"text","text":" from "},{"type":"emph","content":[{"type":"text","text":"Scene"}]},{"type":"text","text":" 1"}]}
   --- status: done, turns: 0
 
   $ node main_test.js ../programs/comments.md
-  {"type":"para","content":[{"type":"text","text":"inline comments"},{"type":"space"},{"type":"verbatim","html":"<i>don't</i>"},{"type":"space"},{"type":"text","text":"appear"}]}
+  {"type":"para","content":[{"type":"text","text":"inline comments "},{"type":"verbatim","html":"<i>don't</i>"},{"type":"text","text":" appear"}]}
   --- status: done, turns: 0
 
   $ node main_test.js ../programs/jump-links.md jump
@@ -101,17 +101,17 @@
   --- status: done, turns: 0
 
   $ node main_test.js ../programs/interpolation.md a c
-  {"type":"para","content":[{"type":"text","text":"Turns:"},{"type":"space"},{"type":"text","text":"0"}]}
+  {"type":"para","content":[{"type":"text","text":"Turns: "},{"type":"text","text":"0"}]}
   {"type":"choices","nodeId":1,"items":[{"choiceId":0,"content":[{"type":"text","text":"a"}]}]}
   --- choose: a
   {"type":"markOld"}
   {"type":"removeChoices","nodeId":1}
-  {"type":"para","content":[{"type":"text","text":"Turns:"},{"type":"space"},{"type":"text","text":"1"}]}
+  {"type":"para","content":[{"type":"text","text":"Turns: "},{"type":"text","text":"1"}]}
   {"type":"choices","nodeId":3,"items":[{"choiceId":2,"content":[{"type":"text","text":"c"}]}]}
   --- choose: c
   {"type":"markOld"}
   {"type":"removeChoices","nodeId":3}
-  {"type":"para","content":[{"type":"text","text":"Turns:"},{"type":"space"},{"type":"text","text":"2"}]}
+  {"type":"para","content":[{"type":"text","text":"Turns: "},{"type":"text","text":"2"}]}
   --- status: done, turns: 2
 
   $ node main_test.js ../programs/choices-continue.md 'continue'
@@ -145,7 +145,7 @@
   --- choose: Choice 2
   {"type":"markOld"}
   {"type":"removeChoices","nodeId":11}
-  {"type":"para","content":[{"type":"text","text":"after"},{"type":"space"},{"type":"text","text":"break"}]}
+  {"type":"para","content":[{"type":"text","text":"after"},{"type":"text","text":" "},{"type":"text","text":"break"}]}
   {"type":"para","content":[{"type":"text","text":"Right before going back to Nested"}]}
   {"type":"choices","nodeId":14,"items":[{"choiceId":12,"content":[{"type":"text","text":"Choice 3"}]},{"choiceId":13,"content":[{"type":"text","text":"Choice 4"}]}]}
   --- choose: Choice 3
@@ -178,7 +178,7 @@
   --- status: done, turns: 0
 
   $ node main_test.js ../programs/meta-undefined.md
-  {"type":"para","content":[{"type":"text","text":"a"},{"type":"space"},{"type":"text","text":"b"},{"type":"space"},{"type":"text","text":"c"}]}
+  {"type":"para","content":[{"type":"text","text":"a "},{"type":"text","text":" b "},{"type":"text","text":" c"}]}
   {"type":"para","content":[{"type":"text","text":"after"}]}
   --- status: done, turns: 0
 
@@ -199,19 +199,19 @@
   {"type":"markOld"}
   {"type":"removeChoices","nodeId":1}
   {"type":"para","content":[{"type":"text","text":"code after"}]}
-  {"type":"para","content":[{"type":"text","text":"\"Hi,"},{"type":"space"},{"type":"text","text":"A"},{"type":"text","text":",\" he said."}]}
+  {"type":"para","content":[{"type":"text","text":"\"Hi, "},{"type":"text","text":"A"},{"type":"text","text":",\" he said."}]}
   {"type":"para","content":[{"type":"text","text":"\""},{"type":"text","text":"Edge case"},{"type":"text","text":"\" here"}]}
   {"type":"para","content":[{"type":"text","text":"A"},{"type":"text","text":"'s thing"}]}
   --- status: done, turns: 1
 
   $ node main_test.js ../programs/inline-and-block-meta.md
-  {"type":"para","content":[{"type":"text","text":"interpolation"},{"type":"space"},{"type":"text","text":"1"}]}
-  {"type":"para","content":[{"type":"text","text":"inline meta"},{"type":"space"},{"type":"text","text":"1"}]}
+  {"type":"para","content":[{"type":"text","text":"interpolation "},{"type":"text","text":"1"}]}
+  {"type":"para","content":[{"type":"text","text":"inline meta "},{"type":"text","text":"1"}]}
   {"type":"para","content":[{"type":"text","text":"block meta"}]}
   --- status: done, turns: 0
 
   $ node main_test.js ../programs/inline-meta-jump.md
-  {"type":"para","content":[{"type":"text","text":"hi"},{"type":"space"},{"type":"text","text":"there"}]}
+  {"type":"para","content":[{"type":"text","text":"hi "},{"type":"text","text":"there"}]}
   {"type":"para","content":[{"type":"text","text":"b"}]}
   --- status: done, turns: 0
 
@@ -289,32 +289,32 @@
   --- status: done, turns: 2
 
   $ node main_test.js ../programs/api-local-state.md b a b a b
-  {"type":"para","content":[{"type":"text","text":"ha's state:"},{"type":"space"},{"type":"text","text":"0"}]}
+  {"type":"para","content":[{"type":"text","text":"ha's state: "},{"type":"text","text":"0"}]}
   {"type":"choices","nodeId":1,"items":[{"choiceId":0,"content":[{"type":"text","text":"b"}]}]}
   --- choose: b
   {"type":"markOld"}
   {"type":"removeChoices","nodeId":1}
-  {"type":"para","content":[{"type":"text","text":"hb's state:"},{"type":"space"},{"type":"text","text":"0"}]}
+  {"type":"para","content":[{"type":"text","text":"hb's state: "},{"type":"text","text":"0"}]}
   {"type":"choices","nodeId":3,"items":[{"choiceId":2,"content":[{"type":"text","text":"a"}]}]}
   --- choose: a
   {"type":"markOld"}
   {"type":"removeChoices","nodeId":3}
-  {"type":"para","content":[{"type":"text","text":"ha's state:"},{"type":"space"},{"type":"text","text":"1"}]}
+  {"type":"para","content":[{"type":"text","text":"ha's state: "},{"type":"text","text":"1"}]}
   {"type":"choices","nodeId":5,"items":[{"choiceId":4,"content":[{"type":"text","text":"b"}]}]}
   --- choose: b
   {"type":"markOld"}
   {"type":"removeChoices","nodeId":5}
-  {"type":"para","content":[{"type":"text","text":"hb's state:"},{"type":"space"},{"type":"text","text":"1"}]}
+  {"type":"para","content":[{"type":"text","text":"hb's state: "},{"type":"text","text":"1"}]}
   {"type":"choices","nodeId":7,"items":[{"choiceId":6,"content":[{"type":"text","text":"a"}]}]}
   --- choose: a
   {"type":"markOld"}
   {"type":"removeChoices","nodeId":7}
-  {"type":"para","content":[{"type":"text","text":"ha's state:"},{"type":"space"},{"type":"text","text":"2"}]}
+  {"type":"para","content":[{"type":"text","text":"ha's state: "},{"type":"text","text":"2"}]}
   {"type":"choices","nodeId":9,"items":[{"choiceId":8,"content":[{"type":"text","text":"b"}]}]}
   --- choose: b
   {"type":"markOld"}
   {"type":"removeChoices","nodeId":9}
-  {"type":"para","content":[{"type":"text","text":"hb's state:"},{"type":"space"},{"type":"text","text":"2"}]}
+  {"type":"para","content":[{"type":"text","text":"hb's state: "},{"type":"text","text":"2"}]}
   {"type":"choices","nodeId":11,"items":[{"choiceId":10,"content":[{"type":"text","text":"a"}]}]}
   --- status: awaiting, turns: 5
 
@@ -331,27 +331,27 @@
   --- status: awaiting, turns: 1
 
   $ node main_test.js ../programs/api-turns-since.md go back go
-  {"type":"para","content":[{"type":"text","text":"since a:"},{"type":"space"},{"type":"text","text":"0"}]}
+  {"type":"para","content":[{"type":"text","text":"since a: "},{"type":"text","text":"0"}]}
   {"type":"choices","nodeId":1,"items":[{"choiceId":0,"content":[{"type":"text","text":"go"}]}]}
   --- choose: go
   {"type":"markOld"}
   {"type":"removeChoices","nodeId":1}
-  {"type":"para","content":[{"type":"text","text":"since a:"},{"type":"space"},{"type":"text","text":"1"},{"type":"text","text":", since b:"},{"type":"space"},{"type":"text","text":"0"}]}
+  {"type":"para","content":[{"type":"text","text":"since a: "},{"type":"text","text":"1"},{"type":"text","text":", since b: "},{"type":"text","text":"0"}]}
   {"type":"choices","nodeId":3,"items":[{"choiceId":2,"content":[{"type":"text","text":"back"}]}]}
   --- choose: back
   {"type":"markOld"}
   {"type":"removeChoices","nodeId":3}
-  {"type":"para","content":[{"type":"text","text":"since a:"},{"type":"space"},{"type":"text","text":"0"}]}
+  {"type":"para","content":[{"type":"text","text":"since a: "},{"type":"text","text":"0"}]}
   {"type":"choices","nodeId":5,"items":[{"choiceId":4,"content":[{"type":"text","text":"go"}]}]}
   --- choose: go
   {"type":"markOld"}
   {"type":"removeChoices","nodeId":5}
-  {"type":"para","content":[{"type":"text","text":"since a:"},{"type":"space"},{"type":"text","text":"1"},{"type":"text","text":", since b:"},{"type":"space"},{"type":"text","text":"0"}]}
+  {"type":"para","content":[{"type":"text","text":"since a: "},{"type":"text","text":"1"},{"type":"text","text":", since b: "},{"type":"text","text":"0"}]}
   {"type":"choices","nodeId":7,"items":[{"choiceId":6,"content":[{"type":"text","text":"back"}]}]}
   --- status: awaiting, turns: 3
 
   $ node main_test.js ../programs/api-random.md
-  {"type":"para","content":[{"type":"text","text":"roll:"},{"type":"space"},{"type":"text","text":"3"},{"type":"text","text":", coin:"},{"type":"space"},{"type":"text","text":"false"},{"type":"text","text":", pick:"},{"type":"space"},{"type":"text","text":"y"},{"type":"text","text":", float below one:"},{"type":"space"},{"type":"text","text":"true"}]}
+  {"type":"para","content":[{"type":"text","text":"roll: "},{"type":"text","text":"3"},{"type":"text","text":", coin: "},{"type":"text","text":"false"},{"type":"text","text":", pick: "},{"type":"text","text":"y"},{"type":"text","text":", float below one: "},{"type":"text","text":"true"}]}
   --- status: done, turns: 0
 
   $ node main_test.js ../programs/api-last-choice.md second
@@ -359,7 +359,7 @@
   --- choose: second
   {"type":"markOld"}
   {"type":"removeChoices","nodeId":2}
-  {"type":"para","content":[{"type":"text","text":"you chose"},{"type":"space"},{"type":"text","text":"second"}]}
+  {"type":"para","content":[{"type":"text","text":"you chose "},{"type":"text","text":"second"}]}
   --- status: done, turns: 1
 
   $ node main_test.js ../programs/jump-to-current-section.md a

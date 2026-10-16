@@ -190,13 +190,7 @@ module SemicolonBreak = struct
         | Inline.Inlines (ls, _meta) -> loop current_para paras (ls @ rest)
         | _ -> loop (inl :: current_para) paras rest)
     in
-    loop [] [] inls
-    |> List.map (fun inls ->
-        List.filter
-          (function
-            | Inline.Text (s, _) when String.trim s = "" -> false | _ -> true)
-          inls)
-    |> List.filter (function [] -> false | _ -> true)
+    loop [] [] inls |> List.filter (function [] -> false | _ -> true)
 
   let block _ = function
     | Block.Paragraph (p, m) ->

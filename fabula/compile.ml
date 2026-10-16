@@ -6,9 +6,7 @@ let inline_cmd_folder section =
   let inline : (Inline.t, cmd Acc.t) Folder.folder =
    fun self acc i ->
     match i with
-    | Inline.Text (s, _) when not (is_whitespace s) ->
-      Folder.ret (Acc.add acc (Text (String.trim s)))
-    | Inline.Text _ -> Folder.default
+    | Inline.Text (s, _) -> Folder.ret (Acc.add acc (Text s))
     | Inline.Autolink (_, _) -> failwith "unimplemented Autolink"
     | Inline.Break (_, _) -> Folder.ret (Acc.add acc Break)
     | Inline.Code_span (cs, _) ->
@@ -105,26 +103,31 @@ let check_no_fallthrough_and_otherwise fallthrough oc =
   if fallthrough && oc > 0 then
     fail "fallthrough is not compatible with otherwises"
 
+let remove_whitespace (cs : cmd list) : cmd list =
+  List.filter (function Text s -> not (is_whitespace s) | _ -> true) cs
+
 let list_item_to_choice_item self section i =
-  let bs =
+  (* recursively translate the list item, which gives us a story *)
+  let sections =
     Folder.fold_block self
       (Acc.single (section, Acc.empty))
       (Block.List_item.block i)
     |> Acc.to_list
   in
   (* show_block (Block.List_item.block i); *)
-  (* the first block is expected to be a paragraph *)
+  (* extract the first block of the first (and only) section. the first para will contain the main choice components. the remainder is the REST *)
   let para, after_first =
-    match bs with
+    match sections with
     | [(_, bs)] ->
       (match Acc.to_list bs with
       | Para b :: rest -> (b, rest)
       | _ ->
         show_block (Block.List_item.block i);
         failwith "not a para followed by rest")
-    | _ -> failwith "not a singleton scene"
+    | _ -> failwith "not a singleton section"
   in
-  match (para, after_first) with
+  let significant = remove_whitespace para in
+  match (significant, after_first) with
   | [Run g; Run m], []
     when String.starts_with ~prefix:"?" g
          && String.starts_with ~prefix:"more " m ->
@@ -171,8 +174,9 @@ let list_item_to_choice_item self section i =
           initial = Acc.to_list !initial;
           code = Option.to_list !code;
           rest =
-            (let r = Acc.to_list !rest in
-             match r with [] -> after_first | _ -> Para r :: after_first);
+            (match Acc.to_list !rest with
+            | [] -> after_first
+            | r -> Para r :: after_first);
           kind = (if !sticky then Sticky else Consumable (fresh ~prefix:"c" ()));
         }
 

@@ -7,7 +7,6 @@ type LinkId = number & { readonly __kind: "link" };
 
 type Inline =
   | { type: "text"; text: string }
-  | { type: "space" }
   | { type: "verbatim"; html: string }
   | { type: "link"; linkId: LinkId; label: string }
   | { type: "emph"; content: Inline[] };
